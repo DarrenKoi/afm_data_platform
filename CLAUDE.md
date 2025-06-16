@@ -11,44 +11,128 @@ This is an AFM (Atomic Force Microscopy) data platform with a Vue.js front-end b
 - **Framework**: Vue 3 with Composition API
 - **UI Library**: Vuetify 3 (Material Design components)
 - **State Management**: Pinia stores
-- **Routing**: File-based routing with unplugin-vue-router (pages in `src/pages/` become routes)
+- **Routing**: Manual route configuration (conventional Vue Router setup)
 - **Layouts**: Uses vite-plugin-vue-layouts-next for layout management
 - **Auto-imports**: Components and Vue APIs are auto-imported via unplugin-vue-components and unplugin-auto-import
 
-The front-end follows Vuetify's standard project structure:
-- `src/pages/` - File-based routes (index.vue becomes `/`)
-- `src/layouts/` - Layout templates (default.vue wraps pages)
-- `src/components/` - Reusable Vue components
+The front-end follows this organized project structure:
+- `src/pages/` - Page components (manually registered in router)
+- `src/layouts/` - Layout components (AppHeader.vue, AppFooter.vue)
+- `src/components/` - Reusable UI components (buttons, cards, charts, etc.)
 - `src/stores/` - Pinia state management stores
 - `src/plugins/` - Plugin registration (Vuetify, Pinia, Router)
 - `src/styles/` - SCSS styling configuration
 
-## Common Development Commands
+## Development Environment
 
-All commands should be run from the `front-end/` directory:
+### Frontend
+**IMPORTANT**: The user runs npm commands in their own development environment (not via WSL). 
+Do NOT execute npm commands using the Bash tool. The user handles all package management and development server operations.
 
-```bash
-# Install dependencies
-npm install
+**Target Platform**: This application is designed exclusively for desktop browsers and internal corporate use. No mobile responsiveness or mobile-specific features are required.
 
-# Start development server (http://localhost:3000)
-npm run dev
+Common commands (user runs these):
+- `npm install` - Install dependencies
+- `npm run dev` - Start development server (http://localhost:3000)
+- `npm run build` - Build for production
+- `npm run preview` - Preview production build
+- `npm run lint` - Run linting with auto-fix
 
-# Build for production
-npm run build
+### Backend
+The backend is a Flask application that provides API endpoints for the frontend.
 
-# Preview production build
-npm run preview
+**Backend Setup and Running**:
+1. Navigate to the `back-end` directory
+2. Install Python dependencies: `pip install -r requirements.txt`
+3. Run the backend server: 
+   - **Development**: `python run.py` or `python index.py`
+   - **Production**: UWSGI server automatically uses `index.py`
+4. Backend will be available at: http://localhost:5000
+5. API endpoints available at: http://localhost:5000/api
 
-# Run linting with auto-fix
-npm run lint
-```
+**Production Deployment**:
+- **Entry Point**: `index.py` (required for UWSGI server)
+- **Cloud Setup**: Configured to work with cloud UWSGI deployment
+- **No Configuration Changes Needed**: Production server automatically detects `index.py`
+
+**Backend Architecture**:
+- **Framework**: Flask with Blueprint structure
+- **API Folder**: All API routes are organized in the `api/` folder
+- **Scheduler**: APScheduler for background tasks (data cleanup, health checks)
+- **CORS**: Configured for frontend communication
+- **Data Service**: Generates realistic dummy AFM data for development
+
+**API Endpoints**:
+- `GET /api/health` - API health check
+- `GET /api/afm-data` - Get AFM measurement data
+- `GET /api/trend-data` - Get trend analysis data
+- `GET /api/analysis-results` - Get analysis results
+- `GET /api/profile-data/<group_key>/<point>` - Get profile data
+- `GET /api/summary-data/<group_key>` - Get summary data
+
+**Real-time Search Endpoints**:
+- `GET /api/measurements/search?q=<query>&limit=<limit>&offset=<offset>` - Real-time search with filtering
+- `GET /api/measurements/suggestions?q=<query>&limit=<limit>` - Search suggestions for autocomplete
+- `GET /api/measurements?limit=<limit>&offset=<offset>` - Get all measurements with pagination
+- `GET /api/measurements/<measurement_id>` - Get specific measurement details
+- `GET /api/measurements/stats` - Get measurement statistics
+
+## API Integration
+
+The frontend now uses Axios for API communication with real-time search capabilities:
+- **API Service**: `src/services/api.js` handles all backend communication
+- **Real-time Search**: `src/composables/useSearch.js` provides debounced search and caching
+- **Base URL**: Configured via environment variables (`VITE_API_BASE_URL`)
+- **Development**: Backend runs on port 5000, frontend on port 3000
+- **CORS**: Properly configured for cross-origin requests
+
+### Real-time Search Features
+- **Debounced Search**: 300ms delay to prevent excessive API calls
+- **Search Suggestions**: Auto-complete with cached suggestions
+- **Client-side Caching**: Search results and suggestions cached for performance
+- **Large Dataset Support**: Optimized for 10K-20K measurement records
+- **Multi-field Search**: Searches across lot_id, fab_id, tool_name, recipe_name, material, process_step
 
 ## Development Notes
 
-- The development server runs on port 3000
+- The frontend development server runs on port 3000
+- The backend development server runs on port 5000
 - Components are automatically imported - no need for manual imports
 - Vue Router is auto-configured based on files in `src/pages/`
 - Vuetify components and theming are configured via `src/plugins/vuetify.js`
 - SCSS settings are in `src/styles/settings.scss`
 - The project uses modern Sass API compilation
+- AFM logo (afm_logo2.png) and favicon are located in `src/assets/`
+
+## Documentation Structure
+
+The `front-end/docs/` folder contains comprehensive beginner-friendly guides for web development using this AFM data platform as a learning project:
+
+### Documentation Organization
+
+**Main Tutorial File**: `front-end/docs/claude.md`
+- **Purpose**: Consolidated beginner's guide combining content from multiple sources
+- **Target Audience**: Non-developer engineers at SK hynix who want to learn web development
+- **Structure**: Progressive 3-chapter tutorial covering web basics through Vue.js fundamentals
+
+**Tutorial Chapters**:
+1. **Chapter 1: 시작하기 전에** - Web development basics, project overview, technology stack introduction
+2. **Chapter 2: 개발 환경 구축하기** - Node.js installation, project setup, VS Code configuration
+3. **Chapter 3: Vue 프로젝트 시작하기** - Vue.js fundamentals, component creation, project structure
+
+**Reference Folders** (integrated into main tutorial):
+- `01-web-basics/` - HTML/CSS/JavaScript fundamentals (content merged into Chapter 1)
+- `02-project-structure/` - Detailed folder structure explanations (content merged into Chapters 1-3)  
+- `03-configuration/` - Configuration files guide (content merged into Chapter 3)
+- `tutorials/` - Original Korean tutorial chapters (source material for claude.md)
+
+### Documentation Consolidation Work
+
+**What was accomplished**:
+- **Eliminated duplication**: Combined similar content from reference folders and tutorial chapters
+- **Improved organization**: Structured as progressive learning path rather than scattered topics
+- **Enhanced explanations**: Added practical examples, analogies, and AFM-specific context
+- **Streamlined access**: Single comprehensive file instead of navigating multiple folders
+- **Maintained beginner focus**: Preserved tutorial's approachable tone for non-developers
+
+The consolidated `claude.md` serves as the primary learning resource, making the documentation more accessible while preserving all technical details from the original reference materials.

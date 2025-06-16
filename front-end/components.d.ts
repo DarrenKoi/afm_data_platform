@@ -8,9 +8,18 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    AppFooter: typeof import('./src/components/AppFooter.vue')['default']
-    HelloWorld: typeof import('./src/components/HelloWorld.vue')['default']
+    ChartVisualization: typeof import('./src/components/ResultPage/ChartVisualization.vue')['default']
+    DataGroupingCard: typeof import('./src/components/MainPage/DataGroupingCard.vue')['default']
+    EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']
+    MeasurementInfo: typeof import('./src/components/ResultPage/MeasurementInfo.vue')['default']
+    MeasurementPointsSelector: typeof import('./src/components/ResultPage/MeasurementPointsSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
+    SavedGroupsCard: typeof import('./src/components/MainPage/SavedGroupsCard.vue')['default']
+    SearchHistoryCard: typeof import('./src/components/MainPage/SearchHistoryCard.vue')['default']
+    SearchSection: typeof import('./src/components/MainPage/SearchSection.vue')['default']
+    StatisticalInfo: typeof import('./src/components/ResultPage/StatisticalInfo.vue')['default']
+    SummaryDataTable: typeof import('./src/components/ResultPage/SummaryDataTable.vue')['default']
+    ViewHistoryCard: typeof import('./src/components/MainPage/ViewHistoryCard.vue')['default']
   }
 }

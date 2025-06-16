@@ -1,0 +1,67 @@
+I want to make dummy data that is mostly matched with the real data from back-end.
+Here is the description. You can randomize to create data.
+The data flow is by searching measurement history from search bar, and 
+when a user click the result, profile and summary data need to be called.
+
+[Measuremet history]
+This data shows what have been measured from the AFM tools
+
+The data goes, 
+
+fab: Fab identifier (R3, M14, M16), tend to be short with first alphabet letter and one or two digit number.
+lot_id: Starts with alphabets and mix of numbers. example -> T7HQK84T1, COM62353
+wf_id: numbers from 1 to 25
+lot_wf: combination of lot and workflow = T7HQK84T1_14
+group_key: Grouping_key combining fab_lot_id_wf_id. example -> R3_T7HQK84T1_14
+
+point: Measurement point number (1, 2, 3, 4..)
+x_axis: coordinates of the measurement point for x
+y_axis: coordinates of the measurement point for y
+parameter: one of these (RQ_value, RA_value, RMAX_value)
+value: measured_value
+event_time: timestamp of the event 
+rcp_id: Recipe identifier (example: BSOXCMP_DISHING_9PT, normally comes with two underbars)
+
+
+[profile data]
+The profile is related to the each measurement point from the recipe.
+From the measurement history, when a user want to see the detail from a specific point, 
+this data needs to be called. 
+
+data size is around 20,000
+surface size can be variable like (X, Y)
+It is the form of surface data (like heat map)
+
+data format is in X, Y, Z
+X	Y	Z
+0.0000	0.0000	0.063871275
+0.1074	0.0000	0.094706873
+0.2148	0.0000	0.248826780
+0.5371	0.0000	-0.095052670
+...
+0.0000	0.1245	0.032523583
+...
+55.0000 25.0000 0.23513532
+
+The data range is determined by X, Y from the surface size. 
+if X, Y is 55, 25 then 20,000 exists between X = 0~55 and Y = 0~25
+You can decide the range of X and Y and the data points between them. 
+Z is the data for surface height such that it should be somehow continuous to describe the surface fluctuations.
+
+
+[Summary Data]
+This data contains statistical information for each point
+For example, the data goes like,
+
+Point, No X, No Y, ID, State, Left_H, Right_H
+1, 5386.64, -586.31, 1, TRUE, 8.255, 8.785
+...
+5, 5389.72, 73428.53, 5, TRUE, 4.973, 4.512
+and so on.
+
+
+	
+
+
+
+

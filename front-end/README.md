@@ -1,79 +1,100 @@
-# Vuetify (Default)
+# AFM 데이터 뷰어 (AFM Data Viewer)
 
-This is the official scaffolding tool for Vuetify, designed to give you a head start in building your new Vuetify application. It sets up a base template with all the necessary configurations and standard directory structure, enabling you to begin development without the hassle of setting up the project from scratch.
+ITC에서 개발한 AFM(Atomic Force Microscopy) 측정 데이터 검색 및 시각화 플랫폼입니다.
 
-## ❗️ Important Links
+## 📂 프로젝트 구조
 
-- 📄 [Docs](https://vuetifyjs.com/)
-- 🚨 [Issues](https://issues.vuetifyjs.com/)
-- 🏬 [Store](https://store.vuetifyjs.com/)
-- 🎮 [Playground](https://play.vuetifyjs.com/)
-- 💬 [Discord](https://community.vuetifyjs.com)
+### `src/pages/`
+페이지 컴포넌트들이 위치하며, 라우터에 수동으로 등록됩니다.
 
-## 💿 Install
+- **MainPage.vue**: 메인 검색 페이지 (`/` 경로)
+  - AFM 로고 표시
+  - 통합 검색바 (Fab ID, Lot ID, Tool ID, Recipe name 검색 가능)
+  - 검색 기능 구현
 
-Set up your project using your preferred package manager. Use the corresponding command to install the dependencies:
+### `src/layouts/`
+레이아웃 관련 컴포넌트들이 위치합니다.
 
-| Package Manager                                                | Command        |
-|---------------------------------------------------------------|----------------|
-| [yarn](https://yarnpkg.com/getting-started)                   | `yarn install` |
-| [npm](https://docs.npmjs.com/cli/v7/commands/npm-install)     | `npm install`  |
-| [pnpm](https://pnpm.io/installation)                          | `pnpm install` |
-| [bun](https://bun.sh/#getting-started)                        | `bun install`  |
+- **AppHeader.vue**: 상단 앱바
+  - "AFM Data Viewer" 타이틀
+  - 우측 네비게이션 링크들 (Home, About, Help, Contact)
+  - 현재 링크들은 비활성화 상태 (href: null)
 
-After completing the installation, your environment is ready for Vuetify development.
+- **AppFooter.vue**: 하단 푸터
+  - "© 2025 ITC AFM Data Platform" 표시
 
-## ✨ Features
+### `src/components/`
+재사용 가능한 UI 컴포넌트들을 위한 폴더입니다.
 
-- 🖼️ **Optimized Front-End Stack**: Leverage the latest Vue 3 and Vuetify 3 for a modern, reactive UI development experience. [Vue 3](https://v3.vuejs.org/) | [Vuetify 3](https://vuetifyjs.com/en/)
-- 🗃️ **State Management**: Integrated with [Pinia](https://pinia.vuejs.org/), the intuitive, modular state management solution for Vue.
-- 🚦 **Routing and Layouts**: Utilizes Vue Router for SPA navigation and vite-plugin-vue-layouts for organizing Vue file layouts. [Vue Router](https://router.vuejs.org/) | [vite-plugin-vue-layouts](https://github.com/JohnCampionJr/vite-plugin-vue-layouts)
-- ⚡ **Next-Gen Tooling**: Powered by Vite, experience fast cold starts and instant HMR (Hot Module Replacement). [Vite](https://vitejs.dev/)
-- 🧩 **Automated Component Importing**: Streamline your workflow with unplugin-vue-components, automatically importing components as you use them. [unplugin-vue-components](https://github.com/antfu/unplugin-vue-components)
+- 현재는 비어있음
+- 향후 차트, 버튼, 카드 등의 재사용 컴포넌트들이 추가될 예정
 
-These features are curated to provide a seamless development experience from setup to deployment, ensuring that your Vuetify application is both powerful and maintainable.
+### `src/stores/`
+Pinia 상태 관리 스토어들이 위치합니다.
 
-## 💡 Usage
+- **app.js**: 기본 앱 스토어
+- **index.js**: 스토어 설정 파일
 
-This section covers how to start the development server and build your project for production.
+### `src/plugins/`
+Vue 플러그인 등록 파일들이 위치합니다.
 
-### Starting the Development Server
+- **index.js**: 플러그인 등록
+- **vuetify.js**: Vuetify 설정
 
-To start the development server with hot-reload, run the following command. The server will be accessible at [http://localhost:3000](http://localhost:3000):
+### `src/router/`
+라우터 설정 파일이 위치합니다.
+
+- **index.js**: 수동 라우터 설정
+  - MainPage.vue → `/` 경로 매핑
+  - 기존 자동 생성 라우팅에서 수동 설정으로 변경
+
+### `src/assets/`
+정적 자산 파일들이 위치합니다.
+
+- **afm_logo2.png**: AFM 로고 이미지
+- **favicon.png**: 파비콘
+- **logo.png, logo.svg**: 기본 Vue 로고들
+
+### `src/styles/`
+SCSS 스타일 설정 파일들이 위치합니다.
+
+- **settings.scss**: Vuetify 스타일 설정
+
+## 🛠️ 기술 스택
+
+- **Vue 3** (Composition API)
+- **Vuetify 3** (Material Design)
+- **Vue Router** (수동 설정)
+- **Pinia** (상태 관리)
+- **Vite** (빌드 도구)
+
+## 🚀 개발 명령어
 
 ```bash
-yarn dev
+# 의존성 설치
+npm install
+
+# 개발 서버 시작 (http://localhost:3000)
+npm run dev
+
+# 프로덕션 빌드
+npm run build
+
+# 빌드 미리보기
+npm run preview
+
+# 린팅 (자동 수정)
+npm run lint
 ```
 
-(Repeat for npm, pnpm, and bun with respective commands.)
+## 📋 TODO 목록
 
-> Add NODE_OPTIONS='--no-warnings' to suppress the JSON import warnings that happen as part of the Vuetify import mapping. If you are on Node [v21.3.0](https://nodejs.org/en/blog/release/v21.3.0) or higher, you can change this to NODE_OPTIONS='--disable-warning=5401'. If you don't mind the warning, you can remove this from your package.json dev script.
+1. **더미 AFM 측정 데이터 구조 생성** (Fab ID, Lot ID, Tool ID, Recipe name, 측정 결과 포함)
+2. **검색 결과 페이지 생성** (데이터 시각화 컴포넌트 포함)
+3. **검색 기록 추적 및 최근 검색 내역 표시**
+4. **검색 페이지와 결과 페이지 간 라우팅 구현**
+5. **반응형 디자인 추가**
 
-### Building for Production
+## 📄 라이선스
 
-To build your project for production, use:
-
-```bash
-yarn build
-```
-
-(Repeat for npm, pnpm, and bun with respective commands.)
-
-Once the build process is completed, your application will be ready for deployment in a production environment.
-
-## 💪 Support Vuetify Development
-
-This project is built with [Vuetify](https://vuetifyjs.com/en/), a UI Library with a comprehensive collection of Vue components. Vuetify is an MIT licensed Open Source project that has been made possible due to the generous contributions by our [sponsors and backers](https://vuetifyjs.com/introduction/sponsors-and-backers/). If you are interested in supporting this project, please consider:
-
-- [Requesting Enterprise Support](https://support.vuetifyjs.com/)
-- [Sponsoring John on Github](https://github.com/users/johnleider/sponsorship)
-- [Sponsoring Kael on Github](https://github.com/users/kaelwd/sponsorship)
-- [Supporting the team on Open Collective](https://opencollective.com/vuetify)
-- [Becoming a sponsor on Patreon](https://www.patreon.com/vuetify)
-- [Becoming a subscriber on Tidelift](https://tidelift.com/subscription/npm/vuetify)
-- [Making a one-time donation with Paypal](https://paypal.me/vuetify)
-
-## 📑 License
-[MIT](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2016-present Vuetify, LLC
+© 2025 ITC AFM Data Platform
