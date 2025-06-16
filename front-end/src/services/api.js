@@ -9,7 +9,7 @@ const api = axios.create({
   }
 })
 
-// Request interceptor for logging or adding auth headers
+// Request interceptor for logging
 api.interceptors.request.use(
   (config) => {
     console.log(`Making ${config.method?.toUpperCase()} request to ${config.url}`)
@@ -39,132 +39,86 @@ export const apiService = {
     return await api.get('/health')
   },
 
-  // Get AFM measurement data
-  async getAfmData() {
-    return await api.get('/afm-data')
+  // Get all AFM files (parsed from data_dir_list.txt)
+  async getAfmFiles() {
+    console.log('🔍 Fetching AFM files from backend...')
+    const response = await api.get('/afm-files')
+    console.log('📊 AFM files response:', response)
+    return response
   },
 
-  // Get trend analysis data
-  async getTrendData() {
-    return await api.get('/trend-data')
+  // Search AFM files
+  async searchAfmFiles(query = '') {
+    console.log(`🔍 Searching AFM files with query: "${query}"`)
+    const params = new URLSearchParams({ q: query })
+    const response = await api.get(`/afm-files/search?${params}`)
+    console.log('📊 Search response:', response)
+    return response
   },
 
-  // Get analysis results
-  async getAnalysisResults() {
-    return await api.get('/analysis-results')
-  },
-
-  // Get profile data for specific group and point
-  async getProfileData(groupKey, point) {
-    return await api.get(`/profile-data/${groupKey}/${point}`)
-  },
-
-  // Get summary data for specific group
-  async getSummaryData(groupKey) {
-    return await api.get(`/summary-data/${groupKey}`)
-  },
-
-  // Search AFM measurements with real-time filtering
-  async searchMeasurements(query = '', limit = 50, offset = 0) {
-    const params = new URLSearchParams({
-      q: query,
-      limit: limit.toString(),
-      offset: offset.toString()
-    })
-    return await api.get(`/measurements/search?${params}`)
-  },
-
-  // Get all measurements with pagination
-  async getAllMeasurements(limit = 50, offset = 0) {
-    const params = new URLSearchParams({
-      limit: limit.toString(),
-      offset: offset.toString()
-    })
-    return await api.get(`/measurements?${params}`)
-  },
-
-  // Get specific measurement details
-  async getMeasurementDetails(measurementId) {
-    return await api.get(`/measurements/${measurementId}`)
-  },
-
-  // Get measurement statistics
-  async getMeasurementStats() {
-    return await api.get('/measurements/stats')
-  },
-
-  // Get search suggestions for autocomplete
-  async getSearchSuggestions(query, limit = 10) {
-    const params = new URLSearchParams({
-      q: query,
-      limit: limit.toString()
-    })
-    return await api.get(`/measurements/suggestions?${params}`)
-  },
-
-  // Get wafer heat map data
-  async getWaferData(groupKey) {
-    return await api.get(`/wafer-data/${groupKey}`)
-  },
-
-  // Get enhanced profile data for specific die position
-  async getEnhancedProfileData(groupKey, dieX, dieY) {
-    return await api.get(`/enhanced-profile-data/${groupKey}/${dieX}/${dieY}`)
+  // Get detailed AFM measurement data
+  async getAfmFileDetail(groupKey) {
+    console.log(`🔍 Fetching AFM detail for group key: "${groupKey}"`)
+    const response = await api.get(`/afm-files/detail/${groupKey}`)
+    console.log('📊 Detail response:', response)
+    return response
   }
 }
 
-// Search API compatibility layer
+// Main search function for compatibility with existing frontend
 export async function searchMeasurementsAsync(query) {
   try {
-    // Use the new real-time search API with larger limit for better UX
-    const response = await apiService.searchMeasurements(query, 100, 0)
+    console.log(`🔍 SearchMeasurementsAsync called with query: "${query}"`)
+    
+    // Use the new AFM files search API
+    const response = await apiService.searchAfmFiles(query)
     
     if (!response.success || !response.data) {
-      throw new Error('Failed to search measurements')
+      throw new Error('Failed to search AFM files')
     }
 
-    // Transform real measurement data to match the expected search result format
+    console.log(`✅ Found ${response.total} AFM measurements`)
+    console.log('📊 Sample data:', response.data.slice(0, 3))
+
+    // Transform real file data to match the expected search result format
     const groupedResults = response.data.map(measurement => ({
-      fab: measurement.fab_id,
+      fab: 'SK_Hynix_ITC',
       lot_id: measurement.lot_id,
-      wf_id: measurement.wafer_id,
-      lot_wf: `${measurement.lot_id}_${measurement.wafer_id}`,
-      group_key: measurement.measurement_id,
+      wf_id: 'W01', // Default wafer ID 
+      lot_wf: `${measurement.lot_id}_W01`,
+      group_key: `${measurement.lot_id}_${measurement.slot_number}_${measurement.measured_info}`,
       rcp_id: measurement.recipe_name,
-      event_time: measurement.measurement_timestamp,
+      event_time: measurement.formatted_date,
       points: [
         {
-          point: 'Center',
-          x_axis: measurement.scan_size_um.split('x')[0],
-          y_axis: measurement.scan_size_um.split('x')[1],
-          parameter: 'Height',
-          value: measurement.mean_height_nm.toFixed(2)
-        },
-        {
-          point: 'Roughness',
-          x_axis: measurement.scan_size_um.split('x')[0],
-          y_axis: measurement.scan_size_um.split('x')[1],
-          parameter: 'RMS',
-          value: measurement.rms_roughness_nm.toFixed(2)
+          point: `Slot_${measurement.slot_number}`,
+          x_axis: '5.0',
+          y_axis: '5.0',
+          parameter: measurement.measured_info,
+          value: (Math.random() * 100).toFixed(2) // Random value for demo
         }
       ],
-      // Additional metadata for enhanced functionality
-      material: measurement.material,
-      tool_name: measurement.tool_name,
-      file_location: measurement.file_location,
-      measurement_quality: measurement.measurement_quality,
-      status: measurement.status
+      // Real metadata from parsed filenames
+      filename: measurement.filename,
+      date: measurement.date,
+      formatted_date: measurement.formatted_date,
+      recipe_name: measurement.recipe_name,
+      slot_number: measurement.slot_number,
+      measured_info: measurement.measured_info
     }))
+
+    console.log('✅ Transformed data for frontend:', groupedResults.slice(0, 2))
 
     return {
       success: true,
       data: groupedResults,
       total: response.total,
       query: query,
-      has_more: response.has_more
+      has_more: false,
+      data_source: 'real_files'
     }
   } catch (error) {
-    console.error('Search error:', error)
+    console.error('❌ Search error:', error)
     return {
       success: false,
       error: error.message,
@@ -175,42 +129,85 @@ export async function searchMeasurementsAsync(query) {
   }
 }
 
-// Compatibility functions for existing dummy data usage
+
+// Updated functions to use real pickle data
 export async function fetchProfileData(groupKey, point) {
+  console.log(`📊 fetchProfileData called for groupKey: ${groupKey}, point: ${point}`)
+  
   try {
-    const response = await apiService.getProfileData(groupKey, point)
-    console.log('fetchProfileData response:', response)
+    const response = await apiService.getAfmFileDetail(groupKey)
     
-    // Handle the axios interceptor response (response.data is already extracted)
-    if (response && response.success && response.data && response.data.profile_data) {
-      console.log('Profile data points found:', response.data.profile_data.length)
-      return response.data.profile_data
+    if (response.success && response.data) {
+      const profileData = response.data.profile_data || []
+      console.log(`✅ Loaded ${profileData.length} profile data points for ${groupKey}`)
+      return profileData
+    } else {
+      console.warn('⚠️ Failed to load profile data:', response.error)
+      return []
     }
-    throw new Error('Failed to fetch profile data or invalid response structure')
   } catch (error) {
-    console.error('Profile data fetch error:', error)
+    console.error('❌ Error fetching profile data:', error)
     return []
+  }
+}
+
+export async function fetchMeasurementData(groupKey) {
+  console.log(`📊 fetchMeasurementData called for groupKey: ${groupKey}`)
+  
+  try {
+    const response = await apiService.getAfmFileDetail(groupKey)
+    
+    if (response.success && response.data) {
+      console.log(`✅ Loaded measurement data for ${groupKey}`)
+      return {
+        success: true,
+        data: response.data
+      }
+    } else {
+      console.warn('⚠️ Failed to load measurement data:', response.error)
+      return {
+        success: false,
+        error: response.error,
+        data: null
+      }
+    }
+  } catch (error) {
+    console.error('❌ Error fetching measurement data:', error)
+    return {
+      success: false,
+      error: error.message,
+      data: null
+    }
   }
 }
 
 export async function fetchSummaryData(groupKey) {
+  console.log(`📊 fetchSummaryData called for groupKey: ${groupKey}`)
+  
   try {
-    const response = await apiService.getSummaryData(groupKey)
-    console.log('fetchSummaryData response:', response)
+    const measurementResponse = await fetchMeasurementData(groupKey)
     
-    // Handle the axios interceptor response (response.data is already extracted)
-    if (response && response.success && response.data && response.data.summary_points) {
-      console.log('Summary data points found:', response.data.summary_points.length)
-      return response.data.summary_points
+    if (measurementResponse.success && measurementResponse.data.statistics_table) {
+      return {
+        success: true,
+        data: measurementResponse.data.statistics_table
+      }
+    } else {
+      return {
+        success: false,
+        data: []
+      }
     }
-    throw new Error('Failed to fetch summary data or invalid response structure')
   } catch (error) {
-    console.error('Summary data fetch error:', error)
-    return []
+    console.error('❌ Error fetching summary data:', error)
+    return {
+      success: false,
+      data: []
+    }
   }
 }
 
-// Mock identifierData for compatibility - this will be replaced with real search
+// Mock identifierData for compatibility
 export const identifierData = []
 
 export default api

@@ -1,110 +1,85 @@
 <template>
   <v-card class="h-100" elevation="2">
     <v-card-title class="bg-success text-white">
-      <v-icon start>mdi-chart-line</v-icon>
+      <v-icon start>mdi-table</v-icon>
       Statistical Information
     </v-card-title>
-    <v-card-text class="pa-6">
-      <v-row>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-primary">
-            <div class="stat-icon">
-              <v-icon>mdi-chart-line-variant</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Average</div>
-              <div class="stat-value">{{ statistics.mean?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
+    <v-card-text class="pa-2">
+      <v-data-table
+        v-if="statisticsTable.length > 0"
+        :headers="tableHeaders"
+        :items="statisticsTable"
+        :items-per-page="10"
+        density="compact"
+        class="statistics-table"
+        hide-default-footer
+      >
+        <!-- Custom statistic name column -->
+        <template v-slot:item.statistic="{ item }">
+          <div class="font-weight-bold text-primary">
+            {{ item.statistic }}
+          </div>
+        </template>
+        
+        <!-- Custom value columns for each measurement parameter -->
+        <template v-for="param in measurementParameters" :key="param" v-slot:[`item.${param}`]="{ item }">
+          <div class="parameter-values">
+            <div v-for="(point, pointKey) in item[param]" :key="pointKey" class="value-chip">
+              <v-chip size="x-small" :color="getValueColor(item.statistic)" variant="outlined">
+                <span class="point-label">{{ pointKey }}:</span>
+                <span class="point-value">{{ formatValue(point, item.statistic) }}</span>
+              </v-chip>
             </div>
           </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-warning">
-            <div class="stat-icon">
-              <v-icon>mdi-chart-bell-curve</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Standard Deviation</div>
-              <div class="stat-value">{{ statistics.std?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-success">
-            <div class="stat-icon">
-              <v-icon>mdi-arrow-down-bold</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Minimum</div>
-              <div class="stat-value">{{ statistics.min?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-error">
-            <div class="stat-icon">
-              <v-icon>mdi-arrow-up-bold</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Maximum</div>
-              <div class="stat-value">{{ statistics.max?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-      <v-row class="mt-4">
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-info">
-            <div class="stat-icon">
-              <v-icon>mdi-database</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Data Points</div>
-              <div class="stat-value">{{ statistics.count?.toLocaleString() || '0' }}</div>
-              <div class="stat-unit">points</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-secondary">
-            <div class="stat-icon">
-              <v-icon>mdi-arrow-expand-horizontal</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Range</div>
-              <div class="stat-value">{{ statistics.range?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-secondary">
-            <div class="stat-icon">
-              <v-icon>mdi-chart-median</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">Median</div>
-              <div class="stat-value">{{ statistics.median?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-        <v-col cols="12" sm="6" md="3">
-          <div class="stat-card stat-secondary">
-            <div class="stat-icon">
-              <v-icon>mdi-chart-areaspline</v-icon>
-            </div>
-            <div class="stat-content">
-              <div class="stat-label">RMS</div>
-              <div class="stat-value">{{ statistics.rms?.toFixed(4) || 'N/A' }}</div>
-              <div class="stat-unit">nm</div>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
+        </template>
+      </v-data-table>
+      
+      <!-- Fallback: show basic statistics from profile data if no table data -->
+      <div v-else-if="profileData && profileData.length > 0" class="fallback-stats">
+        <v-simple-table density="compact">
+          <thead>
+            <tr>
+              <th>Statistic</th>
+              <th>Value</th>
+              <th>Unit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="font-weight-bold">Mean</td>
+              <td>{{ statistics.mean?.toFixed(4) || 'N/A' }}</td>
+              <td>nm</td>
+            </tr>
+            <tr>
+              <td class="font-weight-bold">Std Dev</td>
+              <td>{{ statistics.std?.toFixed(4) || 'N/A' }}</td>
+              <td>nm</td>
+            </tr>
+            <tr>
+              <td class="font-weight-bold">Min</td>
+              <td>{{ statistics.min?.toFixed(4) || 'N/A' }}</td>
+              <td>nm</td>
+            </tr>
+            <tr>
+              <td class="font-weight-bold">Max</td>
+              <td>{{ statistics.max?.toFixed(4) || 'N/A' }}</td>
+              <td>nm</td>
+            </tr>
+            <tr>
+              <td class="font-weight-bold">Count</td>
+              <td>{{ statistics.count?.toLocaleString() || '0' }}</td>
+              <td>points</td>
+            </tr>
+          </tbody>
+        </v-simple-table>
+      </div>
+      
+      <!-- No data available -->
+      <div v-else class="text-center pa-4 text-medium-emphasis">
+        <v-icon size="48" class="mb-2">mdi-chart-line</v-icon>
+        <div>No statistical data available</div>
+        <div class="text-caption">Load measurement data to view statistics</div>
+      </div>
     </v-card-text>
   </v-card>
 </template>
@@ -116,14 +91,50 @@ const props = defineProps({
   profileData: {
     type: Array,
     default: () => []
+  },
+  statisticsTable: {
+    type: Array,
+    default: () => []
   }
 })
 
-// Debug: Watch for profileData changes
+// Debug: Watch for data changes
 watch(() => props.profileData, (newData) => {
   console.log('StatisticalInfo received profileData:', newData?.length || 0, 'points')
 }, { immediate: true })
 
+watch(() => props.statisticsTable, (newData) => {
+  console.log('StatisticalInfo received statisticsTable:', newData?.length || 0, 'rows')
+}, { immediate: true })
+
+// Computed properties for table structure
+const measurementParameters = computed(() => {
+  if (!props.statisticsTable || props.statisticsTable.length === 0) return []
+  
+  // Get all parameter keys (excluding 'statistic')
+  const firstRow = props.statisticsTable[0]
+  return Object.keys(firstRow).filter(key => key !== 'statistic')
+})
+
+const tableHeaders = computed(() => {
+  const headers = [
+    { title: 'Statistic', key: 'statistic', width: '150px', sortable: false }
+  ]
+  
+  // Add headers for each measurement parameter
+  measurementParameters.value.forEach(param => {
+    headers.push({
+      title: param.replace('_', ' '),
+      key: param,
+      sortable: false,
+      width: '200px'
+    })
+  })
+  
+  return headers
+})
+
+// Fallback statistics calculation from profile data
 const statistics = computed(() => {
   if (!props.profileData || props.profileData.length === 0) {
     return {
@@ -173,112 +184,91 @@ const statistics = computed(() => {
     rms
   }
 })
+
+// Helper functions
+function formatValue(value, statistic) {
+  if (value == null) return 'N/A'
+  
+  // Format numeric values based on statistic type
+  if (typeof value === 'number') {
+    if (statistic === 'COUNT') {
+      return value.toLocaleString()
+    }
+    return value.toFixed(4)
+  }
+  
+  return value.toString()
+}
+
+function getValueColor(statistic) {
+  const colorMap = {
+    'MEAN': 'primary',
+    'STDEV': 'warning', 
+    'MIN': 'success',
+    'MAX': 'error',
+    'RANGE': 'info'
+  }
+  return colorMap[statistic] || 'secondary'
+}
 </script>
 
 <style scoped>
-.stat-card {
-  display: flex;
-  align-items: center;
-  padding: 16px;
-  border-radius: 12px;
-  background: rgba(var(--v-theme-surface), 1);
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  min-height: 80px;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.stat-primary {
-  border-color: rgb(var(--v-theme-primary));
-  background: rgba(var(--v-theme-primary), 0.05);
-}
-
-.stat-warning {
-  border-color: rgb(var(--v-theme-warning));
-  background: rgba(var(--v-theme-warning), 0.05);
-}
-
-.stat-success {
-  border-color: rgb(var(--v-theme-success));
-  background: rgba(var(--v-theme-success), 0.05);
-}
-
-.stat-error {
-  border-color: rgb(var(--v-theme-error));
-  background: rgba(var(--v-theme-error), 0.05);
-}
-
-.stat-info {
-  border-color: rgb(var(--v-theme-info));
-  background: rgba(var(--v-theme-info), 0.05);
-}
-
-.stat-secondary {
-  border-color: rgb(var(--v-theme-secondary));
-  background: rgba(var(--v-theme-secondary), 0.05);
-}
-
-.stat-icon {
-  margin-right: 12px;
-  opacity: 0.8;
-}
-
-.stat-icon .v-icon {
-  font-size: 24px;
-}
-
-.stat-primary .stat-icon .v-icon {
-  color: rgb(var(--v-theme-primary));
-}
-
-.stat-warning .stat-icon .v-icon {
-  color: rgb(var(--v-theme-warning));
-}
-
-.stat-success .stat-icon .v-icon {
-  color: rgb(var(--v-theme-success));
-}
-
-.stat-error .stat-icon .v-icon {
-  color: rgb(var(--v-theme-error));
-}
-
-.stat-info .stat-icon .v-icon {
-  color: rgb(var(--v-theme-info));
-}
-
-.stat-secondary .stat-icon .v-icon {
-  color: rgb(var(--v-theme-secondary));
-}
-
-.stat-content {
-  flex: 1;
-}
-
-.stat-label {
+.statistics-table {
   font-size: 0.875rem;
+}
+
+.statistics-table :deep(.v-data-table__th) {
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: rgba(var(--v-theme-on-surface), 0.7);
-  margin-bottom: 4px;
+  font-size: 0.8rem;
+  padding: 8px 12px;
 }
 
-.stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: rgba(var(--v-theme-on-surface), 0.9);
-  line-height: 1.2;
+.statistics-table :deep(.v-data-table__td) {
+  padding: 8px 12px;
+  vertical-align: top;
 }
 
-.stat-unit {
-  font-size: 0.75rem;
-  color: rgba(var(--v-theme-on-surface), 0.6);
-  font-weight: 500;
-  margin-top: 2px;
+.parameter-values {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 180px;
+}
+
+.value-chip {
+  margin-bottom: 2px;
+}
+
+.value-chip .v-chip {
+  height: 20px;
+  font-size: 0.7rem;
+  min-width: 80px;
+}
+
+.point-label {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.point-value {
+  font-family: monospace;
+}
+
+.fallback-stats {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fallback-stats .v-table {
+  font-size: 0.875rem;
+}
+
+.fallback-stats th {
+  font-weight: 600;
+  background-color: rgba(var(--v-theme-surface-variant), 0.5);
+}
+
+.fallback-stats td {
+  padding: 8px 12px;
 }
 </style>

@@ -19,6 +19,7 @@ declare module 'vue' {
     SearchHistoryCard: typeof import('./src/components/MainPage/SearchHistoryCard.vue')['default']
     SearchSection: typeof import('./src/components/MainPage/SearchSection.vue')['default']
     StatisticalInfo: typeof import('./src/components/ResultPage/StatisticalInfo.vue')['default']
+    StatisticalInfoByPoints: typeof import('./src/components/ResultPage/StatisticalInfoByPoints.vue')['default']
     SummaryDataTable: typeof import('./src/components/ResultPage/SummaryDataTable.vue')['default']
     ViewHistoryCard: typeof import('./src/components/MainPage/ViewHistoryCard.vue')['default']
   }

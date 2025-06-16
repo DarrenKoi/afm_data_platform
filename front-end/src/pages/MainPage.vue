@@ -6,15 +6,15 @@
         style="max-width: 400px; width: 100%; height: auto;">
     </div>
 
-    <v-row justify="center" style="max-width: 1200px; margin: 0 auto;">
+    <v-row justify="center" style="max-width: 1400px; margin: 0 auto;">
       <!-- Left Column: Search & Results -->
-      <v-col cols="12" lg="8" md="7">
+      <v-col cols="12" lg="7" md="6">
         <SearchSection :search-results="searchResults" :is-searching="isSearching" :is-in-group="dataStore.isInGroup"
           @search-performed="handleSearchPerformed" @add-to-group="addToGroup" @view-details="viewDetails" />
       </v-col>
 
       <!-- Right Column: History & Data Grouping -->
-      <v-col cols="12" lg="4" md="5">
+      <v-col cols="12" lg="5" md="6">
         <div class="px-2">
           <!-- View History -->
           <ViewHistoryCard :view-history="dataStore.viewHistory" :history-count="dataStore.historyCount"
@@ -149,8 +149,9 @@ function viewDetails(measurement) {
   // Add to history
   dataStore.addToHistory(measurement)
 
-  // Navigate to details
-  router.push(`/result/${measurement.group_key}`)
+  // Navigate to details with recipe ID in URL
+  const recipeId = measurement.rcp_id || measurement.recipe_name || 'unknown'
+  router.push(`/result/${encodeURIComponent(recipeId)}/${measurement.group_key}`)
 }
 
 function addToGroup(measurement) {
@@ -161,16 +162,6 @@ function viewTrendAnalysis() {
   router.push('/result/data_trend')
 }
 
-async function loadInitialResults() {
-  try {
-    const response = await searchMeasurementsAsync('')
-    if (response.success) {
-      searchResults.value = response.data.slice(0, 5)
-    }
-  } catch (error) {
-    console.error('Error loading initial results:', error)
-  }
-}
 
 
 // Save group dialog state
@@ -207,7 +198,4 @@ function loadSavedGroup(groupId) {
   dataStore.loadGroupFromHistory(groupId)
 }
 
-onMounted(() => {
-  loadInitialResults()
-})
 </script>

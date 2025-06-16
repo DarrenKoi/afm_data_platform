@@ -8,7 +8,8 @@
       "Bash(grep:*)",
       "Bash(rm:*)",
       "WebFetch(domain:docs.anthropic.com)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(python:*)"
     ],
     "deny": []
   }

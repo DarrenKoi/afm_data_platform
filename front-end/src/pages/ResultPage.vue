@@ -1,44 +1,38 @@
 <template>
   <v-container fluid class="pa-4">
-    <!-- Compact Header -->
-    <div class="d-flex align-center mb-3">
+    <!-- Distinctive Back Button -->
+    <div class="mb-4">
       <v-btn
-        variant="outlined" 
-        size="small"
+        color="primary"
+        variant="elevated"
+        size="large"
         @click="goBack"
-        class="mr-3"
+        class="back-button"
       >
-        <v-icon start size="small">mdi-arrow-left</v-icon>
-        Back
+        <v-icon start>mdi-arrow-left</v-icon>
+        Back to Search
       </v-btn>
-      
-      <div>
-        <h1 class="text-h5 mb-0">AFM Measurement Details</h1>
-        <p class="text-caption text-medium-emphasis">{{ groupKey }}</p>
-      </div>
     </div>
 
-    <!-- Compact Information Row -->
-    <v-row dense class="mb-3">
-      <v-col cols="12" md="6">
-        <MeasurementInfo :measurement-info="measurementInfo" :compact="true" />
-      </v-col>
-      <v-col cols="12" md="6">
-        <StatisticalInfo :profile-data="profileData" :compact="true" />
-      </v-col>
-    </v-row>
+    <!-- Measurement Information at Top -->
+    <div class="mb-4">
+      <MeasurementInfo :measurement-info="measurementInfo" :compact="false" />
+    </div>
 
-    <!-- Compact Summary Data -->
-    <SummaryDataTable :summary-data="summaryData" :compact="true" class="mb-3" />
+    <!-- Statistical Information by UL Points -->
+    <div class="mb-4">
+      <StatisticalInfoByPoints :statistics-data="statisticsData" />
+    </div>
 
-    <!-- Compact Measurement Points Selection -->
-    <MeasurementPointsSelector 
-      :measurement-points="measurementPoints"
-      :selected-point="selectedPoint"
-      :compact="true"
-      @point-selected="selectPoint"
-      class="mb-3"
-    />
+    <!-- Measurement Points Selection -->
+    <div class="mb-4">
+      <MeasurementPointsSelector 
+        :measurement-points="measurementPoints"
+        :selected-point="selectedPoint"
+        :compact="false"
+        @point-selected="selectPoint"
+      />
+    </div>
 
     <!-- Professional Two-Column Layout -->
     <v-row dense class="main-content-row">
@@ -120,7 +114,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { identifierData, fetchProfileData, fetchSummaryData } from '@/services/api.js'
+import { identifierData, fetchProfileData, fetchSummaryData, fetchMeasurementData } from '@/services/api.js'
 
 // Import components
 import MeasurementInfo from '@/components/ResultPage/MeasurementInfo.vue'
@@ -128,6 +122,7 @@ import SummaryDataTable from '@/components/ResultPage/SummaryDataTable.vue'
 import MeasurementPointsSelector from '@/components/ResultPage/MeasurementPointsSelector.vue'
 import ChartVisualization from '@/components/ResultPage/ChartVisualization.vue'
 import StatisticalInfo from '@/components/ResultPage/StatisticalInfo.vue'
+import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPoints.vue'
 import EnhancedChartVisualization from '@/components/ResultPage/EnhancedChartVisualization.vue'
 
 const route = useRoute()
@@ -135,7 +130,9 @@ const router = useRouter()
 
 // Reactive data
 const groupKey = ref(route.params.groupKey)
+const recipeId = ref(route.params.recipeId)
 const measurementInfo = ref({})
+const statisticsData = ref({})
 const measurementPoints = ref([])
 const summaryData = ref([])
 const selectedPoint = ref(null)
@@ -198,38 +195,86 @@ function handleWaferPointSelected(point) {
 
 
 async function loadData() {
-  // Find measurement points for this group
-  const points = identifierData.filter(item => item.group_key === groupKey.value)
-  measurementPoints.value = points
+  console.log(`🚀 Loading data for recipe: ${recipeId.value}, group_key: ${groupKey.value}`)
   
-  if (points.length > 0) {
-    // Set measurement info from first point
-    measurementInfo.value = points[0]
+  try {
+    // Load real measurement data from pickle file
+    const measurementResponse = await fetchMeasurementData(groupKey.value)
     
-    // Load summary data
-    try {
-      const summaryResponse = await fetchSummaryData(groupKey.value)
-      if (summaryResponse.success) {
-        summaryData.value = summaryResponse.data
+    if (measurementResponse.success && measurementResponse.data) {
+      const data = measurementResponse.data
+      
+      // Set measurement info from pickle data
+      measurementInfo.value = {
+        fab: 'SK_Hynix_ITC',
+        lot_id: data.measurement_info['Lot ID'] || 'Unknown',
+        wf_id: 'W01',
+        group_key: groupKey.value,
+        rcp_id: data.measurement_info['Recipe ID'] || 'Unknown',
+        event_time: data.measurement_info['Start Time'] || new Date().toISOString(),
+        tool: data.measurement_info['Tool'] || 'Unknown',
+        operator: data.measurement_info['Operator'] || 'Unknown',
+        sample_id: data.measurement_info['Sample ID'] || 'Unknown',
+        carrier_id: data.measurement_info['Carrier ID'] || 'Unknown'
       }
-    } catch (error) {
-      console.error('Error loading summary data:', error)
+      
+      // Set available measurement points
+      if (data.available_points && data.available_points.length > 0) {
+        measurementPoints.value = data.available_points.map(point => ({
+          point: point,
+          group_key: groupKey.value
+        }))
+        
+        // Auto-select first point and load its data
+        selectPoint(data.available_points[0])
+      }
+      
+      // Set statistics data by UL points
+      if (data.data_status) {
+        statisticsData.value = data.data_status
+        console.log(`✅ Loaded statistics for points: ${Object.keys(data.data_status).join(', ')}`)
+      }
+      
+      // Load summary/statistics data for backward compatibility
+      try {
+        const summaryResponse = await fetchSummaryData(groupKey.value)
+        if (summaryResponse.success && summaryResponse.data) {
+          summaryData.value = summaryResponse.data
+          console.log(`✅ Loaded ${summaryResponse.data.length} statistics rows`)
+        }
+      } catch (error) {
+        console.error('Error loading summary data:', error)
+      }
+      
+      console.log('✅ Measurement data loaded successfully')
+    } else {
+      console.warn('⚠️ Failed to load measurement data, using fallback')
+      
+      // Fallback: parse group key
+      const parts = groupKey.value.split('_')
+      if (parts.length >= 3) {
+        measurementInfo.value = {
+          fab: 'SK_Hynix_ITC',
+          lot_id: parts[0],
+          wf_id: 'W01',
+          group_key: groupKey.value,
+          rcp_id: "UNKNOWN_RECIPE",
+          event_time: new Date().toISOString()
+        }
+      }
     }
+  } catch (error) {
+    console.error('❌ Error loading measurement data:', error)
     
-    // Auto-select first point
-    if (points.length > 0) {
-      selectPoint(points[0].point)
-    }
-  } else {
-    // Fallback: parse group key
+    // Fallback in case of error
     const parts = groupKey.value.split('_')
     if (parts.length >= 3) {
       measurementInfo.value = {
-        fab: parts[0],
-        lot_id: parts[1],
-        wf_id: parts[2],
+        fab: 'SK_Hynix_ITC',
+        lot_id: parts[0],
+        wf_id: 'W01',
         group_key: groupKey.value,
-        rcp_id: "BSOXCMP_DISHING_9PT",
+        rcp_id: "ERROR_LOADING",
         event_time: new Date().toISOString()
       }
     }
@@ -247,7 +292,22 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Professional compact layout */
+/* Distinctive back button */
+.back-button {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.3);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--v-theme-primary), 0.4);
+}
+
+/* Professional layout */
 .main-content-row {
   height: calc(100vh - 280px);
   min-height: 600px;
@@ -277,7 +337,7 @@ onMounted(() => {
   overflow: hidden;
 }
 
-/* Responsive adjustments for professional layout */
+/* Responsive adjustments */
 @media (max-width: 1280px) {
   .main-content-row {
     height: auto;
@@ -288,36 +348,13 @@ onMounted(() => {
   }
 }
 
-/* Ensure no scrolling on desktop */
-@media (min-width: 1280px) {
-  .v-container {
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  .main-content-row {
-    flex: 1;
-    overflow: hidden;
-  }
-}
-
-/* Compact spacing overrides */
-.v-row.dense .v-col {
-  padding: 6px;
+/* Card spacing */
+.v-card {
+  margin-bottom: 16px;
 }
 
 .v-chip.v-chip--size-x-small {
   font-size: 0.625rem;
   height: 20px;
-}
-
-.text-subtitle-1 {
-  font-size: 0.875rem !important;
-  line-height: 1.2;
-}
-
-.text-caption {
-  font-size: 0.75rem !important;
-  line-height: 1.2;
 }
 </style>

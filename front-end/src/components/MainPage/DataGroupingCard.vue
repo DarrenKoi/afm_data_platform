@@ -12,9 +12,11 @@
     
     <v-list v-if="groupedCount > 0" density="compact">
       <v-list-item v-for="(item, index) in groupedData" :key="index">
-        <v-list-item-title class="text-body-2">{{ item.fab }} - {{ item.lot_id }}</v-list-item-title>
+        <v-list-item-title class="text-body-2">
+          {{ item.formatted_date || item.date }} - {{ item.recipe_name }} - {{ item.lot_id }}
+        </v-list-item-title>
         <v-list-item-subtitle class="text-caption">
-          WF: {{ item.wf_id }} | {{ item.rcp_id }}
+          Slot: {{ item.slot_number }} | {{ item.measured_info }}
         </v-list-item-subtitle>
         
         <template v-slot:append>

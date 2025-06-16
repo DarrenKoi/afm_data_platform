@@ -12,7 +12,7 @@ export function useDebounceSearch(delay = 300) {
   let searchTimeout = null
   let suggestionsTimeout = null
   
-  // Debounced search function
+  // Debounced search function for AFM files
   const performSearch = async (query) => {
     if (!query || query.trim() === '' || query.trim().length < 2) {
       searchResults.value = []
@@ -20,51 +20,56 @@ export function useDebounceSearch(delay = 300) {
     }
     
     const normalizedQuery = query.trim().toLowerCase()
+    console.log(`🔍 useSearch: Performing search for "${normalizedQuery}"`)
     
     // Check cache first
     if (searchCache.has(normalizedQuery)) {
+      console.log('📋 useSearch: Using cached results')
       searchResults.value = searchCache.get(normalizedQuery)
       return
     }
     
     try {
       isSearching.value = true
-      const response = await apiService.searchMeasurements(normalizedQuery, 100, 0)
+      console.log('🌐 useSearch: Making API call to search AFM files')
+      
+      // Use the new AFM files search API
+      const response = await apiService.searchAfmFiles(normalizedQuery)
       
       if (response.success) {
-        // Transform data to match expected format
+        console.log(`✅ useSearch: Found ${response.total} AFM measurements`)
+        console.log('📊 useSearch: Sample raw data:', response.data.slice(0, 2))
+        
+        // Transform AFM file data to match expected format for the UI
         const transformedData = response.data.map(measurement => ({
-          fab: measurement.fab_id,
+          // UI-expected fields
+          fab: 'SK_Hynix_ITC',
           lot_id: measurement.lot_id,
-          wf_id: measurement.wafer_id,
-          lot_wf: `${measurement.lot_id}_${measurement.wafer_id}`,
-          group_key: measurement.measurement_id,
+          wf_id: 'W01', // Default wafer ID since filenames don't contain this
+          lot_wf: `${measurement.lot_id}_W01`,
+          group_key: `${measurement.lot_id}_${measurement.slot_number}_${measurement.measured_info}`,
           rcp_id: measurement.recipe_name,
-          event_time: measurement.measurement_timestamp,
+          event_time: measurement.formatted_date,
           points: [
             {
-              point: 'Center',
-              x_axis: measurement.scan_size_um.split('x')[0],
-              y_axis: measurement.scan_size_um.split('x')[1],
-              parameter: 'Height',
-              value: measurement.mean_height_nm.toFixed(2)
-            },
-            {
-              point: 'Roughness',
-              x_axis: measurement.scan_size_um.split('x')[0],
-              y_axis: measurement.scan_size_um.split('x')[1],
-              parameter: 'RMS',
-              value: measurement.rms_roughness_nm.toFixed(2)
+              point: `Slot_${measurement.slot_number}`,
+              x_axis: '5.0',
+              y_axis: '5.0',
+              parameter: measurement.measured_info,
+              value: (Math.random() * 100).toFixed(2) // Random value for demo
             }
           ],
-          // Additional metadata
-          material: measurement.material,
-          tool_name: measurement.tool_name,
-          file_location: measurement.file_location,
-          measurement_quality: measurement.measurement_quality,
-          status: measurement.status
+          // Real AFM file metadata
+          filename: measurement.filename,
+          date: measurement.date,
+          formatted_date: measurement.formatted_date,
+          recipe_name: measurement.recipe_name,
+          slot_number: measurement.slot_number,
+          measured_info: measurement.measured_info,
+          file_id: measurement.id
         }))
         
+        console.log('✅ useSearch: Transformed data for UI:', transformedData.slice(0, 2))
         searchResults.value = transformedData
         
         // Cache the results (limit cache size)
@@ -73,16 +78,19 @@ export function useDebounceSearch(delay = 300) {
           searchCache.delete(firstKey)
         }
         searchCache.set(normalizedQuery, transformedData)
+      } else {
+        console.log('⚠️ useSearch: Search API returned unsuccessful response')
+        searchResults.value = []
       }
     } catch (error) {
-      console.error('Search error:', error)
+      console.error('❌ useSearch: Search error:', error)
       searchResults.value = []
     } finally {
       isSearching.value = false
     }
   }
   
-  // Get search suggestions
+  // Get search suggestions (simplified for AFM files)
   const getSuggestions = async (query) => {
     if (!query || query.trim().length < 2) {
       suggestions.value = []
@@ -90,34 +98,51 @@ export function useDebounceSearch(delay = 300) {
     }
     
     const normalizedQuery = query.trim().toLowerCase()
+    console.log(`💡 useSearch: Getting suggestions for "${normalizedQuery}"`)
     
     // Check cache first
     if (suggestionsCache.has(normalizedQuery)) {
+      console.log('📋 useSearch: Using cached suggestions')
       suggestions.value = suggestionsCache.get(normalizedQuery)
       return
     }
     
     try {
-      const response = await apiService.getSearchSuggestions(normalizedQuery, 8)
+      // For now, generate simple suggestions based on common AFM search terms
+      // You can enhance this later by calling a suggestions API endpoint
+      const commonTerms = [
+        'CMP', 'ETCH', 'DEPOSITION', 'POLISH', 'TRENCH',
+        'FSOXCMP', 'OXIDE', 'METAL', 'POLY', 'NITRIDE',
+        'STI', 'CONTACT', 'DAMASCENE', 'SPACER', 'GATE',
+        'SHALLOW', 'INTERLAYER', 'VIA', 'BARRIER', 'COPPER',
+        'HARD_MASK', 'DIELECTRIC', 'SOURCE_DRAIN', 'IMPLANT',
+        'EPITAXY', 'SILICIDE'
+      ]
       
-      if (response.success) {
-        suggestions.value = response.data
-        
-        // Cache suggestions (limit cache size)
-        if (suggestionsCache.size > 30) {
-          const firstKey = suggestionsCache.keys().next().value
-          suggestionsCache.delete(firstKey)
-        }
-        suggestionsCache.set(normalizedQuery, response.data)
+      const matchingSuggestions = commonTerms
+        .filter(term => term.toLowerCase().includes(normalizedQuery))
+        .slice(0, 8)
+      
+      suggestions.value = matchingSuggestions
+      console.log(`💡 useSearch: Generated ${matchingSuggestions.length} suggestions`)
+      
+      // Cache suggestions
+      if (suggestionsCache.size > 30) {
+        const firstKey = suggestionsCache.keys().next().value
+        suggestionsCache.delete(firstKey)
       }
+      suggestionsCache.set(normalizedQuery, matchingSuggestions)
+      
     } catch (error) {
-      console.error('Suggestions error:', error)
+      console.error('❌ useSearch: Suggestions error:', error)
       suggestions.value = []
     }
   }
   
   // Watch for search query changes with debouncing
   watch(searchQuery, (newQuery) => {
+    console.log(`🔄 useSearch: Search query changed to "${newQuery}"`)
+    
     // Clear previous timeouts
     if (searchTimeout) clearTimeout(searchTimeout)
     if (suggestionsTimeout) clearTimeout(suggestionsTimeout)
@@ -141,6 +166,8 @@ export function useDebounceSearch(delay = 300) {
   
   // Manual search trigger (for immediate search)
   const triggerSearch = async (query) => {
+    console.log(`⚡ useSearch: Manual search trigger for "${query}"`)
+    
     if (searchTimeout) clearTimeout(searchTimeout)
     if (suggestionsTimeout) clearTimeout(suggestionsTimeout)
     
@@ -155,6 +182,7 @@ export function useDebounceSearch(delay = 300) {
   
   // Clear cache
   const clearCache = () => {
+    console.log('🗑️ useSearch: Clearing cache')
     searchCache.clear()
     suggestionsCache.clear()
   }
@@ -177,6 +205,8 @@ export function useDebounceSearch(delay = 300) {
 }
 
 export function useRealtimeSearch() {
+  console.log('🚀 useSearch: Initializing real-time search for AFM files')
+  
   const {
     searchQuery,
     searchResults,

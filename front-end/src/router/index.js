@@ -28,7 +28,7 @@ const routes = [
     component: ContactPage
   },
   {
-    path: '/result/:groupKey',
+    path: '/result/:recipeId/:groupKey',
     name: 'ResultPage',
     component: ResultPage
   },

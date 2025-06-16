@@ -17,9 +17,11 @@
         @click="viewDetails(item)"
         class="cursor-pointer"
       >
-        <v-list-item-title class="text-body-2">{{ item.fab }} - {{ item.lot_id }}</v-list-item-title>
+        <v-list-item-title class="text-body-2">
+          {{ item.formatted_date || item.date }} - {{ item.recipe_name }} - {{ item.lot_id }}
+        </v-list-item-title>
         <v-list-item-subtitle class="text-caption">
-          {{ new Date(item.viewedAt).toLocaleString() }}
+          Slot: {{ item.slot_number }} | {{ item.measured_info }} | {{ new Date(item.viewedAt).toLocaleString() }}
         </v-list-item-subtitle>
       </v-list-item>
     </v-list>

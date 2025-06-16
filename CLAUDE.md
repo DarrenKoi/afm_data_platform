@@ -64,18 +64,20 @@ The backend is a Flask application that provides API endpoints for the frontend.
 
 **API Endpoints**:
 - `GET /api/health` - API health check
-- `GET /api/afm-data` - Get AFM measurement data
-- `GET /api/trend-data` - Get trend analysis data
-- `GET /api/analysis-results` - Get analysis results
-- `GET /api/profile-data/<group_key>/<point>` - Get profile data
-- `GET /api/summary-data/<group_key>` - Get summary data
+- `GET /api/afm-files` - Get all parsed AFM file data from data_dir_list.txt
+- `GET /api/afm-files/search?q=<query>` - Search AFM files by query
 
-**Real-time Search Endpoints**:
-- `GET /api/measurements/search?q=<query>&limit=<limit>&offset=<offset>` - Real-time search with filtering
-- `GET /api/measurements/suggestions?q=<query>&limit=<limit>` - Search suggestions for autocomplete
-- `GET /api/measurements?limit=<limit>&offset=<offset>` - Get all measurements with pagination
-- `GET /api/measurements/<measurement_id>` - Get specific measurement details
-- `GET /api/measurements/stats` - Get measurement statistics
+**Real File Data Integration**:
+The API parses real AFM file data from the `itc-afm-data-platform-pjt-shared/AFM_DB/MAP608/data_dir_list.txt` file:
+- **File Pattern**: `#date#recipe_name#lot_id_time#slot_measured_info#.extension`
+- **Parsed Fields**: 
+  - Date (YYMMDD format converted to YYYY-MM-DD)
+  - Recipe name (e.g., FSOXCMP_DISHING_9PT, OXIDE_ETCH_3PT)
+  - Lot ID (time portion removed, e.g., T7HQR42TA)
+  - Slot number (e.g., 21, 15)
+  - Measured info (e.g., 1, 2, repeat1, repeat2)
+- **Search Capabilities**: Search across lot_id, recipe_name, measured_info, date, and slot_number
+- **Data Source**: Real files from the shared data directory, no dummy data
 
 ## API Integration
 
