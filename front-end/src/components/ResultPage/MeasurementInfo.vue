@@ -5,67 +5,132 @@
       Measurement Information
     </v-card-title>
     <v-card-text class="pa-6">
-      <v-row>
-        <v-col cols="12" md="4">
+      <!-- Dynamic grid layout for any number of key-value pairs -->
+      <v-row v-if="informationEntries.length > 0">
+        <v-col 
+          v-for="(entry, index) in informationEntries" 
+          :key="entry.key"
+          :cols="getColumnSize(informationEntries.length)"
+          :md="getMdColumnSize(informationEntries.length)"
+        >
           <div class="info-item">
-            <div class="info-label">Fab ID</div>
-            <div class="info-value text-h6 text-primary">{{ measurementInfo.fab || 'N/A' }}</div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="info-item">
-            <div class="info-label">Lot ID</div>
-            <div class="info-value text-h6 text-success">{{ measurementInfo.lot_id || 'N/A' }}</div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="info-item">
-            <div class="info-label">Workflow ID</div>
-            <div class="info-value text-h6 text-info">{{ measurementInfo.wf_id || 'N/A' }}</div>
-          </div>
-        </v-col>
-      </v-row>
-      <v-row class="mt-2">
-        <v-col cols="12" md="4">
-          <div class="info-item">
-            <div class="info-label">Recipe ID</div>
-            <div class="info-value text-h6 text-warning">{{ measurementInfo.rcp_id || 'N/A' }}</div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="info-item">
-            <div class="info-label">Event Time</div>
-            <div class="info-value text-body-1 text-medium-emphasis">{{ formatEventTime(measurementInfo.event_time) }}</div>
-          </div>
-        </v-col>
-        <v-col cols="12" md="4">
-          <div class="info-item">
-            <div class="info-label">Group Key</div>
-            <div class="info-value text-body-2 text-medium-emphasis">{{ measurementInfo.group_key || 'N/A' }}</div>
+            <div class="info-label">{{ formatLabel(entry.key) }}</div>
+            <div 
+              class="info-value text-h6"
+              :class="getValueClass(entry.key, index)"
+            >
+              {{ formatValue(entry.value, entry.key) }}
+            </div>
           </div>
         </v-col>
       </v-row>
+      
+      <!-- Fallback message when no data -->
+      <div v-else class="text-center pa-6 text-medium-emphasis">
+        <v-icon size="48" class="mb-3">mdi-information-outline</v-icon>
+        <div class="text-h6 mb-2">No Measurement Information Available</div>
+        <div class="text-body-2">Load measurement data to view detailed information</div>
+      </div>
     </v-card-text>
   </v-card>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 // Props
-defineProps({
+const props = defineProps({
   measurementInfo: {
     type: Object,
     default: () => ({})
   }
 })
 
-// Functions
-function formatEventTime(eventTime) {
-  if (!eventTime) return 'N/A'
-  try {
-    return new Date(eventTime).toLocaleString()
-  } catch (error) {
-    return 'Invalid Date'
+// Computed property to convert measurementInfo object to array of entries
+const informationEntries = computed(() => {
+  if (!props.measurementInfo || typeof props.measurementInfo !== 'object') {
+    return []
   }
+  
+  return Object.entries(props.measurementInfo)
+    .filter(([key, value]) => value !== null && value !== undefined && value !== '')
+    .map(([key, value]) => ({ key, value }))
+})
+
+// Functions
+function formatLabel(key) {
+  // Convert snake_case and camelCase to Title Case
+  return key
+    .replace(/[_-]/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ')
+}
+
+function formatValue(value, key) {
+  if (value === null || value === undefined) return 'N/A'
+  
+  // Special formatting for specific key types
+  const lowerKey = key.toLowerCase()
+  
+  if (lowerKey.includes('time') || lowerKey.includes('date')) {
+    try {
+      return new Date(value).toLocaleString()
+    } catch (error) {
+      return value.toString()
+    }
+  }
+  
+  if (typeof value === 'number') {
+    // Format numbers with appropriate precision
+    if (Number.isInteger(value)) {
+      return value.toLocaleString()
+    } else {
+      return value.toFixed(3)
+    }
+  }
+  
+  return value.toString()
+}
+
+function getColumnSize(totalItems) {
+  // Responsive column sizing based on number of items
+  if (totalItems <= 2) return 12
+  if (totalItems <= 4) return 6
+  if (totalItems <= 6) return 4
+  return 3
+}
+
+function getMdColumnSize(totalItems) {
+  // Medium screen column sizing
+  if (totalItems <= 1) return 12
+  if (totalItems <= 2) return 6
+  if (totalItems <= 3) return 4
+  if (totalItems <= 6) return 4
+  return 3
+}
+
+function getValueClass(key, index) {
+  // Assign different colors to values for visual distinction
+  const colorClasses = [
+    'text-primary',
+    'text-success', 
+    'text-info',
+    'text-warning',
+    'text-secondary',
+    'text-purple'
+  ]
+  
+  // Special colors for common keys
+  const lowerKey = key.toLowerCase()
+  if (lowerKey.includes('id')) return 'text-primary'
+  if (lowerKey.includes('time') || lowerKey.includes('date')) return 'text-info'
+  if (lowerKey.includes('recipe')) return 'text-warning'
+  if (lowerKey.includes('lot')) return 'text-success'
+  
+  // Default cycling through colors
+  return colorClasses[index % colorClasses.length]
 }
 </script>
 

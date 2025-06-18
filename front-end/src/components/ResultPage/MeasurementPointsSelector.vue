@@ -61,7 +61,7 @@ const props = defineProps({
     default: () => []
   },
   selectedPoint: {
-    type: Number,
+    type: [Number, String],
     default: null
   }
 })

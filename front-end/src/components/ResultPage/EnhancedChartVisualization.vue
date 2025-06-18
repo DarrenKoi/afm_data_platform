@@ -35,6 +35,14 @@ const props = defineProps({
   chartHeight: {
     type: Number,
     default: 600
+  },
+  profileData: {
+    type: Array,
+    default: () => []
+  },
+  selectedPoint: {
+    type: String,
+    default: null
   }
 })
 
@@ -76,15 +84,42 @@ async function fetchWaferData() {
 function initWaferHeatmap() {
   console.log('initWaferHeatmap called')
   console.log('waferHeatmapContainer.value:', waferHeatmapContainer.value)
-  console.log('waferData.value.length:', waferData.value.length)
+  console.log('props.profileData.length:', props.profileData.length)
   
   if (!waferHeatmapContainer.value) {
     console.error('Wafer heatmap container not found!')
     return
   }
   
-  if (waferData.value.length === 0) {
-    console.error('No wafer data available!')
+  // Use profile data if available, otherwise fall back to wafer data
+  let dataToUse = []
+  
+  if (props.profileData && props.profileData.length > 0) {
+    console.log('Using profile data for heat map')
+    // Convert profile data to heat map format
+    dataToUse = props.profileData.map(point => ({
+      x: point.x || 0,
+      y: point.y || 0,
+      value: point.z || 0  // Use z value for heat map intensity
+    }))
+  } else if (waferData.value && waferData.value.length > 0) {
+    console.log('Using wafer data for heat map')
+    dataToUse = waferData.value
+  }
+  
+  if (dataToUse.length === 0) {
+    console.warn('No data available for heat map')
+    return
+  }
+  
+  // Validate data structure
+  const validData = dataToUse.filter(d => 
+    d && typeof d.x === 'number' && typeof d.y === 'number' && 
+    (typeof d.value === 'number' || d.value === null || d.value === undefined)
+  )
+  
+  if (validData.length === 0) {
+    console.warn('No valid data points found for heat map')
     return
   }
   
@@ -112,24 +147,24 @@ function initWaferHeatmap() {
     return
   }
   
-  // Prepare data for heatmap
-  const xValues = [...new Set(waferData.value.map(d => d.x))].sort((a, b) => a - b)
-  const yValues = [...new Set(waferData.value.map(d => d.y))].sort((a, b) => a - b)
+  // Prepare data for heatmap using validated data
+  const xValues = [...new Set(validData.map(d => d.x))].sort((a, b) => a - b)
+  const yValues = [...new Set(validData.map(d => d.y))].sort((a, b) => a - b)
   
-  const heatmapData = waferData.value.map(d => [
+  const heatmapData = validData.map(d => [
     xValues.indexOf(d.x),
     yValues.indexOf(d.y),
-    d.z
+    d.value || 0  // Use d.value instead of d.z, with fallback to 0
   ])
   
   const option = {
     tooltip: {
       position: 'top',
       formatter: function(params) {
-        const [xIndex, yIndex, z] = params.data
+        const [xIndex, yIndex, value] = params.data
         const dieX = xValues[xIndex]
         const dieY = yValues[yIndex]
-        return `Die: (${dieX}, ${dieY})<br/>Z: ${z.toFixed(6)} nm<br/>Click to view details`
+        return `Die: (${dieX}, ${dieY})<br/>Value: ${(value || 0).toFixed(2)} nm<br/>Click to view details`
       }
     },
     xAxis: {
@@ -155,8 +190,8 @@ function initWaferHeatmap() {
       splitArea: { show: true }
     },
     visualMap: {
-      min: Math.min(...waferData.value.map(d => d.z)),
-      max: Math.max(...waferData.value.map(d => d.z)),
+      min: Math.min(...validData.map(d => d.value || 0)),
+      max: Math.max(...validData.map(d => d.value || 100)),
       calculable: true,
       orient: 'vertical',
       right: 5,
@@ -250,15 +285,20 @@ async function initializeData() {
     await nextTick()
     
     // Use a more robust approach to ensure DOM is ready
+    let retryCount = 0
+    const maxRetries = 20 // Maximum 2 seconds of retries
+    
     const checkAndInit = () => {
       if (waferHeatmapContainer.value && 
           waferHeatmapContainer.value.clientWidth > 0 && 
           waferHeatmapContainer.value.clientHeight > 0) {
         console.log('DOM is ready, initializing wafer heatmap...')
         initWaferHeatmap()
-      } else {
-        console.log('DOM not ready yet, retrying in 100ms...')
+      } else if (retryCount < maxRetries) {
+        retryCount++
         setTimeout(checkAndInit, 100)
+      } else {
+        console.warn('Max retries reached, wafer heatmap initialization failed')
       }
     }
     
@@ -277,6 +317,17 @@ watch(() => props.chartHeight, () => {
     setTimeout(() => waferHeatmapChart.resize(), 100)
   }
 })
+
+// Watch for profile data changes
+watch(() => props.profileData, (newProfileData) => {
+  console.log('Profile data changed:', newProfileData?.length || 0, 'points')
+  if (newProfileData && newProfileData.length > 0) {
+    // Update heat map with new profile data
+    nextTick(() => {
+      initWaferHeatmap()
+    })
+  }
+}, { deep: true })
 
 // Lifecycle
 onMounted(() => {

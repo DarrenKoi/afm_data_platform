@@ -6,6 +6,42 @@
         style="max-width: 400px; width: 100%; height: auto;">
     </div>
 
+    <!-- Tool Selection Interface -->
+    <div class="text-center mb-6">
+      <v-card class="pa-4 mx-auto" style="max-width: 400px;" elevation="2">
+        <v-card-title class="text-h6 text-center mb-3">
+          <v-icon color="primary" class="mr-2">mdi-tools</v-icon>
+          Analysis Tool
+        </v-card-title>
+        <v-card-text>
+          <div class="d-flex justify-center align-center flex-wrap gap-3">
+            <v-chip
+              v-for="tool in availableTools"
+              :key="tool.id"
+              :color="selectedTool === tool.id ? 'primary' : 'default'"
+              :variant="selectedTool === tool.id ? 'elevated' : 'outlined'"
+              size="large"
+              class="px-6 py-2"
+              @click="selectTool(tool.id)"
+            >
+              <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
+                {{ tool.icon }}
+              </v-icon>
+              <span class="font-weight-medium">{{ tool.name }}</span>
+              <v-badge
+                v-if="selectedTool === tool.id"
+                color="success"
+                icon="mdi-check"
+                floating
+                offset-x="10"
+                offset-y="10"
+              />
+            </v-chip>
+          </div>
+        </v-card-text>
+      </v-card>
+    </div>
+
     <v-row justify="center" style="max-width: 1400px; margin: 0 auto;">
       <!-- Left Column: Search & Results -->
       <v-col cols="12" lg="7" md="6">
@@ -119,6 +155,26 @@ const dataStore = useDataStore()
 const searchResults = ref([])
 const isSearching = ref(false)
 
+// Tool selection state
+const selectedTool = ref('MAP608')
+const availableTools = ref([
+  {
+    id: 'MAP608',
+    name: 'MAP608',
+    icon: 'mdi-microscope',
+    description: 'Atomic Force Microscopy Analysis Tool',
+    status: 'active'
+  }
+  // Future tools can be added here:
+  // {
+  //   id: 'MAP609',
+  //   name: 'MAP609',
+  //   icon: 'mdi-atom',
+  //   description: 'Advanced AFM Analysis Tool',
+  //   status: 'coming_soon'
+  // }
+])
+
 // Handle real-time search results from SearchSection component
 function handleSearchPerformed(query, results) {
   if (query && results) {
@@ -151,7 +207,7 @@ function viewDetails(measurement) {
 
   // Navigate to details with recipe ID in URL
   const recipeId = measurement.rcp_id || measurement.recipe_name || 'unknown'
-  router.push(`/result/${encodeURIComponent(recipeId)}/${measurement.group_key}`)
+  router.push(`/result/${encodeURIComponent(recipeId)}/${encodeURIComponent(measurement.filename)}`)
 }
 
 function addToGroup(measurement) {
@@ -197,5 +253,46 @@ function cancelSaveGroup() {
 function loadSavedGroup(groupId) {
   dataStore.loadGroupFromHistory(groupId)
 }
+
+// Tool selection functions
+function selectTool(toolId) {
+  console.log(`🔧 Tool selected: ${toolId}`)
+  selectedTool.value = toolId
+  
+  // Clear current search results when switching tools
+  searchResults.value = []
+  
+  // Store selected tool in data store for use by other components
+  dataStore.setSelectedTool(toolId)
+  
+  // Trigger initial data load for the selected tool
+  loadToolData(toolId)
+}
+
+function getSelectedToolInfo() {
+  const tool = availableTools.value.find(t => t.id === selectedTool.value)
+  return tool ? `${tool.name} - ${tool.description}` : 'No tool selected'
+}
+
+async function loadToolData(toolId) {
+  console.log(`📊 Loading data for tool: ${toolId}`)
+  // The search composable will automatically reload data when the tool changes
+  // via the watch on dataStore.selectedTool
+}
+
+// Initialize component
+onMounted(() => {
+  console.log('🚀 MainPage: Component mounted and ready for AFM file searches')
+  
+  // Initialize with stored tool selection
+  const storedTool = dataStore.selectedTool
+  if (storedTool && availableTools.value.find(t => t.id === storedTool)) {
+    selectedTool.value = storedTool
+    console.log(`🔧 MainPage: Restored tool selection: ${storedTool}`)
+  } else {
+    // Set default tool
+    selectTool('MAP608')
+  }
+})
 
 </script>

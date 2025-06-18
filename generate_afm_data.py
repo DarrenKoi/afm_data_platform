@@ -76,33 +76,41 @@ def generate_data_status(num_points):
     for i in range(1, num_points + 1):
         point_name = f"{i}_UL"
         
-        # Generate base values for consistency
-        left_base = random.uniform(50, 150)
-        right_base = random.uniform(45, 145)
-        ref_base = random.uniform(40, 140)
+        # Generate base values with variation between points
+        # Add positional bias and random variation
+        position_bias = (i - 1) * random.uniform(-2, 3)  # Gradual trend across points
+        point_variation = random.uniform(-15, 15)  # Random point-to-point variation
+        
+        left_base = random.uniform(60, 120) + position_bias + point_variation
+        right_base = random.uniform(55, 115) + position_bias + point_variation * 0.8
+        ref_base = random.uniform(50, 110) + position_bias + point_variation * 0.6
+        
+        # Add process-dependent characteristics
+        process_noise = random.uniform(0.5, 3.0)  # Different noise levels
+        measurement_drift = random.uniform(-1.5, 1.5)  # Systematic drift
         
         data_status[point_name] = {
             'ITEM': ['MEAN', 'STDEV', 'MIN', 'MAX', 'RANGE'],
             'Left_H (nm)': [
-                round(left_base, 2),
-                round(random.uniform(1, 5), 2),
-                round(left_base - random.uniform(5, 15), 2),
-                round(left_base + random.uniform(5, 15), 2),
-                round(random.uniform(10, 30), 2)
+                round(left_base + measurement_drift, 2),  # MEAN
+                round(random.uniform(0.8, 4.5) * process_noise, 2),  # STDEV
+                round(left_base - random.uniform(8, 20), 2),  # MIN
+                round(left_base + random.uniform(8, 20), 2),  # MAX
+                round(random.uniform(15, 35), 2)  # RANGE
             ],
             'Right_H (nm)': [
-                round(right_base, 2),
-                round(random.uniform(1, 5), 2),
-                round(right_base - random.uniform(5, 15), 2),
-                round(right_base + random.uniform(5, 15), 2),
-                round(random.uniform(10, 30), 2)
+                round(right_base + measurement_drift * 0.9, 2),  # MEAN
+                round(random.uniform(0.9, 4.2) * process_noise, 2),  # STDEV
+                round(right_base - random.uniform(7, 18), 2),  # MIN
+                round(right_base + random.uniform(7, 18), 2),  # MAX
+                round(random.uniform(12, 32), 2)  # RANGE
             ],
             'Ref_H (nm)': [
-                round(ref_base, 2),
-                round(random.uniform(1, 5), 2),
-                round(ref_base - random.uniform(5, 15), 2),
-                round(ref_base + random.uniform(5, 15), 2),
-                round(random.uniform(10, 30), 2)
+                round(ref_base + measurement_drift * 0.7, 2),  # MEAN
+                round(random.uniform(0.7, 3.8) * process_noise, 2),  # STDEV
+                round(ref_base - random.uniform(6, 16), 2),  # MIN
+                round(ref_base + random.uniform(6, 16), 2),  # MAX
+                round(random.uniform(10, 28), 2)  # RANGE
             ]
         }
     
@@ -165,9 +173,9 @@ def generate_afm_data_file(filename):
 def main():
     # Read the file list
     list_file_path = '/mnt/c/Python_Projects/afm_data_platform/itc-afm-data-platform-pjt-shared/AFM_DB/MAP608/data_dir_list.txt'
-    data_dir_path = '/mnt/c/Python_Projects/afm_data_platform/itc-afm-data-platform-pjt-shared/AFM_DB/MAP608/data_dir'
+    data_dir_path = '/mnt/c/Python_Projects/afm_data_platform/itc-afm-data-platform-pjt-shared/AFM_DB/MAP608/data_dir_pickle'
     
-    # Create data_dir if it doesn't exist
+    # Create data_dir_pickle if it doesn't exist
     os.makedirs(data_dir_path, exist_ok=True)
     
     # Read all filenames

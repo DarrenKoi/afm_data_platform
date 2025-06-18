@@ -1,61 +1,109 @@
-# AFM 데이터 뷰어 개발 가이드
+# AFM Data Platform Documentation
 
-개발자가 아닌 분들을 위한 웹 애플리케이션 개발 학습 가이드입니다.
+Comprehensive learning resources for web development using the AFM (Atomic Force Microscopy) data platform as a practical project.
 
-## 🎯 학습 목표
+## Learning Resources
 
-이 프로젝트를 통해 다음을 배울 수 있습니다:
-- 웹 애플리케이션이 어떻게 동작하는지
-- Vue.js를 사용한 현대적인 웹 개발
-- 실제 프로젝트 구조와 파일 조직
-- 검색, 데이터 관리, 시각화 기능 구현
+### Two Learning Paths Available
 
-## 📚 학습 순서
+#### 📚 [Individual Tutorial Chapters](./tutorials/)
+**Recommended for comprehensive learning**
+- Detailed, step-by-step progression through web development concepts
+- Hands-on examples with AFM-specific context
+- Progressive skill building from basics to advanced topics
+- Perfect for coworkers learning at their own pace
 
-### 1단계: 기초 개념 이해
-- [웹 개발 기초](./01-web-basics/web-development-intro.md) - HTML, CSS, JavaScript가 무엇인지
-- [Vue.js 소개](./01-web-basics/vue-introduction.md) - 왜 Vue.js를 사용하는지
-- [프로젝트 구조 이해](./02-project-structure/folder-organization.md) - 파일들이 어떻게 구성되어 있는지
+#### 📖 [Consolidated Reference Guide](./claude.md)
+**Quick reference and overview**
+- Streamlined 3-chapter structure covering core concepts
+- Condensed version for quick review and reference
+- Complementary to the detailed tutorial chapters
 
-### 2단계: 프로젝트 구조 탐험
-- [페이지와 컴포넌트](./02-project-structure/pages-and-components.md) - 화면을 구성하는 요소들
-- [라우팅 시스템](./02-project-structure/routing-explained.md) - 페이지 간 이동 방법
-- [데이터 관리](./02-project-structure/data-management.md) - 정보를 저장하고 공유하는 방법
+## Target Audience
 
-### 3단계: 실습하며 배우기
-- [검색 기능 만들기](./03-hands-on-examples/search-functionality.md) - 사용자가 데이터를 찾는 방법
-- [새 페이지 추가하기](./03-hands-on-examples/adding-new-page.md) - 기능 확장하는 방법
-- [데이터 시각화](./03-hands-on-examples/data-visualization.md) - 차트와 그래프 추가하기
+- Engineers with minimal web development experience
+- Technical professionals interested in data visualization
+- AFM equipment operators and engineers
+- Anyone wanting to understand modern web application architecture
 
-## 🛠️ 현재 프로젝트 상태
+## Learning Approach
 
-우리의 AFM 데이터 뷰어는 다음 기능들을 가지고 있습니다:
+This documentation uses the AFM data platform as a **practical learning vehicle**, combining:
+- Real-world semiconductor engineering context
+- Progressive skill building from basics to advanced concepts
+- Hands-on examples with AFM measurement data
+- Professional development practices
 
-### ✅ 완성된 기능
-- **메인 검색 페이지**: 사용자가 AFM 측정 데이터를 검색할 수 있음
-- **검색 결과 표시**: 찾은 데이터를 목록으로 보여줌
-- **검색 기록**: 이전에 본 데이터들을 기억함
-- **데이터 그룹핑**: 여러 데이터를 모아서 비교할 수 있음
-- **상세 보기**: 개별 측정 데이터의 자세한 정보 확인
-- **트렌드 분석**: 여러 데이터를 함께 분석하는 페이지
+## Current Project Features
 
-### 🔄 개발 중인 기능
-- 실제 데이터 시각화 (차트, 그래프)
-- 반응형 디자인 (모바일에서도 잘 보이게)
+The AFM data platform currently includes:
 
-## 🚀 시작하기
+### Implemented Features
+- **Main Search Interface**: Search and filter AFM measurement data
+- **Results Display**: View measurement data in organized lists and cards
+- **Search History**: Track previously viewed measurements
+- **Data Grouping**: Compare multiple measurements side by side
+- **Detailed Views**: Examine individual measurement properties
+- **Trend Analysis**: Multi-measurement comparison and analysis pages
 
-1. [웹 개발 기초](./01-web-basics/web-development-intro.md)부터 시작하세요
-2. 모르는 용어가 나오면 [용어집](./glossary.md)을 참고하세요
-3. 각 챕터의 "직접 해보기" 섹션을 꼭 실습해보세요
+### In Development
+- Enhanced data visualization (interactive charts and graphs)
+- Real-time measurement monitoring
+- Advanced filtering and sorting capabilities
 
-## 💡 학습 팁
+## Getting Started
 
-- **코드를 두려워하지 마세요**: 처음에는 복잡해 보이지만 천천히 읽어보면 이해할 수 있습니다
-- **실습이 중요합니다**: 설명만 읽지 말고 직접 코드를 수정해보세요
-- **에러는 친구입니다**: 에러 메시지를 통해 많은 것을 배울 수 있습니다
-- **작은 단위로 학습**: 한 번에 모든 것을 이해하려 하지 말고 차근차근 진행하세요
+### For Comprehensive Learning (Recommended)
+1. **Start with [Chapter 1: 시작하기 전에](./tutorials/Chapter%201_시작하기%20전에.md)** - Introduction and foundations
+2. **Progress through individual chapters** - Each builds on the previous
+3. **Reference the [Glossary](./glossary.md)** - When encountering new terms
+4. **Practice hands-on examples** - Modify code as you learn
+
+### For Quick Reference
+1. **Use the [Consolidated Guide](./claude.md)** - Overview of all concepts
+2. **Jump to specific sections** - When you need quick answers
+
+## Learning Tips
+
+- **Don't fear the code**: Start simple and build understanding gradually
+- **Practice is essential**: Read explanations, then try modifying examples
+- **Errors are learning opportunities**: Debug messages teach valuable lessons
+- **Learn incrementally**: Master one concept before moving to the next
+
+## Tutorial Chapter Overview
+
+### Available Chapters in `/tutorials/`
+
+**Foundation Chapters:**
+- [Chapter 1: 시작하기 전에](./tutorials/Chapter%201_시작하기%20전에.md) - Getting started
+- [Chapter 2: 개발 환경 구축하기](./tutorials/Chapter%202_개발%20환경%20구축하기.md) - Development setup
+- [Chapter 3: Vue 프로젝트 시작하기](./tutorials/Chapter%203_Vue%20프로젝트%20시작하기.md) - Vue project basics
+
+**Core Development:**
+- [Chapter 4-1: Vue3 기초 다지기](./tutorials/Chapter%204_1_Vue3%20기초%20다지기.md) - Vue3 fundamentals
+- [Chapter 4-2: Vue3 좀 더 다지기](./tutorials/Chapter%204_2_Vue3%20좀%20더%20다지기.md) - Advanced Vue3
+- [Chapter 5: Vuetify로 UI 구성하기](./tutorials/Chapter%205_Vuetify로%20UI%20구성하기.md) - UI components
+
+**Application Features:**
+- [Chapter 6: 라우팅 구현하기](./tutorials/Chapter%206_라우팅%20구현하기.md) - Navigation
+- [Chapter 7: 데이터 시각화-ECharts 연동하기](./tutorials/Chapter%207_데이터%20시각화-ECharts%20연동하기.md) - Charts
+- [Chapter 8: 상태 관리-Pinia 활용하기](./tutorials/Chapter%208_상태%20관리-Pinia%20활용하기.md) - State management
+- [Chapter 9: API 통신-데이터교환](./tutorials/Chapter%209_API%20통신-데이터교환.md) - API integration
+
+**Advanced Topics:**
+- [Chapter 10: 성능 최적화](./tutorials/Chapter%2010_성능%20최적화.md) - Performance optimization
+- [Chapter 11: 배포하기](./tutorials/Chapter%2011_배포하기.md) - Deployment
+- [Chapter 12: 지속적으로 성장하기](./tutorials/Chapter%2012_지속적으로%20성장하기.md) - Continuous learning
+
+**Work in Progress:**
+- [Flask와 연동하기](./tutorials/Chapter_notyet_Flask와%20연동하기.md) - Backend integration
+
+## Additional Resources
+
+- **[Glossary](./glossary.md)**: Comprehensive definitions of web development terms
+- **[Consolidated Guide](./claude.md)**: Quick reference covering all concepts
+- **[Development Notes](./tutorials/Note.md)**: Additional development insights
 
 ---
 
-**질문이 있으시면 언제든 물어보세요! 🤗**
+**Questions are welcome - learning is a collaborative process! 🚀**

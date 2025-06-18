@@ -43,7 +43,7 @@ import * as echarts from 'echarts'
 // Props
 const props = defineProps({
   selectedPoint: {
-    type: Number,
+    type: [Number, String],
     default: null
   },
   profileData: {

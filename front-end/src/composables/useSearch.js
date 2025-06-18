@@ -1,53 +1,38 @@
 import { ref, watch, nextTick } from 'vue'
-import { apiService } from '@/services/api.js'
+import { apiService, filterMeasurementsLocally } from '@/services/api.js'
+import { useDataStore } from '@/stores/dataStore.js'
 
 export function useDebounceSearch(delay = 300) {
+  const dataStore = useDataStore()
   const searchQuery = ref('')
   const searchResults = ref([])
   const isSearching = ref(false)
   const suggestions = ref([])
+  const allFileData = ref([]) // Store all loaded files for local filtering
   const searchCache = new Map()
   const suggestionsCache = new Map()
   
   let searchTimeout = null
   let suggestionsTimeout = null
   
-  // Debounced search function for AFM files
-  const performSearch = async (query) => {
-    if (!query || query.trim() === '' || query.trim().length < 2) {
-      searchResults.value = []
-      return
-    }
-    
-    const normalizedQuery = query.trim().toLowerCase()
-    console.log(`🔍 useSearch: Performing search for "${normalizedQuery}"`)
-    
-    // Check cache first
-    if (searchCache.has(normalizedQuery)) {
-      console.log('📋 useSearch: Using cached results')
-      searchResults.value = searchCache.get(normalizedQuery)
-      return
-    }
-    
+  // Load all files for a tool (called once when tool changes)
+  const loadAllFiles = async (toolName = 'MAP608') => {
     try {
+      console.log(`🔄 useSearch: Loading all files for tool: ${toolName}`)
       isSearching.value = true
-      console.log('🌐 useSearch: Making API call to search AFM files')
       
-      // Use the new AFM files search API
-      const response = await apiService.searchAfmFiles(normalizedQuery)
+      const response = await apiService.getAfmFiles(toolName)
       
       if (response.success) {
-        console.log(`✅ useSearch: Found ${response.total} AFM measurements`)
-        console.log('📊 useSearch: Sample raw data:', response.data.slice(0, 2))
+        console.log(`✅ useSearch: Loaded ${response.total} AFM measurements for ${toolName}`)
         
-        // Transform AFM file data to match expected format for the UI
+        // Transform and store all file data
         const transformedData = response.data.map(measurement => ({
           // UI-expected fields
           fab: 'SK_Hynix_ITC',
           lot_id: measurement.lot_id,
           wf_id: 'W01', // Default wafer ID since filenames don't contain this
           lot_wf: `${measurement.lot_id}_W01`,
-          group_key: `${measurement.lot_id}_${measurement.slot_number}_${measurement.measured_info}`,
           rcp_id: measurement.recipe_name,
           event_time: measurement.formatted_date,
           points: [
@@ -66,28 +51,69 @@ export function useDebounceSearch(delay = 300) {
           recipe_name: measurement.recipe_name,
           slot_number: measurement.slot_number,
           measured_info: measurement.measured_info,
-          file_id: measurement.id
+          file_id: measurement.id,
+          tool_name: measurement.tool_name || toolName
         }))
         
-        console.log('✅ useSearch: Transformed data for UI:', transformedData.slice(0, 2))
-        searchResults.value = transformedData
+        allFileData.value = transformedData
+        console.log('✅ useSearch: Stored all file data for local filtering')
         
-        // Cache the results (limit cache size)
-        if (searchCache.size > 50) {
-          const firstKey = searchCache.keys().next().value
-          searchCache.delete(firstKey)
+        // Clear cache when loading new data
+        searchCache.clear()
+        
+        // If there's an active search query, apply filtering
+        if (searchQuery.value && searchQuery.value.trim().length >= 2) {
+          performLocalSearch(searchQuery.value)
+        } else {
+          // Show all data sorted by latest first
+          const sortedData = filterMeasurementsLocally(transformedData, '')
+          searchResults.value = sortedData
         }
-        searchCache.set(normalizedQuery, transformedData)
       } else {
-        console.log('⚠️ useSearch: Search API returned unsuccessful response')
+        console.log('⚠️ useSearch: Failed to load files')
+        allFileData.value = []
         searchResults.value = []
       }
     } catch (error) {
-      console.error('❌ useSearch: Search error:', error)
+      console.error('❌ useSearch: Error loading files:', error)
+      allFileData.value = []
       searchResults.value = []
     } finally {
       isSearching.value = false
     }
+  }
+
+  // Local search function using pre-loaded data
+  const performLocalSearch = (query) => {
+    if (!query || query.trim() === '' || query.trim().length < 2) {
+      // Show all data sorted by date
+      const sortedData = filterMeasurementsLocally(allFileData.value, '')
+      searchResults.value = sortedData
+      return
+    }
+    
+    const normalizedQuery = query.trim().toLowerCase()
+    console.log(`🔍 useSearch: Performing local search for "${normalizedQuery}" on ${allFileData.value.length} items`)
+    
+    // Check cache first
+    if (searchCache.has(normalizedQuery)) {
+      console.log('📋 useSearch: Using cached results')
+      searchResults.value = searchCache.get(normalizedQuery)
+      return
+    }
+    
+    // Filter locally
+    const filteredData = filterMeasurementsLocally(allFileData.value, normalizedQuery)
+    searchResults.value = filteredData
+    
+    console.log(`✅ useSearch: Local search found ${filteredData.length} results`)
+    
+    // Cache the results (limit cache size)
+    if (searchCache.size > 50) {
+      const firstKey = searchCache.keys().next().value
+      searchCache.delete(firstKey)
+    }
+    searchCache.set(normalizedQuery, filteredData)
   }
   
   // Get search suggestions (simplified for AFM files)
@@ -147,22 +173,28 @@ export function useDebounceSearch(delay = 300) {
     if (searchTimeout) clearTimeout(searchTimeout)
     if (suggestionsTimeout) clearTimeout(suggestionsTimeout)
     
-    if (!newQuery || newQuery.trim() === '' || newQuery.trim().length < 2) {
-      searchResults.value = []
-      suggestions.value = []
-      return
-    }
-    
-    // Debounce search
+    // Always perform local search (no minimum length restriction for showing all data)
     searchTimeout = setTimeout(() => {
-      performSearch(newQuery)
+      performLocalSearch(newQuery)
     }, delay)
     
-    // Debounce suggestions (shorter delay)
-    suggestionsTimeout = setTimeout(() => {
-      getSuggestions(newQuery)
-    }, delay / 2)
+    // Generate suggestions if query has content
+    if (newQuery && newQuery.trim().length >= 1) {
+      suggestionsTimeout = setTimeout(() => {
+        getSuggestions(newQuery)
+      }, delay / 2)
+    } else {
+      suggestions.value = []
+    }
   }, { immediate: false })
+
+  // Watch for tool changes to reload data
+  watch(() => dataStore.selectedTool, (newTool, oldTool) => {
+    if (newTool && newTool !== oldTool) {
+      console.log(`🔧 useSearch: Tool changed from ${oldTool} to ${newTool}, reloading data`)
+      loadAllFiles(newTool)
+    }
+  }, { immediate: true })
   
   // Manual search trigger (for immediate search)
   const triggerSearch = async (query) => {
@@ -174,10 +206,8 @@ export function useDebounceSearch(delay = 300) {
     searchQuery.value = query
     await nextTick()
     
-    // Only search if query has 2+ characters
-    if (query && query.trim().length >= 2) {
-      await performSearch(query)
-    }
+    // Perform local search immediately
+    performLocalSearch(query)
   }
   
   // Clear cache
@@ -198,7 +228,9 @@ export function useDebounceSearch(delay = 300) {
     searchResults,
     isSearching,
     suggestions,
+    allFileData,
     triggerSearch,
+    loadAllFiles,
     clearCache,
     getCacheInfo
   }
@@ -212,7 +244,9 @@ export function useRealtimeSearch() {
     searchResults,
     isSearching,
     suggestions,
+    allFileData,
     triggerSearch,
+    loadAllFiles,
     clearCache,
     getCacheInfo
   } = useDebounceSearch(300) // 300ms debounce
@@ -222,7 +256,9 @@ export function useRealtimeSearch() {
     searchResults,
     isSearching,
     suggestions,
+    allFileData,
     triggerSearch,
+    loadAllFiles,
     clearCache,
     getCacheInfo
   }

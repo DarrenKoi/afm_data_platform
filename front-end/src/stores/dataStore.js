@@ -4,7 +4,8 @@ import { ref, computed } from 'vue'
 const STORAGE_KEYS = {
   VIEW_HISTORY: 'afm_view_history',
   GROUPED_DATA: 'afm_grouped_data',
-  GROUP_HISTORY: 'afm_group_history'
+  GROUP_HISTORY: 'afm_group_history',
+  SELECTED_TOOL: 'afm_selected_tool'
 }
 
 function loadFromStorage(key, defaultValue = []) {
@@ -30,20 +31,21 @@ export const useDataStore = defineStore('data', () => {
   const viewHistory = ref(loadFromStorage(STORAGE_KEYS.VIEW_HISTORY))
   const groupedData = ref(loadFromStorage(STORAGE_KEYS.GROUPED_DATA))
   const groupHistory = ref(loadFromStorage(STORAGE_KEYS.GROUP_HISTORY))
+  const selectedTool = ref(loadFromStorage(STORAGE_KEYS.SELECTED_TOOL, 'MAP608'))
   const maxHistoryItems = ref(10)
 
   // Getters (computed properties)
   const historyCount = computed(() => viewHistory.value.length)
   const groupedCount = computed(() => groupedData.value.length)
   const groupHistoryCount = computed(() => groupHistory.value.length)
-  const isInGroup = computed(() => (groupKey) => {
-    return groupedData.value.some(item => item.group_key === groupKey)
+  const isInGroup = computed(() => (filename) => {
+    return groupedData.value.some(item => item.filename === filename)
   })
 
   // Actions (functions)
   function addToHistory(measurement) {
     // Remove if already exists
-    viewHistory.value = viewHistory.value.filter(item => item.group_key !== measurement.group_key)
+    viewHistory.value = viewHistory.value.filter(item => item.filename !== measurement.filename)
     
     // Add to beginning
     viewHistory.value.unshift({
@@ -68,7 +70,7 @@ export const useDataStore = defineStore('data', () => {
 
   function addToGroup(measurement) {
     // Check if already in group
-    if (!isInGroup.value(measurement.group_key)) {
+    if (!isInGroup.value(measurement.filename)) {
       groupedData.value.push({
         ...measurement,
         addedAt: new Date().toISOString()
@@ -79,8 +81,8 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
-  function removeFromGroup(groupKey) {
-    groupedData.value = groupedData.value.filter(item => item.group_key !== groupKey)
+  function removeFromGroup(filename) {
+    groupedData.value = groupedData.value.filter(item => item.filename !== filename)
     saveToStorage(STORAGE_KEYS.GROUPED_DATA, groupedData.value)
   }
 
@@ -134,12 +136,18 @@ export const useDataStore = defineStore('data', () => {
     saveToStorage(STORAGE_KEYS.GROUP_HISTORY, groupHistory.value)
   }
 
+  function setSelectedTool(toolId) {
+    selectedTool.value = toolId
+    saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
+  }
+
   // Return everything that should be exposed
   return {
     // State
     viewHistory,
     groupedData,
     groupHistory,
+    selectedTool,
     maxHistoryItems,
     
     // Getters
@@ -157,6 +165,7 @@ export const useDataStore = defineStore('data', () => {
     saveCurrentGroupAsHistory,
     loadGroupFromHistory,
     removeFromGroupHistory,
-    clearGroupHistory
+    clearGroupHistory,
+    setSelectedTool
   }
 })

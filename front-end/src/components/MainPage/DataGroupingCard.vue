@@ -11,7 +11,7 @@
     <v-divider />
     
     <v-list v-if="groupedCount > 0" density="compact">
-      <v-list-item v-for="(item, index) in groupedData" :key="index">
+      <v-list-item v-for="(item, index) in sortedGroupedData" :key="index">
         <v-list-item-title class="text-body-2">
           {{ item.formatted_date || item.date }} - {{ item.recipe_name }} - {{ item.lot_id }}
         </v-list-item-title>
@@ -20,7 +20,7 @@
         </v-list-item-subtitle>
         
         <template v-slot:append>
-          <v-btn variant="text" size="small" @click="removeFromGroup(item.group_key)">
+          <v-btn variant="text" size="small" @click="removeFromGroup(item.filename)">
             <v-icon>mdi-close</v-icon>
           </v-btn>
         </template>
@@ -45,8 +45,10 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
+
 // Props
-defineProps({
+const props = defineProps({
   groupedData: {
     type: Array,
     default: () => []
@@ -55,6 +57,16 @@ defineProps({
     type: Number,
     default: 0
   }
+})
+
+// Computed property to sort grouped data by date (latest to oldest)
+const sortedGroupedData = computed(() => {
+  return [...props.groupedData].sort((a, b) => {
+    // Sort by addedAt timestamp first (newest first), then by formatted_date as fallback
+    const dateA = new Date(a.addedAt || a.formatted_date || a.date)
+    const dateB = new Date(b.addedAt || b.formatted_date || b.date)
+    return dateB - dateA // Latest first (descending order)
+  })
 })
 
 // Emits

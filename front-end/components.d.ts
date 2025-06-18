@@ -12,6 +12,7 @@ declare module 'vue' {
     DataGroupingCard: typeof import('./src/components/MainPage/DataGroupingCard.vue')['default']
     EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']
     MeasurementInfo: typeof import('./src/components/ResultPage/MeasurementInfo.vue')['default']
+    MeasurementPoints: typeof import('./src/components/ResultPage/MeasurementPoints.vue')['default']
     MeasurementPointsSelector: typeof import('./src/components/ResultPage/MeasurementPointsSelector.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
