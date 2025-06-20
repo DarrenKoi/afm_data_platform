@@ -10,7 +10,9 @@
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(python3:*)",
       "Bash(python:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

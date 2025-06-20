@@ -22,7 +22,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
-
+itc-afm-data-platform-pjt-shared/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

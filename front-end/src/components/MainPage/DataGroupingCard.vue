@@ -73,8 +73,8 @@ const sortedGroupedData = computed(() => {
 const emit = defineEmits(['remove-from-group', 'clear-group', 'view-trend-analysis', 'save-current-group'])
 
 // Functions
-function removeFromGroup(groupKey) {
-  emit('remove-from-group', groupKey)
+function removeFromGroup(filename) {
+  emit('remove-from-group', filename)
 }
 
 function clearGroup() {

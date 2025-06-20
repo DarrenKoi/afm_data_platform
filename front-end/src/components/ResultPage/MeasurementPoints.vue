@@ -1,32 +1,28 @@
 <template>
   <div>
-    <!-- Main title card -->
-    <v-card elevation="2" class="mb-4">
-      <v-card-title class="bg-primary text-white">
-        <v-icon start>mdi-dots-grid</v-icon>
-        Detailed Measurement Points Data
-      </v-card-title>
-    </v-card>
-
     <!-- Display detailed data when available -->
     <div v-if="detailedData && detailedData.length > 0">
-      <!-- Controls and filters -->
-      <v-card elevation="2" class="mb-4">
-        <v-card-text class="pa-4">
+      <!-- Main card without tabs -->
+      <v-card elevation="2">
+        <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
+          <v-icon start size="small">mdi-dots-grid</v-icon>
+          Details
+          <v-spacer />
+          <v-chip 
+            color="white" 
+            variant="outlined"
+            size="small"
+            class="text-primary"
+          >
+            <v-icon start size="small">mdi-table-row</v-icon>
+            {{ filteredData.length.toLocaleString() }} rows
+          </v-chip>
+        </v-card-title>
+        
+        <!-- Controls and filters -->
+        <v-card-text class="pa-3 border-b">
           <v-row align="center">
-            <v-col cols="12" sm="6" md="4">
-              <v-select
-                v-model="selectedMeasurementPoint"
-                :items="availableMeasurementPoints"
-                label="Select Measurement Point"
-                density="compact"
-                variant="outlined"
-                prepend-inner-icon="mdi-target"
-                clearable
-              />
-            </v-col>
-            
-            <v-col cols="12" sm="6" md="4">
+            <v-col cols="12" sm="6">
               <v-text-field
                 v-model="searchFilter"
                 label="Search in data"
@@ -38,31 +34,54 @@
               />
             </v-col>
             
-            <v-col cols="12" md="4" class="text-right">
-              <v-chip 
-                :color="filteredData.length > 0 ? 'primary' : 'grey'" 
+            <v-col cols="12" sm="6">
+              <v-select
+                v-model="selectedMeasurementPoint"
+                :items="availableMeasurementPoints"
+                label="Select Measurement Point"
+                density="compact"
                 variant="outlined"
-                size="large"
+                clearable
+                placeholder="All Points"
+              />
+            </v-col>
+          </v-row>
+          
+          <!-- Column selector -->
+          <v-row class="mt-2">
+            <v-col cols="12">
+              <div class="text-subtitle-2 mb-2">Select Columns to Display:</div>
+              <v-chip-group
+                v-model="selectedColumns"
+                multiple
+                column
               >
-                <v-icon start>mdi-table-row</v-icon>
-                {{ filteredData.length.toLocaleString() }} rows
-              </v-chip>
+                <v-chip
+                  v-for="header in allAvailableHeaders"
+                  :key="header.key"
+                  :value="header.key"
+                  size="small"
+                  variant="outlined"
+                  filter
+                >
+                  {{ header.title }}
+                </v-chip>
+              </v-chip-group>
             </v-col>
           </v-row>
         </v-card-text>
-      </v-card>
-
-      <!-- Data table -->
-      <v-card elevation="2">
-        <v-card-title class="bg-info text-white py-3">
-          <v-icon start>mdi-table</v-icon>
-          <span v-if="selectedMeasurementPoint">
-            Point {{ selectedMeasurementPoint }} - Detailed Data
-          </span>
-          <span v-else>
-            All Measurement Points - Detailed Data
-          </span>
-          <v-spacer />
+        
+        <!-- Data Table (no tabs) -->
+        <div class="d-flex justify-space-between align-center pa-3 bg-info text-white">
+          <div class="d-flex align-center">
+            <v-icon start>mdi-table</v-icon>
+            <span v-if="selectedMeasurementPoint">
+              Point {{ selectedMeasurementPoint }} - Detailed Data
+            </span>
+            <span v-else>
+              All Measurement Points - Detailed Data
+            </span>
+          </div>
           <v-btn
             v-if="filteredData.length > 0"
             icon="mdi-download"
@@ -71,12 +90,12 @@
             @click="exportData"
             title="Export to CSV"
           />
-        </v-card-title>
-        
+        </div>
+    
         <v-card-text class="pa-0">
           <v-data-table
             v-model:page="currentPage"
-            :headers="tableHeaders"
+            :headers="visibleHeaders"
             :items="filteredData"
             :items-per-page="itemsPerPage"
             :loading="loading"
@@ -157,19 +176,19 @@
               </v-chip>
             </template>
 
-            <!-- Loading template -->
-            <template v-slot:loading>
-              <v-skeleton-loader type="table-row@10" />
-            </template>
+        <!-- Loading template -->
+        <template v-slot:loading>
+          <v-skeleton-loader type="table-row@10" />
+        </template>
 
-            <!-- No data template -->
-            <template v-slot:no-data>
-              <v-empty-state
-                icon="mdi-table-off"
-                title="No measurement data found"
-                text="No detailed measurement points match your current filters"
-              />
-            </template>
+        <!-- No data template -->
+        <template v-slot:no-data>
+          <v-empty-state
+            icon="mdi-table-off"
+            title="No measurement data found"
+            text="No detailed measurement points match your current filters"
+          />
+        </template>
           </v-data-table>
         </v-card-text>
       </v-card>
@@ -232,20 +251,30 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  groupKey: {
+  filename: {
     type: String,
     default: ''
+  },
+  measurementPoints: {
+    type: Array,
+    default: () => []
+  },
+  selectedPoint: {
+    type: String,
+    default: null
   }
 })
 
 // Emits
-const emit = defineEmits(['point-selected', 'point-data-loaded'])
+const emit = defineEmits(['point-selected', 'point-data-loaded', 'simple-point-selected'])
 
 // Reactive data
 const selectedMeasurementPoint = ref(null)
 const searchFilter = ref('')
 const currentPage = ref(1)
 const itemsPerPage = ref(25)
+const selectedChipIndex = ref(0)
+const selectedColumns = ref([])
 
 // Computed properties
 const availableMeasurementPoints = computed(() => {
@@ -301,7 +330,8 @@ const validPointsCount = computed(() => {
   return props.detailedData.filter(item => item.Valid === true || item.Valid === 1).length
 })
 
-const tableHeaders = computed(() => {
+// Compute all available headers with priority order
+const allAvailableHeaders = computed(() => {
   if (!props.detailedData || props.detailedData.length === 0) {
     return []
   }
@@ -309,65 +339,83 @@ const tableHeaders = computed(() => {
   const sampleItem = props.detailedData[0]
   const headers = []
   
-  // Always include measurement point first
-  headers.push({
-    title: 'Point',
-    key: 'measurement_point',
-    align: 'start',
-    sortable: true,
-    width: '100px'
-  })
+  // Define important columns first with their order priority
+  const importantColumns = [
+    { key: 'measurement_point', title: 'Point', priority: 0 },
+    { key: 'Site_ID', title: 'Site ID', priority: 1, altKeys: ['Site ID'] },
+    { key: 'Site_X', title: 'Site X', priority: 2, altKeys: ['Site X'] },
+    { key: 'Site_Y', title: 'Site Y', priority: 3, altKeys: ['Site Y'] },
+    { key: 'X_um', title: 'X (μm)', priority: 4, altKeys: ['X (um)'] },
+    { key: 'Y_um', title: 'Y (μm)', priority: 5, altKeys: ['Y (um)'] },
+    { key: 'Point_No', title: 'Point ID', priority: 6, altKeys: ['Point No'] },
+    { key: 'Methods_ID', title: 'Method ID', priority: 7, altKeys: ['Methods ID'] },
+    { key: 'Left_H_nm', title: 'Left H (nm)', priority: 8, altKeys: ['Left H (nm)', 'Left_H'] },
+    { key: 'Right_H_nm', title: 'Right H (nm)', priority: 9, altKeys: ['Right H (nm)', 'Right_H'] },
+    { key: 'Ref_H_nm', title: 'Ref H (nm)', priority: 10, altKeys: ['Ref H (nm)', 'Ref_H'] }
+  ]
   
-  // Define preferred column order and formatting
-  const columnConfig = {
-    'Point No': { title: 'Point No', key: 'Point_No', align: 'center', width: '90px' },
-    'Point_No': { title: 'Point No', key: 'Point_No', align: 'center', width: '90px' },
-    'Site ID': { title: 'Site ID', key: 'Site_ID', align: 'center', width: '80px' },
-    'Site_ID': { title: 'Site ID', key: 'Site_ID', align: 'center', width: '80px' },
-    'Site X': { title: 'Site X', key: 'Site_X', align: 'end', width: '100px' },
-    'Site_X': { title: 'Site X', key: 'Site_X', align: 'end', width: '100px' },
-    'Site Y': { title: 'Site Y', key: 'Site_Y', align: 'end', width: '100px' },
-    'Site_Y': { title: 'Site Y', key: 'Site_Y', align: 'end', width: '100px' },
-    'X (um)': { title: 'X (μm)', key: 'X_um', align: 'end', width: '100px' },
-    'X_um': { title: 'X (μm)', key: 'X_um', align: 'end', width: '100px' },
-    'Y (um)': { title: 'Y (μm)', key: 'Y_um', align: 'end', width: '100px' },
-    'Y_um': { title: 'Y (μm)', key: 'Y_um', align: 'end', width: '100px' },
-    'Methods ID': { title: 'Method', key: 'Methods_ID', align: 'center', width: '80px' },
-    'Methods_ID': { title: 'Method', key: 'Methods_ID', align: 'center', width: '80px' },
-    'Valid': { title: 'Valid', key: 'Valid', align: 'center', width: '80px' },
-    'statd': { title: 'Status', key: 'statd', align: 'center', width: '80px' },
-    'Roughness_R': { title: 'Roughness R', key: 'Roughness_R', align: 'end', width: '120px' },
-    'pickup_count': { title: 'Pickup Count', key: 'pickup_count', align: 'end', width: '110px' },
-    'Mileage': { title: 'Mileage', key: 'Mileage', align: 'end', width: '100px' }
-  }
-  
-  // Add configured columns that exist in the data
-  Object.keys(sampleItem).forEach(key => {
-    if (key !== 'measurement_point' && key !== 'index') {
-      const config = columnConfig[key]
-      if (config) {
-        headers.push({
-          title: config.title,
-          key: config.key,
-          align: config.align,
-          sortable: true,
-          width: config.width
-        })
-      } else {
-        // Add other columns with default formatting
-        headers.push({
-          title: key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim(),
-          key: key,
-          align: typeof sampleItem[key] === 'number' ? 'end' : 'start',
-          sortable: true,
-          width: '120px'
-        })
+  // Add important columns that exist in data
+  importantColumns.forEach(col => {
+    let actualKey = col.key
+    let found = false
+    
+    // Check if the primary key exists
+    if (sampleItem.hasOwnProperty(col.key)) {
+      found = true
+    } else if (col.altKeys) {
+      // Check alternative keys
+      for (const altKey of col.altKeys) {
+        if (sampleItem.hasOwnProperty(altKey)) {
+          actualKey = altKey
+          found = true
+          break
+        }
       }
+    }
+    
+    if (found) {
+      headers.push({
+        title: col.title,
+        key: actualKey,
+        align: col.key === 'measurement_point' || col.key.includes('ID') ? 'center' : 
+               (typeof sampleItem[actualKey] === 'number' ? 'end' : 'start'),
+        sortable: true,
+        width: col.key === 'measurement_point' ? '100px' : '120px',
+        priority: col.priority
+      })
     }
   })
   
-  return headers
+  // Add remaining columns
+  Object.keys(sampleItem).forEach(key => {
+    if (!headers.some(h => h.key === key) && key !== 'index') {
+      headers.push({
+        title: key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim(),
+        key: key,
+        align: typeof sampleItem[key] === 'number' ? 'end' : 'start',
+        sortable: true,
+        width: '120px',
+        priority: 100 // Lower priority
+      })
+    }
+  })
+  
+  // Sort by priority
+  return headers.sort((a, b) => (a.priority || 100) - (b.priority || 100))
 })
+
+// Get visible headers based on user selection
+const visibleHeaders = computed(() => {
+  if (selectedColumns.value.length === 0) {
+    // Show all columns by default
+    return allAvailableHeaders.value
+  }
+  
+  return allAvailableHeaders.value.filter(h => selectedColumns.value.includes(h.key))
+})
+
+// Legacy computed for compatibility
+const tableHeaders = computed(() => visibleHeaders.value)
 
 // Methods
 function formatCoordinate(value) {
@@ -458,10 +506,43 @@ watch(selectedMeasurementPoint, (newPoint, oldPoint) => {
     emit('point-selected', {
       measurementPoint: newPoint,
       pointNumber: pointNumber,
-      groupKey: props.groupKey
+      filename: props.filename
     })
   }
 })
+
+// Load column preferences from localStorage
+function loadColumnPreferences() {
+  const saved = localStorage.getItem('measurementPointsColumns')
+  if (saved) {
+    try {
+      const parsedColumns = JSON.parse(saved)
+      if (Array.isArray(parsedColumns)) {
+        selectedColumns.value = parsedColumns
+        return true
+      }
+    } catch (e) {
+      console.warn('Failed to parse column preferences from localStorage:', e)
+    }
+  }
+  return false
+}
+
+// Save column preferences to localStorage
+function saveColumnPreferences() {
+  try {
+    localStorage.setItem('measurementPointsColumns', JSON.stringify(selectedColumns.value))
+  } catch (e) {
+    console.warn('Failed to save column preferences to localStorage:', e)
+  }
+}
+
+// Watch for column selection changes and save to localStorage
+watch(selectedColumns, (newColumns) => {
+  if (newColumns && newColumns.length > 0) {
+    saveColumnPreferences()
+  }
+}, { deep: true })
 
 // Watch for data changes and auto-select first measurement point
 watch(() => props.detailedData, (newData) => {
@@ -478,11 +559,20 @@ watch(() => props.detailedData, (newData) => {
       console.log(`🔍 [MeasurementPoints] Auto-selected point:`, selectedMeasurementPoint.value)
     }
     
+    // Initialize selected columns - first try to load from localStorage, then show all by default
+    if (selectedColumns.value.length === 0) {
+      const loadedFromStorage = loadColumnPreferences()
+      if (!loadedFromStorage) {
+        // Show all columns by default
+        selectedColumns.value = allAvailableHeaders.value.map(h => h.key)
+      }
+    }
+    
     // Emit data loaded event
     emit('point-data-loaded', {
       totalPoints: newData.length,
       availablePoints: availableMeasurementPoints.value,
-      groupKey: props.groupKey
+      filename: props.filename
     })
   }
 }, { immediate: true })
@@ -495,6 +585,23 @@ function extractPointNumber(measurementPoint) {
   const match = measurementPoint.match(/^(\d+)/)
   return match ? parseInt(match[1]) : null
 }
+
+// Function to handle measurement point selection from buttons
+function selectMeasurementPoint(pointName) {
+  selectedMeasurementPoint.value = pointName
+  emit('simple-point-selected', pointName)
+}
+
+// Watch for external selectedPoint changes to update chip selection
+watch(() => props.selectedPoint, (newPoint) => {
+  if (newPoint && props.measurementPoints) {
+    const index = props.measurementPoints.findIndex(p => p.point === newPoint)
+    if (index !== -1) {
+      selectedChipIndex.value = index
+      selectedMeasurementPoint.value = newPoint
+    }
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>
@@ -544,5 +651,29 @@ function extractPointNumber(measurementPoint) {
   .font-mono {
     font-size: 0.8rem;
   }
+}
+
+/* Chip styles */
+.v-chip {
+  margin: 4px;
+  transition: all 0.2s ease;
+}
+
+.v-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.v-chip--selected {
+  background-color: rgb(var(--v-theme-primary)) !important;
+  color: white !important;
+}
+
+.border-b {
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+}
+
+.border-t {
+  border-top: 1px solid rgba(var(--v-theme-outline), 0.12);
 }
 </style>

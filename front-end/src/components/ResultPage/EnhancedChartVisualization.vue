@@ -28,7 +28,7 @@ import * as echarts from 'echarts'
 import { apiService } from '@/services/api.js'
 
 const props = defineProps({
-  groupKey: {
+  filename: {
     type: String,
     required: true
   },
@@ -61,8 +61,8 @@ let waferHeatmapChart = null
 // Fetch wafer data from API
 async function fetchWaferData() {
   try {
-    console.log('Fetching wafer data for group key:', props.groupKey)
-    const result = await apiService.getWaferData(props.groupKey)
+    console.log('Fetching wafer data for filename:', props.filename)
+    const result = await apiService.getWaferData(props.filename)
     console.log('Wafer data result:', result)
     
     // Since axios interceptor returns response.data directly, result is the JSON response
@@ -332,7 +332,7 @@ watch(() => props.profileData, (newProfileData) => {
 // Lifecycle
 onMounted(() => {
   console.log('EnhancedChartVisualization mounted')
-  console.log('Group key:', props.groupKey)
+  console.log('Filename:', props.filename)
   initializeData()
   window.addEventListener('resize', handleResize)
 })

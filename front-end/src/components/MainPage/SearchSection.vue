@@ -13,25 +13,41 @@
           :loading="realtimeSearch.isSearching.value"
           @keyup.enter="triggerInstantSearch"
         >
-          <!-- Search suggestions dropdown -->
-          <template v-if="realtimeSearch.suggestions.value.length > 0" #append>
-            <v-menu v-model="showSuggestions" offset-y>
+          <!-- Recent search terms dropdown (instead of suggestions) -->
+          <template v-if="recentSearchTerms.length > 0 && !realtimeSearch.searchQuery.value" #append>
+            <v-menu v-model="showRecent" offset-y>
               <template #activator="{ props }">
                 <v-btn 
                   v-bind="props"
-                  icon="mdi-chevron-down" 
+                  icon="mdi-history" 
                   variant="text"
                   size="small"
-                  @click="showSuggestions = !showSuggestions"
+                  @click="showRecent = !showRecent"
                 />
               </template>
-              <v-list max-height="200">
+              <v-list max-height="250">
+                <v-list-subheader>Recent Searches</v-list-subheader>
                 <v-list-item 
-                  v-for="suggestion in realtimeSearch.suggestions.value" 
-                  :key="suggestion"
-                  @click="selectSuggestion(suggestion)"
+                  v-for="term in recentSearchTerms" 
+                  :key="term"
+                  @click="selectRecentTerm(term)"
                 >
-                  <v-list-item-title>{{ suggestion }}</v-list-item-title>
+                  <template v-slot:prepend>
+                    <v-icon size="small">mdi-history</v-icon>
+                  </template>
+                  <v-list-item-title>{{ term }}</v-list-item-title>
+                </v-list-item>
+                
+                <v-divider v-if="recentSearchTerms.length > 0" />
+                
+                <v-list-item 
+                  @click="clearRecentTerms"
+                  class="text-caption"
+                >
+                  <template v-slot:prepend>
+                    <v-icon size="small" color="error">mdi-delete</v-icon>
+                  </template>
+                  <v-list-item-title class="text-error">Clear Recent Searches</v-list-item-title>
                 </v-list-item>
               </v-list>
             </v-menu>
@@ -181,7 +197,11 @@ const emit = defineEmits(['search-performed', 'add-to-group', 'view-details'])
 
 // Real-time search functionality
 const realtimeSearch = useRealtimeSearch()
-const showSuggestions = ref(false)
+const showRecent = ref(false)
+
+// Recent search terms functionality
+const recentSearchTerms = ref([])
+const maxRecentTerms = 5
 
 // Inner filter functionality
 const innerFilter = ref('')
@@ -238,22 +258,92 @@ watch(filteredResults, (newFilteredResults) => {
   }
 }, { deep: true })
 
+// Watch for search query changes to add to recent terms
+watch(() => realtimeSearch.searchQuery.value, (newQuery, oldQuery) => {
+  // Only add to recent terms if user has performed a meaningful search (not just typing)
+  if (oldQuery && oldQuery.trim().length >= 2 && newQuery !== oldQuery) {
+    // This will capture when user clears search or significantly changes it
+    if (!newQuery || newQuery.trim().length < 2) {
+      addToRecentTerms(oldQuery)
+    }
+  }
+})
+
 onMounted(() => {
   console.log('🚀 SearchSection: Component mounted and ready for AFM file searches')
+  loadRecentTerms()
 })
 
 // Functions
 function triggerInstantSearch() {
   console.log(`⚡ SearchSection: Triggering instant search for "${realtimeSearch.searchQuery.value}"`)
   if (!realtimeSearch.searchQuery.value) return
+  
+  // Add to recent terms when user performs a search
+  addToRecentTerms(realtimeSearch.searchQuery.value)
+  
   realtimeSearch.triggerSearch(realtimeSearch.searchQuery.value)
 }
 
-function selectSuggestion(suggestion) {
-  console.log(`💡 SearchSection: Selected suggestion "${suggestion}"`)
-  realtimeSearch.searchQuery.value = suggestion
-  showSuggestions.value = false
+function selectRecentTerm(term) {
+  console.log(`🕒 SearchSection: Selected recent term "${term}"`)
+  realtimeSearch.searchQuery.value = term
+  showRecent.value = false
   triggerInstantSearch()
+}
+
+function addToRecentTerms(term) {
+  if (!term || term.trim().length < 2) return
+  
+  const trimmedTerm = term.trim()
+  
+  // Remove if already exists
+  const existingIndex = recentSearchTerms.value.indexOf(trimmedTerm)
+  if (existingIndex > -1) {
+    recentSearchTerms.value.splice(existingIndex, 1)
+  }
+  
+  // Add to beginning
+  recentSearchTerms.value.unshift(trimmedTerm)
+  
+  // Keep only max recent terms
+  if (recentSearchTerms.value.length > maxRecentTerms) {
+    recentSearchTerms.value = recentSearchTerms.value.slice(0, maxRecentTerms)
+  }
+  
+  // Save to localStorage
+  try {
+    localStorage.setItem('afm_recent_searches', JSON.stringify(recentSearchTerms.value))
+  } catch (error) {
+    console.warn('Could not save recent searches to localStorage:', error)
+  }
+  
+  console.log(`🕒 SearchSection: Added "${trimmedTerm}" to recent searches`)
+}
+
+function loadRecentTerms() {
+  try {
+    const saved = localStorage.getItem('afm_recent_searches')
+    if (saved) {
+      recentSearchTerms.value = JSON.parse(saved)
+      console.log(`🕒 SearchSection: Loaded ${recentSearchTerms.value.length} recent search terms`)
+    }
+  } catch (error) {
+    console.warn('Could not load recent searches from localStorage:', error)
+    recentSearchTerms.value = []
+  }
+}
+
+function clearRecentTerms() {
+  recentSearchTerms.value = []
+  showRecent.value = false
+  
+  try {
+    localStorage.removeItem('afm_recent_searches')
+    console.log('🗑️ SearchSection: Cleared all recent search terms')
+  } catch (error) {
+    console.warn('Could not clear recent searches from localStorage:', error)
+  }
 }
 
 function addToGroup(result) {

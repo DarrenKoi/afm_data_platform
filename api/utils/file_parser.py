@@ -3,7 +3,7 @@ File parsing utilities using pathlib for cross-platform compatibility
 """
 import re
 from pathlib import Path
-
+import pickle
 
 def parse_filename(filename):
     """
@@ -60,8 +60,7 @@ def parse_filename(filename):
             'slot_number': slot_number,
             'measured_info': measured_info
         }
-        
-        print(f"  -> Parsed: {parsed_data}")
+
         return parsed_data
         
     except Exception as e:
@@ -106,7 +105,7 @@ def check_pickle_file_exists(parsed_file, tool_name='MAP608'):
 
 
 def load_afm_file_list(tool_name='MAP608'):
-    """Load AFM file list from pre-parsed pickle file"""
+    """Load AFM file list from pre-parsed pickle file, generate cache if not exists"""
     try:
         print(f"🔍 Loading AFM file list for tool: {tool_name}")
         
@@ -117,11 +116,24 @@ def load_afm_file_list(tool_name='MAP608'):
         
         if not parsed_pickle_path.exists():
             print(f"❌ Parsed pickle file not found: {parsed_pickle_path}")
-            print("📝 Falling back to live parsing...")
-            return load_afm_file_list_live(tool_name)
+            print("🔄 Generating cache file for future use...")
+            # Parse and cache the data
+            success = parse_and_cache_afm_data(tool_name)
+            if success and parsed_pickle_path.exists():
+                print("✅ Cache file generated successfully")
+                # Now load from the newly created cache
+                with open(parsed_pickle_path, 'rb') as f:
+                    data = pickle.load(f)
+                measurements = data.get('measurements', [])
+                metadata = data.get('metadata', {})
+                print(f"✅ Successfully loaded {len(measurements)} measurements from new cache")
+                return measurements
+            else:
+                print("⚠️ Cache generation failed, using live parsing")
+                return load_afm_file_list_live(tool_name)
         
         # Load the pre-parsed data from pickle file
-        import pickle
+
         with open(parsed_pickle_path, 'rb') as f:
             data = pickle.load(f)
         
@@ -170,22 +182,16 @@ def load_afm_file_list_live(tool_name='MAP608'):
                 line = line.strip()
                 if not line:
                     continue
-                
-                # Remove line numbers if present (e.g., "   123→")
-                if '→' in line:
-                    filename = line.split('→')[1].strip()
-                else:
-                    filename = line
-                
-                parsed_file = parse_filename(filename)
+
+                parsed_file = parse_filename(line)
                 if parsed_file:
                     # Only include files that have corresponding pickle files
                     if check_pickle_file_exists(parsed_file, tool_name):
-                        parsed_file['id'] = line_num
+
                         parsed_file['tool_name'] = tool_name
                         parsed_data.append(parsed_file)
                     else:
-                        skipped_files.append(filename)
+                        skipped_files.append(line)
         
         print(f"✅ Successfully loaded {len(parsed_data)} measurements (with pickle files)")
         print(f"📊 Skipped {len(skipped_files)} measurements (no pickle files)")
@@ -205,9 +211,8 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
     """Parse AFM data from data_dir_list.txt and save to persistent cache file"""
     try:
         from datetime import datetime
-        import pickle
 
-        print(f"🔄 Starting scheduled parsing and caching for tool: {tool_name}")
+        print(f"🔄 Starting parsing and caching for tool: {tool_name}")
 
         # Parse the data using the live parsing function
         measurements = load_afm_file_list_live(tool_name)
@@ -222,8 +227,7 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
             'metadata': {
                 'tool_name': tool_name,
                 'total_files_processed': len(measurements),
-                'generated_at': datetime.now().isoformat(),
-                'cache_version': '1.0'
+                'generated_at': datetime.now().isoformat()
             }
         }
 
@@ -246,180 +250,6 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
         import traceback
         traceback.print_exc()
         return False
-
-
-def search_afm_files(query, tool_name='MAP608'):
-    """Search AFM files using the cached parsed data"""
-    try:
-        print(f"🔍 Searching AFM files for query: '{query}' in tool: {tool_name}")
-        
-        # Load all measurements from cache
-        measurements = load_afm_file_list(tool_name)
-        if not measurements:
-            return []
-        
-        if not query or not query.strip():
-            return measurements
-        
-        query = query.lower().strip()
-        filtered_results = []
-        
-        for measurement in measurements:
-            # Search in multiple fields
-            searchable_fields = [
-                measurement.get('lot_id', ''),
-                measurement.get('recipe_name', ''),
-                measurement.get('measured_info', ''),
-                measurement.get('formatted_date', ''),
-                measurement.get('slot_number', ''),
-                measurement.get('filename', '')
-            ]
-            
-            # Check if query matches any field
-            for field in searchable_fields:
-                if query in str(field).lower():
-                    filtered_results.append(measurement)
-                    break
-        
-        print(f"📊 Search returned {len(filtered_results)} results for query: '{query}'")
-        return filtered_results
-        
-    except Exception as e:
-        print(f"❌ Error searching AFM files: {e}")
-        import traceback
-        traceback.print_exc()
-        return []
-
-
-def find_pickle_file_path(group_key, tool_name='MAP608'):
-    """Find the exact pickle file path for a given group key"""
-    try:
-        # Parse group_key to find the corresponding pickle file
-        # group_key format: lot_id_slot_measured_info (e.g., T7HQR42TA_21_1)
-        parts = group_key.split('_')
-        if len(parts) < 3:
-            return None
-        
-        lot_id = parts[0]
-        slot_number = parts[1]
-        measured_info = '_'.join(parts[2:])
-        
-        # Find matching pickle file in the pickle directory
-        data_dir = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'data_dir_pickle'
-        
-        if not data_dir.exists():
-            return None
-        
-        # Find matching pickle file
-        pickle_files = list(data_dir.glob('*.pkl'))
-        
-        for pickle_file in pickle_files:
-            parsed = parse_filename(pickle_file.name)
-            if (parsed and 
-                parsed['lot_id'] == lot_id and 
-                parsed['slot_number'] == slot_number and 
-                parsed['measured_info'] == measured_info):
-                return pickle_file
-        
-        return None
-        
-    except Exception as e:
-        print(f"Error finding pickle file path: {e}")
-        return None
-
-
-def find_profile_file_path(group_key, point_number, tool_name='MAP608'):
-    """Find the exact profile file path for a given group key and point number"""
-    try:
-        # Parse group_key to find the corresponding profile file
-        parts = group_key.split('_')
-        if len(parts) < 3:
-            return None
-        
-        lot_id = parts[0]
-        slot_number = parts[1]
-        measured_info = '_'.join(parts[2:])
-        
-        # Find matching profile file in the profile directory
-        profile_dir = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'profile_dir'
-        
-        if not profile_dir.exists():
-            return None
-        
-        # Find matching profile file
-        # Expected format: #date#recipe#lot_id_time#slot_measured_info#_point_Height.pkl
-        profile_files = list(profile_dir.glob('*.pkl'))
-        
-        for profile_file in profile_files:
-            filename = profile_file.name
-            parsed = parse_filename(filename.replace('_Height.pkl', '.pkl'))
-            if (parsed and 
-                parsed['lot_id'] == lot_id and 
-                parsed['slot_number'] == slot_number and 
-                parsed['measured_info'] == measured_info):
-                
-                # Extract point number from filename
-                # Format: ...#_0001_Height.pkl, ...#_0002_Height.pkl, etc.
-                point_match = re.search(r'#_(\d+)_Height\.pkl$', filename)
-                if point_match:
-                    file_point = point_match.group(1)
-                    # Convert point_number to same format (pad with zeros)
-                    formatted_point = f"{int(point_number):04d}"
-                    if file_point == formatted_point:
-                        return profile_file
-        
-        return None
-        
-    except Exception as e:
-        print(f"Error finding profile file path: {e}")
-        return None
-
-
-def find_image_file_path(group_key, point_number, tool_name='MAP608'):
-    """Find the exact image file path for a given group key and point number"""
-    try:
-        # Parse group_key to find the corresponding image file
-        parts = group_key.split('_')
-        if len(parts) < 3:
-            return None
-        
-        lot_id = parts[0]
-        slot_number = parts[1]
-        measured_info = '_'.join(parts[2:])
-        
-        # Find matching image file in the tiff directory
-        tiff_dir = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'tiff_dir'
-        
-        if not tiff_dir.exists():
-            return None
-        
-        # Find matching image file
-        # Expected format: #date#recipe#lot_id_time#slot_measured_info#_point_Height.webp
-        image_files = list(tiff_dir.glob('*.webp'))
-        
-        for image_file in image_files:
-            filename = image_file.name
-            parsed = parse_filename(filename.replace('_Height.webp', '.pkl'))
-            if (parsed and 
-                parsed['lot_id'] == lot_id and 
-                parsed['slot_number'] == slot_number and 
-                parsed['measured_info'] == measured_info):
-                
-                # Extract point number from filename
-                # Format: ...#_0001_Height.webp, ...#_0002_Height.webp, etc.
-                point_match = re.search(r'#_(\d+)_Height\.webp$', filename)
-                if point_match:
-                    file_point = point_match.group(1)
-                    # Convert point_number to same format (pad with zeros)
-                    formatted_point = f"{int(point_number):04d}"
-                    if file_point == formatted_point:
-                        return image_file
-        
-        return None
-        
-    except Exception as e:
-        print(f"Error finding image file path: {e}")
-        return None
 
 
 def get_pickle_file_path_by_filename(base_filename, tool_name='MAP608'):

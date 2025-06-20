@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="pa-4">
+  <v-container fluid class="pa-6 px-md-8 px-lg-12">
     <!-- Distinctive Back Button -->
-    <div class="mb-4">
+    <div class="mb-3">
       <v-btn
         color="primary"
         variant="elevated"
@@ -14,40 +14,90 @@
       </v-btn>
     </div>
 
-    <!-- Measurement Information at Top -->
-    <div class="mb-4">
-      <MeasurementInfo :measurement-info="measurementInfo" :compact="false" />
-    </div>
+    <!-- First row: Information and Scatter Chart -->
+    <v-row dense class="mb-3">
+      <!-- First column: Information -->
+      <v-col cols="12" md="6">
+        <MeasurementInfo 
+          :measurement-info="measurementInfo" 
+          :compact="true" 
+        />
+        
+        <!-- Statistics Card -->
+        <v-card class="mt-3 statistics-card">
+          <v-card-title class="py-3 px-4">
+            <v-icon start size="small">mdi-table</v-icon>
+            <span class="text-subtitle-1 font-weight-medium">Statistics</span>
+          </v-card-title>
+          <v-card-text class="pa-0">
+            <StatisticalInfoByPoints 
+              :summary-data="summaryData" 
+              @row-click="handleStatisticRowClick"
+              @statistic-selected="handleStatisticSelected"
+              :compact="true"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+      
+      <!-- Second column: Scatter Chart -->
+      <v-col cols="12" md="6">
+        <v-card class="scatter-chart-card">
+          <v-card-title class="py-3 px-4">
+            <v-icon start size="small">mdi-chart-scatter-plot</v-icon>
+            <span class="text-subtitle-1 font-weight-medium">Scatter Chart</span>
+            <v-spacer />
+            <!-- Chart Controls -->
+            <v-btn-group variant="outlined" size="small" density="compact">
+              <v-btn 
+                :variant="chartType === 'scatter' ? 'flat' : 'outlined'"
+                :color="chartType === 'scatter' ? 'primary' : 'default'"
+                @click="chartType = 'scatter'"
+                size="x-small"
+              >
+                <v-icon size="small">mdi-chart-scatter-plot</v-icon>
+              </v-btn>
+              <v-btn 
+                :variant="chartType === 'line' ? 'flat' : 'outlined'"
+                :color="chartType === 'line' ? 'primary' : 'default'"
+                @click="chartType = 'line'"
+                size="x-small"
+              >
+                <v-icon size="small">mdi-chart-line</v-icon>
+              </v-btn>
+            </v-btn-group>
+          </v-card-title>
+          <v-card-text class="pa-2">
+            <ChartVisualization 
+              :selected-point="selectedPoint"
+              :profile-data="profileData"
+              :is-loading="isLoadingProfile"
+              :chart-height="350"
+              :compact="true"
+              :chart-type="chartType"
+              @chart-type-changed="handleChartTypeChanged"
+            />
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
 
-    <!-- Statistical Information by UL Points -->
-    <div class="mb-4">
-      <StatisticalInfoByPoints 
-        :summary-data="summaryData" 
-        @row-click="handleStatisticRowClick"
-        @statistic-selected="handleStatisticSelected"
-      />
-    </div>
-
-    <!-- Detailed Measurement Points Data -->
-    <div class="mb-4">
-      <MeasurementPoints 
-        :detailed-data="detailedData"
-        :loading="isLoadingProfile"
-        :filename="filename"
-        @point-selected="handlePointSelected"
-        @point-data-loaded="handlePointDataLoaded"
-      />
-    </div>
-
-    <!-- Measurement Points Selection -->
-    <div class="mb-4">
-      <MeasurementPointsSelector 
-        :measurement-points="measurementPoints"
-        :selected-point="selectedPoint"
-        :compact="false"
-        @point-selected="selectPoint"
-      />
-    </div>
+    <!-- Second row: Detailed data -->
+    <v-row dense class="mb-3">
+      <v-col cols="12">
+        <!-- Details card with integrated point selection -->
+        <MeasurementPoints 
+          :detailed-data="detailedData"
+          :loading="isLoadingProfile"
+          :filename="filename"
+          :measurement-points="measurementPoints"
+          :selected-point="selectedPoint"
+          @point-selected="handlePointSelected"
+          @point-data-loaded="handlePointDataLoaded"
+          @simple-point-selected="selectPoint"
+        />
+      </v-col>
+    </v-row>
 
     <!-- Professional Two-Column Layout -->
     <v-row dense class="main-content-row">
@@ -144,7 +194,6 @@ import { fetchProfileData, fetchSummaryData, fetchMeasurementData, apiService } 
 // Import components
 import MeasurementInfo from '@/components/ResultPage/MeasurementInfo.vue'
 import SummaryDataTable from '@/components/ResultPage/SummaryDataTable.vue'
-import MeasurementPointsSelector from '@/components/ResultPage/MeasurementPointsSelector.vue'
 import ChartVisualization from '@/components/ResultPage/ChartVisualization.vue'
 import StatisticalInfo from '@/components/ResultPage/StatisticalInfo.vue'
 import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPoints.vue'
@@ -155,7 +204,7 @@ const route = useRoute()
 const router = useRouter()
 
 // Reactive data
-const filename = ref(decodeURIComponent(route.params.groupKey || '')) // groupKey param contains filename now
+const filename = ref(decodeURIComponent(route.params.filename || ''))
 const recipeId = ref(route.params.recipeId)
 const measurementInfo = ref({})
 const summaryData = ref([])
@@ -167,6 +216,7 @@ const isLoadingProfile = ref(false)
 const selectedStatistic = ref(null)
 const profileImageUrl = ref(null)
 const isLoadingProfileImage = ref(false)
+const chartType = ref('scatter')
 
 
 // Calculate optimal chart height based on viewport
@@ -239,43 +289,52 @@ async function loadData() {
       const data = measurementResponse.data
       console.log(`🎯 [ResultPage] Processing data with keys:`, Object.keys(data))
       
-      // Set measurement info from information dict
-      console.log(`🔍 [ResultPage] Checking information data:`, data.information)
-      if (data.information && Object.keys(data.information).length > 0) {
-        measurementInfo.value = data.information
+      // Set measurement info from info dict (transformed from information)
+      console.log(`🔍 [ResultPage] Checking info data:`, data.info)
+      if (data.info && Object.keys(data.info).length > 0) {
+        measurementInfo.value = data.info
         console.log(`✅ [ResultPage] Set measurement information:`, measurementInfo.value)
       } else {
         // Fallback measurement info
         measurementInfo.value = {
           'Group Key': filename.value,
           'Recipe ID': recipeId.value || 'Unknown',
-          'Lot ID': extractLotIdFromGroupKey(filename.value),
+          'Lot ID': extractLotIdFromFilename(filename.value),
           'Fab': 'SK_Hynix_ITC',
           'Loading Status': 'No Information Available'
         }
         console.log(`⚠️ [ResultPage] Using fallback measurement info:`, measurementInfo.value)
       }
       
-      // Set summary data from DataFrame
-      console.log(`🔍 [ResultPage] Checking summary data:`, data.summary)
-      console.log(`🔍 [ResultPage] Summary is array:`, Array.isArray(data.summary))
-      console.log(`🔍 [ResultPage] Summary length:`, data.summary ? data.summary.length : 'null/undefined')
+      // Set summary data from DataFrame - using transformed summaryData
+      console.log(`🔍 [ResultPage] Checking summaryData:`, data.summaryData)
+      console.log(`🔍 [ResultPage] summaryData is array:`, Array.isArray(data.summaryData))
+      console.log(`🔍 [ResultPage] summaryData length:`, data.summaryData ? data.summaryData.length : 'null/undefined')
       
-      if (data.summary && Array.isArray(data.summary) && data.summary.length > 0) {
-        summaryData.value = data.summary
-        console.log(`✅ [ResultPage] Set summary data:`, summaryData.value)
+      if (data.summaryData && Array.isArray(data.summaryData) && data.summaryData.length > 0) {
+        summaryData.value = data.summaryData
+        console.log(`✅ [ResultPage] Set summary data from summaryData:`, summaryData.value)
         console.log(`✅ [ResultPage] Summary data length:`, summaryData.value.length)
         console.log(`✅ [ResultPage] First summary record:`, summaryData.value[0])
       } else {
-        // Generate dummy summary data for demonstration
-        summaryData.value = generateDummySummaryData(filename.value)
-        console.log(`⚠️ [ResultPage] Using dummy summary data:`, summaryData.value)
+        // Fallback: check legacy summary property
+        if (data.summary && Array.isArray(data.summary) && data.summary.length > 0) {
+          summaryData.value = data.summary
+          console.log(`✅ [ResultPage] Set summary data from legacy summary:`, summaryData.value)
+        } else {
+          // Generate dummy summary data for demonstration
+          summaryData.value = generateDummySummaryData(filename.value)
+          console.log(`⚠️ [ResultPage] Using dummy summary data:`, summaryData.value)
+        }
       }
       
-      // Set detailed data from DataFrame  
-      if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+      // Set detailed data from DataFrame - using transformed profileData (which contains detailed measurements)
+      if (data.profileData && Array.isArray(data.profileData) && data.profileData.length > 0) {
+        detailedData.value = data.profileData
+        console.log(`✅ Loaded ${data.profileData.length} detailed data records from profileData`)
+      } else if (data.data && Array.isArray(data.data) && data.data.length > 0) {
         detailedData.value = data.data
-        console.log(`✅ Loaded ${data.data.length} detailed data records`)
+        console.log(`✅ Loaded ${data.data.length} detailed data records from legacy data property`)
       } else {
         detailedData.value = []
         console.log('⚠️ No detailed data available')
@@ -304,11 +363,9 @@ async function loadData() {
         }
       }
       
-      // Set profile data if available
-      if (data.profile_data && Array.isArray(data.profile_data)) {
-        profileData.value = data.profile_data
-        console.log(`✅ Loaded ${data.profile_data.length} profile data points`)
-      }
+      // Profile data for charts will be loaded separately via API calls when points are selected
+      // Initial profile data is not typically available in the summary response
+      console.log(`📊 [ResultPage] Profile data will be loaded when measurement points are selected`)
       
       console.log('✅ Measurement data loaded successfully')
     } else {
@@ -322,9 +379,15 @@ async function loadData() {
 }
 
 // Helper function to extract lot ID from group key
-function extractLotIdFromGroupKey(groupKey) {
-  const parts = groupKey.split('_')
-  return parts.length > 0 ? parts[0] : 'Unknown'
+function extractLotIdFromFilename(filename) {
+  // Extract lot ID from filename pattern #date#recipe#lot_id_time#slot_measured#
+  const parts = filename.split('#')
+  if (parts.length >= 4) {
+    const lotPart = parts[3]
+    const lotId = lotPart.split('_')[0] // Get lot ID before underscore
+    return lotId || 'Unknown'
+  }
+  return 'Unknown'
 }
 
 // Helper function to create fallback data when pickle files are not available
@@ -361,8 +424,8 @@ function createFallbackData() {
 }
 
 // Helper function to generate dummy summary data in DataFrame format
-function generateDummySummaryData(groupKey) {
-  const parts = groupKey.split('_')
+function generateDummySummaryData(filename) {
+  const parts = filename.split('#')
   const pointName = parts.length >= 3 ? `${parts[1]}_UL` : '1_UL'
   
   return [
@@ -407,9 +470,20 @@ async function handlePointSelected(pointData) {
       isLoadingProfile.value = true
       isLoadingProfileImage.value = true
       
+      // Clean filename by removing .csv extension if present
+      const cleanFilename = pointFilename.replace('.csv', '')
+      
+      // Convert measurement point format to point number if needed
+      let cleanPointNumber = pointNumber
+      if (typeof pointNumber === 'string' && pointNumber.includes('_')) {
+        cleanPointNumber = pointNumber.split('_')[0] // Extract number part
+      }
+      
+      console.log(`🔧 [ResultPage] Using cleanFilename: ${cleanFilename}, cleanPointNumber: ${cleanPointNumber}`)
+      
       const [profileResponse, imageResponse] = await Promise.allSettled([
-        apiService.getProfileData(pointFilename, pointNumber),
-        apiService.getProfileImage(pointFilename, pointNumber)
+        apiService.getProfileData(cleanFilename, cleanPointNumber),
+        apiService.getProfileImage(cleanFilename, cleanPointNumber)
       ])
       
       // Handle profile data response
@@ -425,7 +499,7 @@ async function handlePointSelected(pointData) {
       // Handle image response
       if (imageResponse.status === 'fulfilled' && imageResponse.value.success) {
         console.log(`✅ [ResultPage] Loaded profile image:`, imageResponse.value.data.filename)
-        profileImageUrl.value = apiService.getProfileImageUrl(pointFilename, pointNumber)
+        profileImageUrl.value = apiService.getProfileImageUrl(cleanFilename, cleanPointNumber)
         console.log(`🖼️ [ResultPage] Profile image URL:`, profileImageUrl.value)
       } else {
         console.warn(`⚠️ [ResultPage] Failed to load profile image:`, imageResponse.reason || imageResponse.value?.error)
@@ -490,8 +564,8 @@ onMounted(() => {
 
 /* Professional layout */
 .main-content-row {
-  height: calc(100vh - 280px);
-  min-height: 600px;
+  height: calc(100vh - 450px);
+  min-height: 500px;
 }
 
 .heat-map-card,
@@ -505,16 +579,16 @@ onMounted(() => {
 .profile-card .v-card-title,
 .distribution-card .v-card-title {
   border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   font-weight: 600;
-  padding: 8px 12px;
+  padding: 6px 10px;
 }
 
 .heat-map-card .v-card-text,
 .profile-card .v-card-text,
 .distribution-card .v-card-text {
-  padding: 8px;
-  height: calc(100% - 44px);
+  padding: 6px;
+  height: calc(100% - 36px);
   overflow: hidden;
 }
 
@@ -531,7 +605,29 @@ onMounted(() => {
 
 /* Card spacing */
 .v-card {
-  margin-bottom: 16px;
+  margin-bottom: 12px;
+}
+
+/* Statistics card styling */
+.statistics-card {
+  border: 1px solid rgba(var(--v-theme-outline), 0.12);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.statistics-card .v-card-title {
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+  background-color: rgba(var(--v-theme-surface), 0.5);
+}
+
+/* Scatter chart card styling */
+.scatter-chart-card {
+  border: 1px solid rgba(var(--v-theme-outline), 0.12);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.scatter-chart-card .v-card-title {
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+  background-color: rgba(var(--v-theme-surface), 0.5);
 }
 
 .v-chip.v-chip--size-x-small {

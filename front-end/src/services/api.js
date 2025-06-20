@@ -275,16 +275,27 @@ export async function searchMeasurementsAsync(query, toolName = 'MAP608') {
 
 
 // Updated functions to use real pickle data
-export async function fetchProfileData(groupKey, point, toolName = 'MAP608') {
-  console.log(`📊 fetchProfileData called for groupKey: ${groupKey}, point: ${point}, tool: ${toolName}`)
+export async function fetchProfileData(filename, point, toolName = 'MAP608') {
+  console.log(`📊 fetchProfileData called for filename: ${filename}, point: ${point}, tool: ${toolName}`)
   
   try {
-    const response = await apiService.getAfmFileDetail(groupKey, toolName)
+    // Remove .csv extension from filename if present
+    const cleanFilename = filename.replace('.csv', '')
+    
+    // Convert measurement point format to point number if needed
+    // E.g., "1_UL" -> "1", or just use point directly if it's already a number
+    let pointNumber = point
+    if (typeof point === 'string' && point.includes('_')) {
+      pointNumber = point.split('_')[0] // Extract number part
+    }
+    
+    console.log(`🔄 Calling getProfileData with cleanFilename: ${cleanFilename}, pointNumber: ${pointNumber}`)
+    
+    const response = await apiService.getProfileData(cleanFilename, pointNumber, toolName)
     
     if (response.success && response.data) {
-      const profileData = response.data.profile_data || []
-      console.log(`✅ Loaded ${profileData.length} profile data points for ${groupKey}`)
-      return profileData
+      console.log(`✅ Loaded ${response.data.length} profile data points for ${cleanFilename}, point ${pointNumber}`)
+      return response.data
     } else {
       console.warn('⚠️ Failed to load profile data:', response.error)
       return []
@@ -295,18 +306,18 @@ export async function fetchProfileData(groupKey, point, toolName = 'MAP608') {
   }
 }
 
-export async function fetchMeasurementData(groupKey, toolName = 'MAP608') {
-  console.log(`🔍 fetchMeasurementData called for groupKey: ${groupKey}, tool: ${toolName}`)
+export async function fetchMeasurementData(filename, toolName = 'MAP608') {
+  console.log(`🔍 fetchMeasurementData called for filename: ${filename}, tool: ${toolName}`)
   
   try {
-    const response = await apiService.getAfmFileDetail(groupKey, toolName)
+    const response = await apiService.getAfmFileDetail(filename, toolName)
     
     console.log(`📦 Raw API response:`, response)
     console.log(`📦 Response success:`, response.success)
     console.log(`📦 Response data keys:`, response.data ? Object.keys(response.data) : 'No data')
     
     if (response.success && response.data) {
-      console.log(`✅ Loaded measurement data for ${groupKey}`)
+      console.log(`✅ Loaded measurement data for ${filename}`)
       
       // Log detailed structure
       const data = response.data
@@ -317,9 +328,27 @@ export async function fetchMeasurementData(groupKey, toolName = 'MAP608') {
       console.log(`📊 Available points:`, data.available_points)
       console.log(`📊 Raw data_status:`, data.raw_data_status)
       
+      // Transform Flask response format to frontend expected format
+      const transformedData = {
+        ...response.data,
+        // Map Flask keys to frontend expected keys
+        info: data.information,           // information -> info
+        summaryData: data.summary,        // summary -> summaryData for StatisticalInfoByPoints
+        profileData: data.data,           // data -> profileData for charts
+        // Keep original keys for backward compatibility
+        information: data.information,
+        summary: data.summary,
+        data: data.data
+      }
+      
+      console.log(`🔄 Transformed data keys:`, Object.keys(transformedData))
+      console.log(`🔄 Frontend-expected info:`, transformedData.info ? 'Available' : 'Missing')
+      console.log(`🔄 Frontend-expected summaryData:`, transformedData.summaryData ? 'Available' : 'Missing')
+      console.log(`🔄 Frontend-expected profileData:`, transformedData.profileData ? 'Available' : 'Missing')
+      
       return {
         success: true,
-        data: response.data
+        data: transformedData
       }
     } else {
       console.warn('⚠️ Failed to load measurement data:', response.error)
@@ -339,16 +368,17 @@ export async function fetchMeasurementData(groupKey, toolName = 'MAP608') {
   }
 }
 
-export async function fetchSummaryData(groupKey, toolName = 'MAP608') {
-  console.log(`📊 fetchSummaryData called for groupKey: ${groupKey}, tool: ${toolName}`)
+export async function fetchSummaryData(filename, toolName = 'MAP608') {
+  console.log(`📊 fetchSummaryData called for filename: ${filename}, tool: ${toolName}`)
   
   try {
-    const measurementResponse = await fetchMeasurementData(groupKey, toolName)
+    const measurementResponse = await fetchMeasurementData(filename, toolName)
     
-    if (measurementResponse.success && measurementResponse.data.statistics_table) {
+    if (measurementResponse.success && measurementResponse.data.summaryData) {
+      console.log(`📊 Summary data found:`, measurementResponse.data.summaryData)
       return {
         success: true,
-        data: measurementResponse.data.statistics_table
+        data: measurementResponse.data.summaryData
       }
     } else {
       return {

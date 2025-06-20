@@ -5,25 +5,43 @@ Run with: python index.py
 
 from flask import Flask
 from flask_cors import CORS
-import atexit
 import os
 from api.routes import api_bp
-from api.scheduler import init_scheduler
 
 def create_app():
     app = Flask(__name__)
     
-    # Enable CORS for frontend communication
-    CORS(app, origins=['http://localhost:3000', 'http://127.0.0.1:3000'])
+    # Configure CORS with flexible settings for development
+    # Get custom origins from environment variable
+    custom_origins = os.environ.get('CORS_ORIGINS', '').split(',') if os.environ.get('CORS_ORIGINS') else []
     
+    # Default allowed origins for local development
+    default_origins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'http://localhost:5173',  # Vite default
+        'http://localhost:8080',
+        'http://127.0.0.1:3000',
+        'http://127.0.0.1:3001',
+        'http://127.0.0.1:3002',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:8080',
+    ]
+    
+    # Combine and deduplicate origins
+    allowed_origins = list(set(default_origins + [origin.strip() for origin in custom_origins if origin.strip()]))
+    
+    # Configure CORS
+    CORS(app, 
+         origins=allowed_origins,
+         allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+         supports_credentials=True
+    )
+
     # Register API blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
-    
-    # Initialize APScheduler
-    scheduler = init_scheduler(app)
-    
-    # Shut down the scheduler when exiting the app
-    atexit.register(lambda: scheduler.shutdown())
     
     @app.route('/')
     def health_check():

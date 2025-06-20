@@ -12,11 +12,6 @@ from .utils.file_parser import (
     get_pickle_file_path_by_filename,
     get_profile_file_path_by_filename,
     get_image_file_path_by_filename,
-    parse_filename
-)
-from .utils.data_converter import (
-    convert_data_status_to_records,
-    convert_data_detail_to_records
 )
 
 # Create main API blueprint
@@ -105,89 +100,97 @@ def get_afm_file_detail(filename):
         print(f"Pickle data keys: {list(data.keys())}")
         
         # Extract measurement information from 'info' key (dict)
-        information = data.get('info', {})
-        print(f"Measurement info keys: {list(information.keys()) if information else []}")
+        data_info = data.get('info', {})
+        print(f"Measurement info keys: {list(data_info.keys()) if data_info else []}")
         
-        # Extract data_status from 'data_status' key and convert to DataFrame records format
-        data_status = data.get('data_status', {})
-        print(f"🔍 Raw data_status type: {type(data_status)}")
-        print(f"🔍 Raw data_status keys: {list(data_status.keys()) if data_status else 'No data_status'}")
-        if data_status:
-            print(f"🔍 First data_status entry: {list(data_status.items())[0] if data_status else 'No entries'}")
+        # Extract data_summary from 'summary' key - already in the right format
+        data_summary = data.get('summary', {})
+        print(f"🔍 Raw data_summary type: {type(data_summary)}")
+        print(f"🔍 Raw data_summary keys: {list(data_summary.keys()) if isinstance(data_summary, dict) else 'Not a dict'}")
         
-        summary_dict = []
-        if data_status:
-            try:
-                # Convert data_status structure to DataFrame records format
-                # data_status format: {'1_UL': {'ITEM': [...], 'Left_H (nm)': [...], ...}}
-                print(f"🔄 Converting data_status to records...")
-                summary_dict = convert_data_status_to_records(data_status)
-                print(f"✅ Converted data_status to {len(summary_dict)} summary records")
-                print(f"📊 Sample summary record: {summary_dict[0] if summary_dict else 'No records'}")
-            except Exception as e:
-                print(f"❌ Error converting data_status: {e}")
-                import traceback
-                traceback.print_exc()
-                summary_dict = []
+        # Check if data_summary is already in records format (list of dicts)
+        if isinstance(data_summary, list):
+            summary_records = data_summary
+            print(f"🔍 Summary already in records format: {len(summary_records)} records")
+        elif isinstance(data_summary, dict):
+            # If it's a dict, try to convert to records
+            summary_records = []
+            if 'Site' in data_summary and 'ITEM' in data_summary:
+                # New format with columnar data
+                num_rows = len(data_summary.get('Site', []))
+                for i in range(num_rows):
+                    record = {}
+                    for key, values in data_summary.items():
+                        if isinstance(values, list) and i < len(values):
+                            record[key] = values[i]
+                    if record:
+                        summary_records.append(record)
+            else:
+                # Legacy format - convert each site's data
+                for site, site_data in data_summary.items():
+                    if isinstance(site_data, dict) and 'ITEM' in site_data:
+                        items = site_data['ITEM']
+                        for i, item in enumerate(items):
+                            record = {'Site': site, 'ITEM': item}
+                            for key, values in site_data.items():
+                                if key != 'ITEM' and isinstance(values, list) and i < len(values):
+                                    record[key] = values[i]
+                            summary_records.append(record)
+            print(f"🔍 Converted summary to {len(summary_records)} records")
+        else:
+            summary_records = []
+            print(f"🔍 Summary data not in expected format")
+
+        # Extract detailed data from 'data' key
+        data_detail = data.get('data', {})
         
-        # Extract detailed data from 'data_detail' key and convert to records format
-        data_detail = data.get('data_detail', {})
-        data_dict = []
-        if data_detail:
-            try:
-                # Convert data_detail structure to records format
-                # data_detail format: {'1_UL': {'Point No': [...], 'X (um)': [...], ...}}
-                data_dict = convert_data_detail_to_records(data_detail)
-                print(f"Converted data_detail to {len(data_dict)} data records")
-            except Exception as e:
-                print(f"Error converting data_detail: {e}")
-                data_dict = []
-        
-        # Extract available measurement points from data_status
-        available_points = list(data_status.keys()) if data_status else []
-        
-        # Add profile data extraction from data_detail
-        profile_data = []
-        if data_detail:
-            # Get first measurement point for profile visualization
-            first_point_key = list(data_detail.keys())[0]
-            first_point_data = data_detail[first_point_key]
-            
-            if 'Point No' in first_point_data and 'Left_H (nm)' in first_point_data:
-                point_nos = first_point_data['Point No']
-                height_values = first_point_data['Left_H (nm)']
-                
-                for i, (point_no, height) in enumerate(zip(point_nos, height_values)):
-                    if i < 1000:  # Limit for performance
-                        profile_data.append({
-                            'x': i % 50,  # Create grid layout
-                            'y': i // 50,
-                            'z': float(height)
-                        })
-        
+        # Check if data_detail is already in records format
+        if isinstance(data_detail, list):
+            detail_records = data_detail
+            print(f"🔍 Detail already in records format: {len(detail_records)} records")
+        elif isinstance(data_detail, dict):
+            # Convert dict format to records
+            detail_records = []
+            for point_key, point_data in data_detail.items():
+                if isinstance(point_data, dict) and 'Point No' in point_data:
+                    point_numbers = point_data.get('Point No', [])
+                    for i in range(len(point_numbers)):
+                        record = {'measurement_point': point_key, 'index': i}
+                        for key, values in point_data.items():
+                            if isinstance(values, list) and i < len(values):
+                                record[key] = values[i]
+                        detail_records.append(record)
+            print(f"🔍 Converted detail to {len(detail_records)} records")
+        else:
+            detail_records = []
+            print(f"🔍 Detail data not in expected format")
+
+        # Extract available measurement points
+        available_points = []
+        if summary_records and len(summary_records) > 0:
+            # Get unique sites from records
+            sites = set()
+            for record in summary_records:
+                if 'Site' in record:
+                    sites.add(record['Site'])
+            available_points = sorted(list(sites))
+        elif isinstance(data_summary, dict):
+            available_points = list(data_summary.keys())
+
         response_data = {
             'success': True,
             'data': {
                 'filename': decoded_filename,
                 'tool': tool_name,
                 'pickle_filename': pickle_path.name,
-                'information': information,      # Dict with measurement metadata
-                'summary': summary_dict,        # Converted from data_status to records format
-                'data': data_dict,             # Converted from data_detail to records format
+                'information': data_info,      # Dict with measurement metadata
+                'summary': summary_records,    # Summary data in records format
+                'data': detail_records,        # Detail data in records format
                 'available_points': available_points,  # List of measurement points
-                'profile_data': profile_data,   # Profile data for visualization
-                'raw_data_status': data_status, # Original data_status structure for debugging
-                'raw_data_detail': data_detail  # Original data_detail structure for debugging
             },
             'message': f'Successfully loaded measurement data for {decoded_filename} from {tool_name}'
         }
-        
         print(f"Successfully loaded pickle data with:")
-        print(f"  - Information fields: {list(information.keys()) if information else []}")
-        print(f"  - Summary records: {len(summary_dict) if isinstance(summary_dict, list) else 'N/A'}")
-        print(f"  - Data records: {len(data_dict) if isinstance(data_dict, list) else 'N/A'}")
-        print(f"  - Profile points: {len(profile_data)}")
-        
         return jsonify(response_data)
         
     except Exception as e:
@@ -200,10 +203,10 @@ def get_afm_file_detail(filename):
             'message': f'Failed to load measurement detail for {decoded_filename}'
         }), 500
 
-# Profile Data Routes
+
 @api_bp.route('/afm-files/profile/<path:filename>/<point_number>', methods=['GET'])
 def get_profile_data(filename, point_number):
-    """Get profile data (x, y, z) from profile_dir for a specific measurement point"""
+    """Get profile data (x,y,z) from profile_dir for a specific measurement point"""
     try:
         tool_name = request.args.get('tool', 'MAP608')
         # URL decode the filename
@@ -221,73 +224,47 @@ def get_profile_data(filename, point_number):
                 'tool': tool_name
             }), 404
         
-        # Load the profile file
-        print(f"Loading profile file: {profile_path}")
+        # Check if file exists
+        if not profile_path.exists():
+            return jsonify({
+                'success': False,
+                'error': 'Profile file not accessible',
+                'message': f'Profile file {profile_path.name} exists in listing but not accessible',
+                'tool': tool_name
+            }), 404
         
-        with open(profile_path, 'rb') as f:
-            profile_data = pickle.load(f)
-        
-        print(f"Profile data type: {type(profile_data)}")
-        print(f"Profile data keys: {list(profile_data.keys()) if isinstance(profile_data, dict) else 'Not a dict'}")
-        
-        # Process profile data to extract x, y, z coordinates
-        processed_data = []
-        
-        if isinstance(profile_data, dict):
-            # Look for common coordinate keys
-            x_key = None
-            y_key = None
-            z_key = None
+        # Load profile data from pickle file
+        try:
+            with open(profile_path, 'rb') as f:
+                profile_data = pickle.load(f)
             
-            # Find coordinate keys (case insensitive)
-            for key in profile_data.keys():
-                key_lower = key.lower()
-                if 'x' in key_lower and not x_key:
-                    x_key = key
-                elif 'y' in key_lower and not y_key:
-                    y_key = key
-                elif any(z_name in key_lower for z_name in ['z', 'height', 'h']):
-                    z_key = key
+            # Profile data should be a list of dictionaries with x, y, z coordinates
+            if not isinstance(profile_data, list):
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid profile data format',
+                    'message': f'Profile data should be a list, got {type(profile_data)}',
+                    'tool': tool_name
+                }), 400
             
-            print(f"Found coordinate keys: x={x_key}, y={y_key}, z={z_key}")
+            print(f"Successfully loaded {len(profile_data)} profile data points")
             
-            if x_key and y_key:
-                x_data = profile_data.get(x_key, [])
-                y_data = profile_data.get(y_key, [])
-                z_data = profile_data.get(z_key, []) if z_key else []
-                
-                # Ensure all arrays are the same length
-                min_length = min(len(x_data), len(y_data))
-                if z_data:
-                    min_length = min(min_length, len(z_data))
-                
-                print(f"Data lengths: x={len(x_data)}, y={len(y_data)}, z={len(z_data) if z_data else 0}")
-                print(f"Using min_length: {min_length}")
-                
-                for i in range(min_length):
-                    point = {
-                        'x': float(x_data[i]) if x_data[i] is not None else 0,
-                        'y': float(y_data[i]) if y_data[i] is not None else 0
-                    }
-                    if z_data and i < len(z_data):
-                        point['z'] = float(z_data[i]) if z_data[i] is not None else 0
-                    
-                    processed_data.append(point)
-                
-                print(f"✅ Processed {len(processed_data)} profile points")
-                if processed_data:
-                    print(f"Sample point: {processed_data[0]}")
-            else:
-                print(f"❌ Could not find x,y coordinate keys in profile data")
-        
-        return jsonify({
-            'success': True,
-            'data': processed_data,
-            'total_points': len(processed_data),
-            'tool': tool_name,
-            'filename': profile_path.name,
-            'message': f'Successfully loaded profile data for {decoded_filename}, point {point_number} from {tool_name}'
-        })
+            return jsonify({
+                'success': True,
+                'data': profile_data,
+                'count': len(profile_data),
+                'tool': tool_name,
+                'message': f'Successfully loaded profile data for {decoded_filename}, point {point_number} from {tool_name}'
+            })
+            
+        except Exception as e:
+            print(f"Error loading profile pickle file: {e}")
+            return jsonify({
+                'success': False,
+                'error': 'Failed to load profile data',
+                'message': f'Error reading profile file: {str(e)}',
+                'tool': tool_name
+            }), 500
         
     except Exception as e:
         print(f"Error in get_profile_data: {e}")
@@ -296,8 +273,9 @@ def get_profile_data(filename, point_number):
         return jsonify({
             'success': False,
             'error': str(e),
-            'message': f'Failed to load profile data for {decoded_filename}, point {point_number}'
+            'message': f'Failed to get profile data for {decoded_filename}, point {point_number}'
         }), 500
+
 
 @api_bp.route('/afm-files/image/<path:filename>/<point_number>', methods=['GET'])
 def get_profile_image(filename, point_number):
