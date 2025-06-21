@@ -137,7 +137,8 @@ export const apiService = {
   async getProfileData(filename, pointNumber, toolName = 'MAP608') {
     console.log(`🔍 Fetching profile data for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
     const params = new URLSearchParams({ tool: toolName })
-    const response = await api.get(`/afm-files/profile/${encodeURIComponent(filename)}/${pointNumber}?${params}`)
+    // Use encodeURIComponent for the point number in case it contains special characters like underscore
+    const response = await api.get(`/afm-files/profile/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
     console.log('📊 Profile data response:', response)
     return response
   },
@@ -146,7 +147,8 @@ export const apiService = {
   async getProfileImage(filename, pointNumber, toolName = 'MAP608') {
     console.log(`🔍 Fetching profile image for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
     const params = new URLSearchParams({ tool: toolName })
-    const response = await api.get(`/afm-files/image/${encodeURIComponent(filename)}/${pointNumber}?${params}`)
+    // Use encodeURIComponent for the point number in case it contains special characters like underscore
+    const response = await api.get(`/afm-files/image/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
     console.log('📊 Profile image response:', response)
     return response
   },
@@ -154,7 +156,8 @@ export const apiService = {
   // Get the URL for serving a profile image
   getProfileImageUrl(filename, pointNumber, toolName = 'MAP608') {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
-    return `${baseUrl}/afm-files/image-file/${encodeURIComponent(filename)}/${pointNumber}?tool=${toolName}`
+    // Use encodeURIComponent for the point number in case it contains special characters like underscore
+    return `${baseUrl}/afm-files/image-file/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?tool=${toolName}`
   }
 }
 
@@ -282,12 +285,9 @@ export async function fetchProfileData(filename, point, toolName = 'MAP608') {
     // Remove .csv extension from filename if present
     const cleanFilename = filename.replace('.csv', '')
     
-    // Convert measurement point format to point number if needed
-    // E.g., "1_UL" -> "1", or just use point directly if it's already a number
-    let pointNumber = point
-    if (typeof point === 'string' && point.includes('_')) {
-      pointNumber = point.split('_')[0] // Extract number part
-    }
+    // Keep the full measurement point with site info (e.g., "1_UL")
+    // The backend needs this to construct the correct file path
+    const pointNumber = point
     
     console.log(`🔄 Calling getProfileData with cleanFilename: ${cleanFilename}, pointNumber: ${pointNumber}`)
     

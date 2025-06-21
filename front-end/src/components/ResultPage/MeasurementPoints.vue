@@ -103,6 +103,8 @@
             class="measurement-points-table"
             hover
             show-current-page
+            :height="400"
+            fixed-header
           >
             <!-- Custom template for measurement point column -->
             <template v-slot:item.measurement_point="{ item }">
@@ -345,8 +347,8 @@ const allAvailableHeaders = computed(() => {
     { key: 'Site_ID', title: 'Site ID', priority: 1, altKeys: ['Site ID'] },
     { key: 'Site_X', title: 'Site X', priority: 2, altKeys: ['Site X'] },
     { key: 'Site_Y', title: 'Site Y', priority: 3, altKeys: ['Site Y'] },
-    { key: 'X_um', title: 'X (μm)', priority: 4, altKeys: ['X (um)'] },
-    { key: 'Y_um', title: 'Y (μm)', priority: 5, altKeys: ['Y (um)'] },
+    { key: 'X_um', title: 'X (um)', priority: 4, altKeys: ['X (um)'] },
+    { key: 'Y_um', title: 'Y (um)', priority: 5, altKeys: ['Y (um)'] },
     { key: 'Point_No', title: 'Point ID', priority: 6, altKeys: ['Point No'] },
     { key: 'Methods_ID', title: 'Method ID', priority: 7, altKeys: ['Methods ID'] },
     { key: 'Left_H_nm', title: 'Left H (nm)', priority: 8, altKeys: ['Left H (nm)', 'Left_H'] },
@@ -553,10 +555,10 @@ watch(() => props.detailedData, (newData) => {
     console.log(`🔍 [MeasurementPoints] First record:`, newData[0])
     console.log(`🔍 [MeasurementPoints] Available measurement points:`, availableMeasurementPoints.value)
     
-    // Auto-select first measurement point if none selected
+    // Don't auto-select first measurement point - wait for user interaction
+    // This prevents unwanted API calls when the page loads
     if (!selectedMeasurementPoint.value && availableMeasurementPoints.value.length > 0) {
-      selectedMeasurementPoint.value = availableMeasurementPoints.value[0]
-      console.log(`🔍 [MeasurementPoints] Auto-selected point:`, selectedMeasurementPoint.value)
+      console.log(`🔍 [MeasurementPoints] ${availableMeasurementPoints.value.length} points available, waiting for user selection`)
     }
     
     // Initialize selected columns - first try to load from localStorage, then show all by default

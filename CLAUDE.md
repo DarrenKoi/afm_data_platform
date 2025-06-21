@@ -20,6 +20,7 @@ The front-end follows this organized project structure:
 - `src/pages/` - Page components (manually registered in router)
 - `src/layouts/` - Layout components (AppHeader.vue, AppFooter.vue)
 - `src/components/` - Reusable UI components (buttons, cards, charts, etc.)
+  - `src/components/ResultPage/` - Components specific to the measurement result display page
 - `src/stores/` - Pinia state management stores
 - `src/plugins/` - Plugin registration (Vuetify, Pinia, Router)
 - `src/styles/` - SCSS styling configuration
@@ -165,6 +166,59 @@ The frontend uses Axios for API communication:
 - The project uses modern Sass API compilation
 - AFM logo (afm_logo2.png) and favicon are located in `src/assets/`
 
+## Component Architecture
+
+### ResultPage Components
+
+The measurement result display page (`src/pages/ResultPage.vue`) uses several specialized components located in `src/components/ResultPage/`:
+
+**Active Components:**
+
+- **`MeasurementInfo.vue`** - Displays measurement information and summary statistics organized by measurement sites in separate cards
+  - Shows basic measurement metadata (fab, lot ID, recipe, date, etc.)
+  - Groups summary statistics by Site parameter
+  - Each site gets its own card with statistics table (MEAN, STDEV, MIN, MAX, etc.)
+
+- **`StatisticalInfoByPoints.vue`** - Provides interactive summary scatter chart visualization
+  - Displays scatter plot of statistical data across measurement points
+  - Chart controls for selecting statistic type and measurements to display
+  - Uses ECharts for data visualization
+  - No table view (chart-only component)
+
+- **`MeasurementPoints.vue`** - Handles detailed measurement point data and selection
+  - Displays available measurement points for data loading
+  - Manages point selection and data fetching from API
+  - Integrates with profile data loading
+
+- **`ChartVisualization.vue`** - Generic chart component for profile data visualization
+  - Used for Z-value distribution charts
+  - Supports multiple chart types (scatter, line, histogram)
+  - Handles profile data (x, y, z coordinates) from measurement points
+
+- **`EnhancedChartVisualization.vue`** - Advanced chart component for wafer heat map visualization
+  - Displays wafer-level heat map of measurement data
+  - Interactive point selection on wafer map
+  - Integrates with detailed measurement data
+
+### ResultPage Layout Structure
+
+```
+ResultPage.vue:
+├── Row 1: Information & Chart
+│   ├── Column 1: MeasurementInfo (info + site statistics)
+│   └── Column 2: StatisticalInfoByPoints (scatter chart)
+├── Row 2: Measurement Points
+│   └── MeasurementPoints (point selection & data loading)
+└── Row 3: Visualization & Analysis
+    ├── Column 1: EnhancedChartVisualization (wafer heat map)
+    └── Column 2: Profile Image & ChartVisualization (Z-distribution)
+```
+
+**Removed/Cleaned Components:**
+- `StatisticalInfo.vue` - Legacy statistics table component (replaced by MeasurementInfo)
+- `SummaryDataTable.vue` - Unused summary table component
+- `MeasurementPointsSelector.vue` - Unused point selector component
+
 ## Documentation Structure
 
 The `front-end/docs/` folder contains comprehensive beginner-friendly guides for web development using this AFM data platform as a learning project:
@@ -188,3 +242,7 @@ The `front-end/docs/` folder contains comprehensive beginner-friendly guides for
 - **Maintained beginner focus**: Preserved tutorial's approachable tone for non-developers
 
 The consolidated `claude.md` serves as the primary learning resource, making the documentation more accessible while preserving all technical details from the original reference materials.
+
+## Memories and Observations
+
+- The data used to display tend to contain string "(nm)" in their column name.

@@ -8,7 +8,7 @@ import { VueRouterAutoImports } from "unplugin-vue-router";
 import VueRouter from "unplugin-vue-router/vite";
 // Utilities
 import { defineConfig } from "vite";
-
+import vueDevTools from "vite-plugin-vue-devtools";
 import Layouts from "vite-plugin-vue-layouts-next";
 import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
@@ -18,6 +18,7 @@ export default defineConfig({
   plugins: [
     VueRouter(),
     Layouts(),
+    vueDevTools(),
     Vue({
       template: { transformAssetUrls },
     }),

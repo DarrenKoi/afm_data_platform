@@ -282,12 +282,42 @@ def get_profile_file_path_by_filename(base_filename, point_number, tool_name='MA
         # Remove extension from base filename if present
         filename_no_ext = base_filename.replace('.csv', '').replace('.pkl', '')
         
-        # Format point number with padding
-        formatted_point = f"{int(point_number):04d}"
+        # Handle different point_number formats
+        # If point_number contains underscore (e.g., "1_UL"), use it as is
+        # If it's just a number, we need to find the correct site suffix
+        if '_' in str(point_number):
+            # Already has site info (e.g., "1_UL")
+            site_suffix = f"_{point_number}"
+            # Extract just the number for formatting
+            point_num = point_number.split('_')[0]
+            formatted_point = f"{int(point_num):04d}"
+        else:
+            # Just a number, need to find the site suffix
+            # Try common site suffixes
+            site_suffixes = ['_UL', '_UR', '_LL', '_LR', '_C']
+            for suffix in site_suffixes:
+                test_point = f"{int(point_number):04d}"
+                # Check if filename already ends with # to avoid double ##
+                if filename_no_ext.endswith('#'):
+                    test_filename = f"{filename_no_ext}_{point_number}{suffix}_{test_point}_Height.pkl"
+                else:
+                    test_filename = f"{filename_no_ext}#_{point_number}{suffix}_{test_point}_Height.pkl"
+                test_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'profile_dir' / test_filename
+                if test_path.exists():
+                    print(f"✅ Found profile file with suffix {suffix}: {test_path}")
+                    return test_path
+            
+            # If no file found with suffixes, try without site info (fallback)
+            formatted_point = f"{int(point_number):04d}"
+            site_suffix = ""
         
         # Construct profile file path
-        # Format: base_filename#_0001_Height.pkl
-        profile_filename = f"{filename_no_ext}#_{formatted_point}_Height.pkl"
+        # Format: base_filename#_1_UL_0001_Height.pkl
+        # Check if filename already ends with # to avoid double ##
+        if filename_no_ext.endswith('#'):
+            profile_filename = f"{filename_no_ext}{site_suffix}_{formatted_point}_Height.pkl"
+        else:
+            profile_filename = f"{filename_no_ext}#{site_suffix}_{formatted_point}_Height.pkl"
         profile_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'profile_dir' / profile_filename
         
         print(f"🔍 Looking for profile file: {profile_path}")
@@ -310,12 +340,42 @@ def get_image_file_path_by_filename(base_filename, point_number, tool_name='MAP6
         # Remove extension from base filename if present
         filename_no_ext = base_filename.replace('.csv', '').replace('.pkl', '')
         
-        # Format point number with padding
-        formatted_point = f"{int(point_number):04d}"
+        # Handle different point_number formats
+        # If point_number contains underscore (e.g., "1_UL"), use it as is
+        # If it's just a number, we need to find the correct site suffix
+        if '_' in str(point_number):
+            # Already has site info (e.g., "1_UL")
+            site_suffix = f"_{point_number}"
+            # Extract just the number for formatting
+            point_num = point_number.split('_')[0]
+            formatted_point = f"{int(point_num):04d}"
+        else:
+            # Just a number, need to find the site suffix
+            # Try common site suffixes
+            site_suffixes = ['_UL', '_UR', '_LL', '_LR', '_C']
+            for suffix in site_suffixes:
+                test_point = f"{int(point_number):04d}"
+                # Check if filename already ends with # to avoid double ##
+                if filename_no_ext.endswith('#'):
+                    test_filename = f"{filename_no_ext}_{point_number}{suffix}_{test_point}_Height.webp"
+                else:
+                    test_filename = f"{filename_no_ext}#_{point_number}{suffix}_{test_point}_Height.webp"
+                test_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'tiff_dir' / test_filename
+                if test_path.exists():
+                    print(f"✅ Found image file with suffix {suffix}: {test_path}")
+                    return test_path
+            
+            # If no file found with suffixes, try without site info (fallback)
+            formatted_point = f"{int(point_number):04d}"
+            site_suffix = ""
         
         # Construct image file path
-        # Format: base_filename#_0001_Height.webp
-        image_filename = f"{filename_no_ext}#_{formatted_point}_Height.webp"
+        # Format: base_filename#_1_UL_0001_Height.webp
+        # Check if filename already ends with # to avoid double ##
+        if filename_no_ext.endswith('#'):
+            image_filename = f"{filename_no_ext}{site_suffix}_{formatted_point}_Height.webp"
+        else:
+            image_filename = f"{filename_no_ext}#{site_suffix}_{formatted_point}_Height.webp"
         image_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'tiff_dir' / image_filename
         
         print(f"🔍 Looking for image file: {image_path}")

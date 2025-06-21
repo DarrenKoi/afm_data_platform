@@ -2,13 +2,7 @@
   <v-container fluid class="pa-6 px-md-8 px-lg-12">
     <!-- Distinctive Back Button -->
     <div class="mb-3">
-      <v-btn
-        color="primary"
-        variant="elevated"
-        size="large"
-        @click="goBack"
-        class="back-button"
-      >
+      <v-btn color="primary" variant="elevated" size="large" @click="goBack" class="back-button">
         <v-icon start>mdi-arrow-left</v-icon>
         Back to Search
       </v-btn>
@@ -20,165 +14,99 @@
       <v-col cols="12" md="6">
         <MeasurementInfo 
           :measurement-info="measurementInfo" 
+          :summary-data="summaryData"
           :compact="true" 
         />
-        
-        <!-- Statistics Card -->
-        <v-card class="mt-3 statistics-card">
-          <v-card-title class="py-3 px-4">
-            <v-icon start size="small">mdi-table</v-icon>
-            <span class="text-subtitle-1 font-weight-medium">Statistics</span>
-          </v-card-title>
-          <v-card-text class="pa-0">
-            <StatisticalInfoByPoints 
-              :summary-data="summaryData" 
-              @row-click="handleStatisticRowClick"
-              @statistic-selected="handleStatisticSelected"
-              :compact="true"
-            />
-          </v-card-text>
-        </v-card>
       </v-col>
-      
+
       <!-- Second column: Scatter Chart -->
       <v-col cols="12" md="6">
-        <v-card class="scatter-chart-card">
-          <v-card-title class="py-3 px-4">
-            <v-icon start size="small">mdi-chart-scatter-plot</v-icon>
-            <span class="text-subtitle-1 font-weight-medium">Scatter Chart</span>
-            <v-spacer />
-            <!-- Chart Controls -->
-            <v-btn-group variant="outlined" size="small" density="compact">
-              <v-btn 
-                :variant="chartType === 'scatter' ? 'flat' : 'outlined'"
-                :color="chartType === 'scatter' ? 'primary' : 'default'"
-                @click="chartType = 'scatter'"
-                size="x-small"
-              >
-                <v-icon size="small">mdi-chart-scatter-plot</v-icon>
-              </v-btn>
-              <v-btn 
-                :variant="chartType === 'line' ? 'flat' : 'outlined'"
-                :color="chartType === 'line' ? 'primary' : 'default'"
-                @click="chartType = 'line'"
-                size="x-small"
-              >
-                <v-icon size="small">mdi-chart-line</v-icon>
-              </v-btn>
-            </v-btn-group>
-          </v-card-title>
-          <v-card-text class="pa-2">
-            <ChartVisualization 
-              :selected-point="selectedPoint"
-              :profile-data="profileData"
-              :is-loading="isLoadingProfile"
-              :chart-height="350"
-              :compact="true"
-              :chart-type="chartType"
-              @chart-type-changed="handleChartTypeChanged"
-            />
-          </v-card-text>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Second row: Detailed data -->
-    <v-row dense class="mb-3">
-      <v-col cols="12">
-        <!-- Details card with integrated point selection -->
-        <MeasurementPoints 
-          :detailed-data="detailedData"
-          :loading="isLoadingProfile"
-          :filename="filename"
-          :measurement-points="measurementPoints"
-          :selected-point="selectedPoint"
-          @point-selected="handlePointSelected"
-          @point-data-loaded="handlePointDataLoaded"
-          @simple-point-selected="selectPoint"
+        <StatisticalInfoByPoints 
+          :summary-data="summaryData" 
+          @row-click="handleStatisticRowClick"
+          @statistic-selected="handleStatisticSelected" 
+          :compact="true" 
         />
       </v-col>
     </v-row>
 
-    <!-- Professional Two-Column Layout -->
+    <!-- Second row: Two-column layout for detailed data and heat map -->
     <v-row dense class="main-content-row">
-      <!-- Column 1: Heat Map and Controls -->
-      <v-col cols="12" lg="7" xl="6">
-        <v-card class="heat-map-card" :height="chartHeight">
-          <v-card-title class="py-2">
-            <v-icon start size="small">mdi-grid</v-icon>
-            <span class="text-subtitle-1">Wafer Heat Map</span>
-          </v-card-title>
-          <v-card-text class="pa-2">
-            <EnhancedChartVisualization 
-              :filename="filename" 
-              :chart-height="chartHeight - 80"
-              :profile-data="profileData"
-              :selected-point="selectedPoint"
-              @point-selected="handleWaferPointSelected"
-            />
-          </v-card-text>
-        </v-card>
+      <!-- Column 1: Detailed Data (Half Width) -->
+      <v-col cols="12" lg="6">
+        <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
+          :measurement-points="measurementPoints" :selected-point="selectedPoint" @point-selected="handlePointSelected"
+          @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
       </v-col>
 
-      <!-- Column 2: Profile Image and Z-Distribution -->
-      <v-col cols="12" lg="5" xl="6">
+      <!-- Column 2: Heat Map and Charts -->
+      <v-col cols="12" lg="6">
         <v-row dense>
-          <!-- Profile Image -->
+          <!-- Heat Map -->
           <v-col cols="12">
-            <v-card class="profile-card mb-2" :height="(chartHeight / 2) - 6">
+            <v-card class="heat-map-card mb-2" :height="(chartHeight * 0.75) - 6">
               <v-card-title class="py-2">
-                <v-icon start size="small">mdi-image</v-icon>
-                <span class="text-subtitle-1">Profile Image</span>
-                <v-spacer />
-                <v-chip v-if="selectedPoint" size="x-small" color="primary" variant="outlined">
-                  Point {{ selectedPoint }}
-                </v-chip>
+                <v-icon start size="small">mdi-grid</v-icon>
+                <span class="text-subtitle-1">Wafer Heat Map</span>
               </v-card-title>
               <v-card-text class="pa-2">
-                <div v-if="isLoadingProfileImage" class="text-center pa-4">
-                  <v-progress-circular indeterminate color="primary" size="small" />
-                  <p class="mt-2 text-caption">Loading profile image...</p>
-                </div>
-                <div v-else-if="profileImageUrl" class="profile-image-container">
-                  <img 
-                    :src="profileImageUrl" 
-                    alt="Profile Image"
-                    class="profile-image"
-                    @error="handleImageError"
-                    @load="handleImageLoad"
-                  />
-                </div>
-                <div v-else class="text-center pa-4">
-                  <v-icon size="32" color="grey">mdi-image-off</v-icon>
-                  <p class="text-body-2 mt-2 text-medium-emphasis">No profile image available</p>
-                </div>
+                <EnhancedChartVisualization :filename="filename" :chart-height="(chartHeight * 0.75) - 50"
+                  :profile-data="profileData" :selected-point="selectedPoint"
+                  @point-selected="handleWaferPointSelected" />
               </v-card-text>
             </v-card>
           </v-col>
 
-          <!-- Z-Value Distribution -->
+          <!-- Profile Image and Z-Distribution Row -->
           <v-col cols="12">
-            <v-card class="distribution-card" :height="(chartHeight / 2) - 6">
-              <v-card-title class="py-2">
-                <v-icon start size="small">mdi-chart-bar</v-icon>
-                <span class="text-subtitle-1">Z-Value Distribution</span>
-                <v-spacer />
-                <v-chip v-if="profileData.length > 0" size="x-small" color="success" variant="outlined">
-                  {{ profileData.length.toLocaleString() }} points
-                </v-chip>
-              </v-card-title>
-              <v-card-text class="pa-2">
-                <ChartVisualization 
-                  :selected-point="selectedPoint"
-                  :profile-data="profileData"
-                  :is-loading="isLoadingProfile"
-                  :chart-height="(chartHeight / 2) - 90"
-                  :compact="true"
-                  :chart-type="'histogram'"
-                  @chart-type-changed="handleChartTypeChanged"
-                />
-              </v-card-text>
-            </v-card>
+            <v-row dense>
+              <!-- Profile Image -->
+              <v-col cols="12" md="6">
+                <v-card class="profile-card" :height="(chartHeight * 0.25) - 6">
+                  <v-card-title class="py-2">
+                    <v-icon start size="small">mdi-image</v-icon>
+                    <span class="text-subtitle-1">Profile Image</span>
+                    <v-spacer />
+                    <v-chip v-if="selectedPoint" size="x-small" color="primary" variant="outlined">
+                      Point {{ selectedPoint }}
+                    </v-chip>
+                  </v-card-title>
+                  <v-card-text class="pa-2">
+                    <div v-if="isLoadingProfileImage" class="text-center pa-4">
+                      <v-progress-circular indeterminate color="primary" size="small" />
+                      <p class="mt-2 text-caption">Loading profile image...</p>
+                    </div>
+                    <div v-else-if="profileImageUrl" class="profile-image-container">
+                      <img :src="profileImageUrl" alt="Profile Image" class="profile-image" @error="handleImageError"
+                        @load="handleImageLoad" />
+                    </div>
+                    <div v-else class="text-center pa-4">
+                      <v-icon size="32" color="grey">mdi-image-off</v-icon>
+                      <p class="text-body-2 mt-2 text-medium-emphasis">No profile image available</p>
+                    </div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+
+              <!-- Z-Value Distribution -->
+              <v-col cols="12" md="6">
+                <v-card class="distribution-card" :height="(chartHeight * 0.25) - 6">
+                  <v-card-title class="py-2">
+                    <v-icon start size="small">mdi-chart-bar</v-icon>
+                    <span class="text-subtitle-1">Z-Value Distribution</span>
+                    <v-spacer />
+                    <v-chip v-if="profileData.length > 0" size="x-small" color="success" variant="outlined">
+                      {{ profileData.length.toLocaleString() }} points
+                    </v-chip>
+                  </v-card-title>
+                  <v-card-text class="pa-2">
+                    <ChartVisualization :selected-point="selectedPoint" :profile-data="profileData"
+                      :is-loading="isLoadingProfile" :chart-height="(chartHeight * 0.25) - 50" :compact="true"
+                      :chart-type="'histogram'" />
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
           </v-col>
         </v-row>
       </v-col>
@@ -193,9 +121,7 @@ import { fetchProfileData, fetchSummaryData, fetchMeasurementData, apiService } 
 
 // Import components
 import MeasurementInfo from '@/components/ResultPage/MeasurementInfo.vue'
-import SummaryDataTable from '@/components/ResultPage/SummaryDataTable.vue'
 import ChartVisualization from '@/components/ResultPage/ChartVisualization.vue'
-import StatisticalInfo from '@/components/ResultPage/StatisticalInfo.vue'
 import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPoints.vue'
 import MeasurementPoints from '@/components/ResultPage/MeasurementPoints.vue'
 import EnhancedChartVisualization from '@/components/ResultPage/EnhancedChartVisualization.vue'
@@ -216,7 +142,6 @@ const isLoadingProfile = ref(false)
 const selectedStatistic = ref(null)
 const profileImageUrl = ref(null)
 const isLoadingProfileImage = ref(false)
-const chartType = ref('scatter')
 
 
 // Calculate optimal chart height based on viewport
@@ -232,7 +157,7 @@ const chartHeight = computed(() => {
 async function selectPoint(pointNumber) {
   selectedPoint.value = pointNumber
   isLoadingProfile.value = true
-  
+
   try {
     const response = await fetchProfileData(filename.value, pointNumber)
     console.log('Profile data response:', response)
@@ -247,22 +172,19 @@ async function selectPoint(pointNumber) {
   }
 }
 
-function handleChartTypeChanged(type) {
-  console.log('Chart type changed to:', type)
-}
 
 function handleWaferPointSelected(point) {
   // When a point is selected from the wafer heat map, update the profile data
   console.log('handleWaferPointSelected called with:', point)
-  
+
   if (point && point.point) {
     console.log('Selecting point:', point.point)
     selectPoint(point.point)
   } else if (point) {
     // Fallback: try to find a matching measurement point or use first point
-    console.log('Point structure unexpected, trying fallback...') 
+    console.log('Point structure unexpected, trying fallback...')
     console.log('Available measurement points:', measurementPoints.value)
-    
+
     if (measurementPoints.value.length > 0) {
       // For now, let's just select the first point as a test
       const firstPoint = measurementPoints.value[0]
@@ -275,20 +197,20 @@ function handleWaferPointSelected(point) {
 
 async function loadData() {
   console.log(`🚀 [ResultPage] Loading data for recipe: ${recipeId.value}, filename: ${filename.value}`)
-  
+
   try {
     // Load real measurement data from pickle file
     console.log(`🔍 [ResultPage] Calling fetchMeasurementData...`)
     const measurementResponse = await fetchMeasurementData(filename.value)
-    
+
     console.log(`📦 [ResultPage] measurementResponse:`, measurementResponse)
     console.log(`📦 [ResultPage] measurementResponse.success:`, measurementResponse.success)
     console.log(`📦 [ResultPage] measurementResponse.data:`, measurementResponse.data)
-    
+
     if (measurementResponse.success && measurementResponse.data) {
       const data = measurementResponse.data
       console.log(`🎯 [ResultPage] Processing data with keys:`, Object.keys(data))
-      
+
       // Set measurement info from info dict (transformed from information)
       console.log(`🔍 [ResultPage] Checking info data:`, data.info)
       if (data.info && Object.keys(data.info).length > 0) {
@@ -305,12 +227,12 @@ async function loadData() {
         }
         console.log(`⚠️ [ResultPage] Using fallback measurement info:`, measurementInfo.value)
       }
-      
+
       // Set summary data from DataFrame - using transformed summaryData
       console.log(`🔍 [ResultPage] Checking summaryData:`, data.summaryData)
       console.log(`🔍 [ResultPage] summaryData is array:`, Array.isArray(data.summaryData))
       console.log(`🔍 [ResultPage] summaryData length:`, data.summaryData ? data.summaryData.length : 'null/undefined')
-      
+
       if (data.summaryData && Array.isArray(data.summaryData) && data.summaryData.length > 0) {
         summaryData.value = data.summaryData
         console.log(`✅ [ResultPage] Set summary data from summaryData:`, summaryData.value)
@@ -327,7 +249,7 @@ async function loadData() {
           console.log(`⚠️ [ResultPage] Using dummy summary data:`, summaryData.value)
         }
       }
-      
+
       // Set detailed data from DataFrame - using transformed profileData (which contains detailed measurements)
       if (data.profileData && Array.isArray(data.profileData) && data.profileData.length > 0) {
         detailedData.value = data.profileData
@@ -339,14 +261,14 @@ async function loadData() {
         detailedData.value = []
         console.log('⚠️ No detailed data available')
       }
-      
+
       // Set available measurement points
       if (data.available_points && data.available_points.length > 0) {
         measurementPoints.value = data.available_points.map(point => ({
           point: point,
           filename: filename.value
         }))
-        
+
         // Auto-select first point and load its data
         selectPoint(data.available_points[0])
       } else {
@@ -362,11 +284,11 @@ async function loadData() {
           selectPoint(`${slot}_${measuredInfo}`)
         }
       }
-      
+
       // Profile data for charts will be loaded separately via API calls when points are selected
       // Initial profile data is not typically available in the summary response
       console.log(`📊 [ResultPage] Profile data will be loaded when measurement points are selected`)
-      
+
       console.log('✅ Measurement data loaded successfully')
     } else {
       console.warn('⚠️ Failed to load measurement data, using fallback')
@@ -409,16 +331,16 @@ function createFallbackData() {
       sample_id: filename.value,
       carrier_id: 'Auto'
     }
-    
+
     // Create measurement points
     measurementPoints.value = [{
       point: `${slot}_${measuredInfo}`,
       filename: filename.value
     }]
-    
+
     // Generate dummy statistics
     statisticsData.value = generateDummyStatistics(filename.value)
-    
+
     console.log('✅ Created fallback measurement data')
   }
 }
@@ -427,7 +349,7 @@ function createFallbackData() {
 function generateDummySummaryData(filename) {
   const parts = filename.split('#')
   const pointName = parts.length >= 3 ? `${parts[1]}_UL` : '1_UL'
-  
+
   return [
     { ITEM: 'MEAN', [pointName]: -4.942, 'Left_H (nm)': -4.942, 'Right_H (nm)': -6.014, 'Ref_H (nm)': 0.0 },
     { ITEM: 'STDEV', [pointName]: 0.234, 'Left_H (nm)': 0.234, 'Right_H (nm)': 0.156, 'Ref_H (nm)': 0.0 },
@@ -442,7 +364,7 @@ function generateDummySummaryData(filename) {
 function handleStatisticRowClick(rowItem) {
   console.log('Statistical row clicked:', rowItem)
   selectedStatistic.value = rowItem.ITEM
-  
+
   // Filter detailed data based on the selected statistic
   // This would show detailed measurement data for the selected statistic
   if (detailedData.value.length > 0) {
@@ -460,32 +382,32 @@ function handleStatisticSelected(statisticName) {
 // Handler for measurement point selection from MeasurementPoints component
 async function handlePointSelected(pointData) {
   console.log('🎯 [ResultPage] Point selected:', pointData)
-  
+
   const { measurementPoint, pointNumber, filename: pointFilename } = pointData
-  
+
   if (pointNumber && pointFilename) {
     try {
       // Fetch profile data and image in parallel
       console.log(`🔄 [ResultPage] Fetching profile data and image for point ${pointNumber}`)
       isLoadingProfile.value = true
       isLoadingProfileImage.value = true
-      
+
       // Clean filename by removing .csv extension if present
       const cleanFilename = pointFilename.replace('.csv', '')
-      
+
       // Convert measurement point format to point number if needed
       let cleanPointNumber = pointNumber
       if (typeof pointNumber === 'string' && pointNumber.includes('_')) {
         cleanPointNumber = pointNumber.split('_')[0] // Extract number part
       }
-      
+
       console.log(`🔧 [ResultPage] Using cleanFilename: ${cleanFilename}, cleanPointNumber: ${cleanPointNumber}`)
-      
+
       const [profileResponse, imageResponse] = await Promise.allSettled([
         apiService.getProfileData(cleanFilename, cleanPointNumber),
         apiService.getProfileImage(cleanFilename, cleanPointNumber)
       ])
-      
+
       // Handle profile data response
       if (profileResponse.status === 'fulfilled' && profileResponse.value.success) {
         console.log(`✅ [ResultPage] Loaded ${profileResponse.value.data.length} profile points`)
@@ -495,7 +417,7 @@ async function handlePointSelected(pointData) {
         console.warn(`⚠️ [ResultPage] Failed to load profile data:`, profileResponse.reason || profileResponse.value?.error)
         profileData.value = []
       }
-      
+
       // Handle image response
       if (imageResponse.status === 'fulfilled' && imageResponse.value.success) {
         console.log(`✅ [ResultPage] Loaded profile image:`, imageResponse.value.data.filename)
@@ -505,10 +427,10 @@ async function handlePointSelected(pointData) {
         console.warn(`⚠️ [ResultPage] Failed to load profile image:`, imageResponse.reason || imageResponse.value?.error)
         profileImageUrl.value = null
       }
-      
+
       // Update selected point for other components
       selectedPoint.value = measurementPoint
-      
+
     } catch (error) {
       console.error(`❌ [ResultPage] Error loading profile data and image:`, error)
       profileData.value = []
@@ -597,7 +519,7 @@ onMounted(() => {
   .main-content-row {
     height: auto;
   }
-  
+
   .heat-map-card {
     margin-bottom: 16px;
   }
@@ -608,32 +530,6 @@ onMounted(() => {
   margin-bottom: 12px;
 }
 
-/* Statistics card styling */
-.statistics-card {
-  border: 1px solid rgba(var(--v-theme-outline), 0.12);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.statistics-card .v-card-title {
-  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
-  background-color: rgba(var(--v-theme-surface), 0.5);
-}
-
-/* Scatter chart card styling */
-.scatter-chart-card {
-  border: 1px solid rgba(var(--v-theme-outline), 0.12);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-}
-
-.scatter-chart-card .v-card-title {
-  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
-  background-color: rgba(var(--v-theme-surface), 0.5);
-}
-
-.v-chip.v-chip--size-x-small {
-  font-size: 0.625rem;
-  height: 20px;
-}
 
 /* Profile image styles */
 .profile-image-container {
