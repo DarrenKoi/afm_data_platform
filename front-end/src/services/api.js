@@ -134,30 +134,82 @@ export const apiService = {
   },
 
   // Get profile data (x, y, z) for a specific measurement point and tool
-  async getProfileData(filename, pointNumber, toolName = 'MAP608') {
-    console.log(`🔍 Fetching profile data for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
+  async getProfileData(filename, pointNumber, toolName = 'MAP608', siteInfo = null) {
+    console.log(`🔍 [API] Fetching profile data for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
+    console.log(`📍 [API] Site info received:`, siteInfo)
+    console.log(`📍 [API] Site info type:`, typeof siteInfo)
+    console.log(`📍 [API] Site info null check:`, siteInfo === null)
+    
     const params = new URLSearchParams({ tool: toolName })
-    // Use encodeURIComponent for the point number in case it contains special characters like underscore
+    if (siteInfo) {
+      console.log(`📍 [API] Processing site info fields:`)
+      console.log(`   site_id: "${siteInfo.site_id}" (${typeof siteInfo.site_id})`)
+      console.log(`   site_x: "${siteInfo.site_x}" (${typeof siteInfo.site_x})`)
+      console.log(`   site_y: "${siteInfo.site_y}" (${typeof siteInfo.site_y})`)
+      console.log(`   point_no: "${siteInfo.point_no}" (${typeof siteInfo.point_no})`)
+      
+      if (siteInfo.site_id !== null && siteInfo.site_id !== undefined) {
+        params.append('site_id', siteInfo.site_id)
+        console.log(`   ✅ Added site_id: ${siteInfo.site_id}`)
+      }
+      if (siteInfo.site_x !== null && siteInfo.site_x !== undefined) {
+        params.append('site_x', siteInfo.site_x)
+        console.log(`   ✅ Added site_x: ${siteInfo.site_x}`)
+      }
+      if (siteInfo.site_y !== null && siteInfo.site_y !== undefined) {
+        params.append('site_y', siteInfo.site_y)
+        console.log(`   ✅ Added site_y: ${siteInfo.site_y}`)
+      }
+      if (siteInfo.point_no !== null && siteInfo.point_no !== undefined) {
+        params.append('point_no', siteInfo.point_no)
+        console.log(`   ✅ Added point_no: ${siteInfo.point_no}`)
+      }
+    } else {
+      console.log(`⚠️ [API] No site info provided`)
+    }
+    
+    console.log(`🔗 [API] Profile request URL: /afm-files/profile/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
     const response = await api.get(`/afm-files/profile/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
-    console.log('📊 Profile data response:', response)
+    console.log('📊 [API] Profile data response:', response)
     return response
   },
 
   // Get profile image for a specific measurement point and tool
-  async getProfileImage(filename, pointNumber, toolName = 'MAP608') {
-    console.log(`🔍 Fetching profile image for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
+  async getProfileImage(filename, pointNumber, toolName = 'MAP608', siteInfo = null) {
+    console.log(`🔍 [API] Fetching profile image for filename: "${filename}", point: ${pointNumber} from tool: ${toolName}`)
+    if (siteInfo) {
+      console.log(`📍 [API] Site info provided:`, siteInfo)
+    }
+    
     const params = new URLSearchParams({ tool: toolName })
-    // Use encodeURIComponent for the point number in case it contains special characters like underscore
+    if (siteInfo) {
+      if (siteInfo.site_id !== null) params.append('site_id', siteInfo.site_id)
+      if (siteInfo.site_x !== null) params.append('site_x', siteInfo.site_x)
+      if (siteInfo.site_y !== null) params.append('site_y', siteInfo.site_y)
+      if (siteInfo.point_no !== null) params.append('point_no', siteInfo.point_no)
+    }
+    
+    console.log(`🔗 [API] Image request URL: /afm-files/image/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
     const response = await api.get(`/afm-files/image/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`)
-    console.log('📊 Profile image response:', response)
+    console.log('📊 [API] Profile image response:', response)
     return response
   },
 
   // Get the URL for serving a profile image
-  getProfileImageUrl(filename, pointNumber, toolName = 'MAP608') {
+  getProfileImageUrl(filename, pointNumber, toolName = 'MAP608', siteInfo = null) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
-    // Use encodeURIComponent for the point number in case it contains special characters like underscore
-    return `${baseUrl}/afm-files/image-file/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?tool=${toolName}`
+    const params = new URLSearchParams({ tool: toolName })
+    
+    if (siteInfo) {
+      if (siteInfo.site_id !== null) params.append('site_id', siteInfo.site_id)
+      if (siteInfo.site_x !== null) params.append('site_x', siteInfo.site_x)
+      if (siteInfo.site_y !== null) params.append('site_y', siteInfo.site_y)
+      if (siteInfo.point_no !== null) params.append('point_no', siteInfo.point_no)
+    }
+    
+    const url = `${baseUrl}/afm-files/image-file/${encodeURIComponent(filename)}/${encodeURIComponent(pointNumber)}?${params}`
+    console.log(`🔗 [API] Image URL generated: ${url}`)
+    return url
   }
 }
 

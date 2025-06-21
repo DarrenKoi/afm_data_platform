@@ -499,16 +499,26 @@ function exportData() {
 // Watch for measurement point selection changes
 watch(selectedMeasurementPoint, (newPoint, oldPoint) => {
   if (newPoint && newPoint !== oldPoint) {
-    console.log(`🎯 [MeasurementPoints] Selected point changed to:`, newPoint)
+    console.log(`🎯 [MeasurementPoints] Selected Site ID changed to:`, newPoint)
     
-    // Extract point number from measurement point name (e.g., "1_UL" -> "1")
+    // Extract point number from Site ID (e.g., "1_UL" -> 1)
     const pointNumber = extractPointNumber(newPoint)
     
-    // Emit point selection event
+    // Find complete site information from detailed data
+    const siteInfo = extractSiteInfo(newPoint)
+    
+    console.log(`📍 [MeasurementPoints] Complete site info extracted:`)
+    console.log(`   Site ID: ${siteInfo.site_id}`)
+    console.log(`   Site X: ${siteInfo.site_x}`)
+    console.log(`   Site Y: ${siteInfo.site_y}`)
+    console.log(`   Point No: ${siteInfo.point_no}`)
+    
+    // Emit point selection event with complete site information
     emit('point-selected', {
-      measurementPoint: newPoint,
-      pointNumber: pointNumber,
-      filename: props.filename
+      measurementPoint: newPoint,      // Site ID (e.g., '1_UL')
+      pointNumber: pointNumber,        // Point number (e.g., 1)
+      filename: props.filename,
+      siteInfo: siteInfo
     })
   }
 })
@@ -586,6 +596,58 @@ function extractPointNumber(measurementPoint) {
   // Extract first number from measurement point (e.g., "1_UL" -> "1", "2_LL" -> "2")
   const match = measurementPoint.match(/^(\d+)/)
   return match ? parseInt(match[1]) : null
+}
+
+// Helper function to extract complete site information from detailed data
+function extractSiteInfo(measurementPoint) {
+  console.log(`🔍 [MeasurementPoints] extractSiteInfo called with: "${measurementPoint}"`)
+  console.log(`🔍 [MeasurementPoints] detailedData available:`, !!props.detailedData)
+  console.log(`🔍 [MeasurementPoints] detailedData length:`, props.detailedData?.length || 0)
+  
+  if (!measurementPoint || !props.detailedData || !Array.isArray(props.detailedData)) {
+    console.log(`⚠️ [MeasurementPoints] Using fallback (no detailed data) for: "${measurementPoint}"`)
+    const fallbackResult = {
+      site_id: measurementPoint,  // measurement point IS the Site ID (e.g., '1_UL')
+      site_x: null,
+      site_y: null,
+      point_no: extractPointNumber(measurementPoint)
+    }
+    console.log(`⚠️ [MeasurementPoints] Fallback result:`, fallbackResult)
+    return fallbackResult
+  }
+  
+  console.log(`🔍 [MeasurementPoints] Searching in ${props.detailedData.length} records...`)
+  console.log(`🔍 [MeasurementPoints] Sample record structure:`, props.detailedData[0])
+  
+  // Find the first record that matches this measurement point (Site ID)
+  const record = props.detailedData.find(item => 
+    item.measurement_point === measurementPoint ||
+    item['Site ID'] === measurementPoint ||
+    item.Site_ID === measurementPoint
+  )
+  
+  if (record) {
+    console.log(`✅ [MeasurementPoints] Found matching record:`, record)
+    const result = {
+      site_id: record['Site ID'] || record.Site_ID || measurementPoint,  // Site ID (e.g., '1_UL')
+      site_x: record['Site X'] || record.Site_X || null,                 // Site X coordinate
+      site_y: record['Site Y'] || record.Site_Y || null,                 // Site Y coordinate
+      point_no: record['Point No'] || record.Point_No || extractPointNumber(measurementPoint)  // Point number (e.g., 1)
+    }
+    console.log(`✅ [MeasurementPoints] Extracted site info:`, result)
+    return result
+  }
+  
+  // Fallback: use measurement point as Site ID
+  console.log(`⚠️ [MeasurementPoints] No matching record found, using fallback for: "${measurementPoint}"`)
+  const fallbackResult = {
+    site_id: measurementPoint,  // measurement point IS the Site ID
+    site_x: null,
+    site_y: null,
+    point_no: extractPointNumber(measurementPoint)
+  }
+  console.log(`⚠️ [MeasurementPoints] Fallback result:`, fallbackResult)
+  return fallbackResult
 }
 
 // Function to handle measurement point selection from buttons

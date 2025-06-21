@@ -192,10 +192,32 @@ def get_profile_data(filename, decoded_point_number):
         # URL decode the filename and point number
         decoded_filename = unquote(filename)
         decoded_point_number = unquote(decoded_point_number)
-        print(f"=== Profile Data API Called for tool: {tool_name}, filename: '{decoded_filename}', point: '{decoded_point_number}' ===")
+        
+        # Extract site information from query parameters
+        site_info = {
+            'site_id': request.args.get('site_id'),     # Keep as string
+            'site_x': request.args.get('site_x'),       # Keep as string
+            'site_y': request.args.get('site_y'),       # Keep as string
+            'point_no': request.args.get('point_no')    # Will convert to int
+        }
+        
+        # Only convert point_no to integer (for 4-digit formatting)
+        if site_info['point_no']:
+            try:
+                site_info['point_no'] = int(site_info['point_no'])
+            except ValueError:
+                site_info['point_no'] = None
+        
+        print(f"\n=== PROFILE API REQUEST ===")
+        print(f"Tool: {tool_name}")
+        print(f"Filename (encoded): '{filename}'")
+        print(f"Filename (decoded): '{decoded_filename}'")
+        print(f"Site ID (encoded): '{decoded_point_number}'")
+        print(f"Site ID (decoded): '{decoded_point_number}'")
+        print(f"Complete site info: {site_info}")
         
         # Find matching profile file using the utility function
-        profile_path = get_profile_file_path_by_filename(decoded_filename, decoded_point_number, tool_name)
+        profile_path = get_profile_file_path_by_filename(decoded_filename, decoded_point_number, tool_name, site_info)
         
         if not profile_path:
             return jsonify({
@@ -219,21 +241,90 @@ def get_profile_data(filename, decoded_point_number):
             with open(profile_path, 'rb') as f:
                 profile_data = pickle.load(f)
             
-            # Profile data should be a list of dictionaries with x, y, z coordinates
-            if not isinstance(profile_data, list):
+            print(f"Profile data type: {type(profile_data)}")
+            print(f"Profile data structure: {profile_data if isinstance(profile_data, dict) and len(str(profile_data)) < 500 else 'Too large to display'}")
+            
+            # Handle different profile data formats
+            if isinstance(profile_data, list):
+                # Already in the expected format
+                final_profile_data = profile_data
+            elif isinstance(profile_data, dict):
+                # If it's a dict, try to extract relevant data
+                if 'data' in profile_data:
+                    final_profile_data = profile_data['data']
+                elif 'profile' in profile_data:
+                    final_profile_data = profile_data['profile']
+                elif 'coordinates' in profile_data:
+                    final_profile_data = profile_data['coordinates']
+                else:
+                    # Try to convert dict to list format
+                    # Check if it has x, y, z keys (both lowercase and uppercase)
+                    x_key = None
+                    y_key = None
+                    z_key = None
+                    
+                    # Find the coordinate keys (case-insensitive)
+                    for key in profile_data.keys():
+                        if key.lower() == 'x':
+                            x_key = key
+                        elif key.lower() == 'y':
+                            y_key = key
+                        elif key.lower() == 'z':
+                            z_key = key
+                    
+                    if x_key and y_key and z_key:
+                        print(f"Found coordinate keys: X='{x_key}', Y='{y_key}', Z='{z_key}'")
+                        
+                        # Convert columnar data to list of dicts
+                        x_vals = profile_data[x_key] if isinstance(profile_data[x_key], list) else [profile_data[x_key]]
+                        y_vals = profile_data[y_key] if isinstance(profile_data[y_key], list) else [profile_data[y_key]]
+                        z_vals = profile_data[z_key] if isinstance(profile_data[z_key], list) else [profile_data[z_key]]
+                        
+                        print(f"Coordinate data lengths: X={len(x_vals)}, Y={len(y_vals)}, Z={len(z_vals)}")
+                        
+                        final_profile_data = []
+                        for i in range(min(len(x_vals), len(y_vals), len(z_vals))):
+                            final_profile_data.append({
+                                'x': x_vals[i],
+                                'y': y_vals[i], 
+                                'z': z_vals[i]
+                            })
+                        
+                        print(f"Converted {len(final_profile_data)} coordinate points to list format")
+                    else:
+                        print(f"Unknown dict structure. Keys: {list(profile_data.keys())}")
+                        print(f"Looking for coordinate keys (case-insensitive): x_key={x_key}, y_key={y_key}, z_key={z_key}")
+                        return jsonify({
+                            'success': False,
+                            'error': 'Unsupported profile data format',
+                            'message': f'Profile data is a dict but doesn\'t have expected coordinate structure. Keys: {list(profile_data.keys())}',
+                            'tool': tool_name
+                        }), 400
+            else:
                 return jsonify({
                     'success': False,
                     'error': 'Invalid profile data format',
-                    'message': f'Profile data should be a list, got {type(profile_data)}',
+                    'message': f'Profile data should be a list or dict, got {type(profile_data)}',
                     'tool': tool_name
                 }), 400
             
-            print(f"Successfully loaded {len(profile_data)} profile data points")
+            # Ensure final data is a list
+            if not isinstance(final_profile_data, list):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to convert profile data to list',
+                    'message': f'Converted profile data is not a list, got {type(final_profile_data)}',
+                    'tool': tool_name
+                }), 400
+            
+            print(f"Successfully loaded {len(final_profile_data)} profile data points")
+            if final_profile_data:
+                print(f"Sample profile data point: {final_profile_data[0]}")
             
             return jsonify({
                 'success': True,
-                'data': profile_data,
-                'count': len(profile_data),
+                'data': final_profile_data,
+                'count': len(final_profile_data),
                 'tool': tool_name,
                 'message': f'Successfully loaded profile data for {decoded_filename}, point {decoded_point_number} from {tool_name}'
             })
@@ -266,10 +357,32 @@ def get_profile_image(filename, decoded_point_number):
         # URL decode the filename and point number
         decoded_filename = unquote(filename)
         decoded_point_number = unquote(decoded_point_number)
-        print(f"=== Profile Image API Called for tool: {tool_name}, filename: '{decoded_filename}', point: '{decoded_point_number}' ===")
+        
+        # Extract site information from query parameters
+        site_info = {
+            'site_id': request.args.get('site_id'),     # Keep as string
+            'site_x': request.args.get('site_x'),       # Keep as string
+            'site_y': request.args.get('site_y'),       # Keep as string
+            'point_no': request.args.get('point_no')    # Will convert to int
+        }
+        
+        # Only convert point_no to integer (for 4-digit formatting)
+        if site_info['point_no']:
+            try:
+                site_info['point_no'] = int(site_info['point_no'])
+            except ValueError:
+                site_info['point_no'] = None
+        
+        print(f"\n=== IMAGE API REQUEST ===")
+        print(f"Tool: {tool_name}")
+        print(f"Filename (encoded): '{filename}'")
+        print(f"Filename (decoded): '{decoded_filename}'")
+        print(f"Site ID (encoded): '{decoded_point_number}'")
+        print(f"Site ID (decoded): '{decoded_point_number}'")
+        print(f"Complete site info: {site_info}")
         
         # Find matching image file using the utility function
-        image_path = get_image_file_path_by_filename(decoded_filename, decoded_point_number, tool_name)
+        image_path = get_image_file_path_by_filename(decoded_filename, decoded_point_number, tool_name, site_info)
         
         if not image_path:
             return jsonify({
@@ -319,8 +432,31 @@ def serve_profile_image(filename, point_number):
         decoded_filename = unquote(filename)
         decoded_point_number = unquote(point_number)
         
+        # Extract site information from query parameters
+        site_info = {
+            'site_id': request.args.get('site_id'),     # Keep as string
+            'site_x': request.args.get('site_x'),       # Keep as string
+            'site_y': request.args.get('site_y'),       # Keep as string
+            'point_no': request.args.get('point_no')    # Will convert to int
+        }
+        
+        # Only convert point_no to integer (for 4-digit formatting)
+        if site_info['point_no']:
+            try:
+                site_info['point_no'] = int(site_info['point_no'])
+            except ValueError:
+                site_info['point_no'] = None
+        
+        print(f"\n=== IMAGE FILE SERVE REQUEST ===")
+        print(f"Tool: {tool_name}")
+        print(f"Filename (encoded): '{filename}'")
+        print(f"Filename (decoded): '{decoded_filename}'")
+        print(f"Site ID (encoded): '{point_number}'")
+        print(f"Site ID (decoded): '{decoded_point_number}'")
+        print(f"Complete site info: {site_info}")
+        
         # Find matching image file using the utility function
-        image_path = get_image_file_path_by_filename(decoded_filename, decoded_point_number, tool_name)
+        image_path = get_image_file_path_by_filename(decoded_filename, decoded_point_number, tool_name, site_info)
         
         if not image_path or not image_path.exists():
             return "Image file not found", 404

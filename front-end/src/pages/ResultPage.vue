@@ -383,12 +383,19 @@ function handleStatisticSelected(statisticName) {
 async function handlePointSelected(pointData) {
   console.log('🎯 [ResultPage] Point selected:', pointData)
 
-  const { measurementPoint, pointNumber, filename: pointFilename } = pointData
+  const { measurementPoint, pointNumber, filename: pointFilename, siteInfo } = pointData
+
+  console.log(`🔍 [ResultPage] Destructured values:`)
+  console.log(`   measurementPoint: "${measurementPoint}" (${typeof measurementPoint})`)
+  console.log(`   pointNumber: "${pointNumber}" (${typeof pointNumber})`)
+  console.log(`   pointFilename: "${pointFilename}" (${typeof pointFilename})`)
+  console.log(`   siteInfo:`, siteInfo)
 
   if (pointNumber && pointFilename) {
     try {
       // Fetch profile data and image in parallel
       console.log(`🔄 [ResultPage] Fetching profile data and image for point ${pointNumber}`)
+      console.log(`📍 [ResultPage] Site info received:`, siteInfo)
       isLoadingProfile.value = true
       isLoadingProfileImage.value = true
 
@@ -398,14 +405,20 @@ async function handlePointSelected(pointData) {
       // Convert measurement point format to point number if needed
       let cleanPointNumber = pointNumber
       if (typeof pointNumber === 'string' && pointNumber.includes('_')) {
+        console.log(`🔧 [ResultPage] Converting "${pointNumber}" to number part`)
         cleanPointNumber = pointNumber.split('_')[0] // Extract number part
       }
 
-      console.log(`🔧 [ResultPage] Using cleanFilename: ${cleanFilename}, cleanPointNumber: ${cleanPointNumber}`)
+      console.log(`🔧 [ResultPage] Final values for API calls:`)
+      console.log(`   cleanFilename: "${cleanFilename}"`)
+      console.log(`   cleanPointNumber: "${cleanPointNumber}" (${typeof cleanPointNumber})`)
+      console.log(`   siteInfo:`, siteInfo)
 
+      const toolName = route.query.tool || 'MAP608'
+      
       const [profileResponse, imageResponse] = await Promise.allSettled([
-        apiService.getProfileData(cleanFilename, cleanPointNumber),
-        apiService.getProfileImage(cleanFilename, cleanPointNumber)
+        apiService.getProfileData(cleanFilename, cleanPointNumber, toolName, siteInfo),
+        apiService.getProfileImage(cleanFilename, cleanPointNumber, toolName, siteInfo)
       ])
 
       // Handle profile data response
@@ -421,7 +434,7 @@ async function handlePointSelected(pointData) {
       // Handle image response
       if (imageResponse.status === 'fulfilled' && imageResponse.value.success) {
         console.log(`✅ [ResultPage] Loaded profile image:`, imageResponse.value.data.filename)
-        profileImageUrl.value = apiService.getProfileImageUrl(cleanFilename, cleanPointNumber)
+        profileImageUrl.value = apiService.getProfileImageUrl(cleanFilename, cleanPointNumber, toolName, siteInfo)
         console.log(`🖼️ [ResultPage] Profile image URL:`, profileImageUrl.value)
       } else {
         console.warn(`⚠️ [ResultPage] Failed to load profile image:`, imageResponse.reason || imageResponse.value?.error)
