@@ -42,6 +42,27 @@ export const useDataStore = defineStore('data', () => {
     return groupedData.value.some(item => item.filename === filename)
   })
 
+  const validGroupedData = computed(() => {
+    return groupedData.value.filter(item => 
+      item.filename && (item.rcp_id || item.recipe_name)
+    )
+  })
+
+  const groupedDataSummary = computed(() => {
+    if (groupedData.value.length === 0) return null
+    
+    const summary = {
+      total: groupedData.value.length,
+      valid: validGroupedData.value.length,
+      fabs: [...new Set(groupedData.value.map(item => item.fab || 'Unknown'))],
+      tools: [...new Set(groupedData.value.map(item => item.tool || selectedTool.value))],
+      recipes: [...new Set(groupedData.value.map(item => item.rcp_id || item.recipe_name || 'Unknown'))],
+      dateRange: getDateRange(groupedData.value)
+    }
+    
+    return summary
+  })
+
   // Actions (functions)
   function addToHistory(measurement) {
     // Remove if already exists
@@ -141,6 +162,47 @@ export const useDataStore = defineStore('data', () => {
     saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
   }
 
+  // Helper function to get date range from measurements
+  function getDateRange(measurements) {
+    if (!measurements || measurements.length === 0) return null
+    
+    const dates = measurements
+      .map(item => new Date(item.event_time || item.formatted_date || new Date()))
+      .filter(date => !isNaN(date))
+      .sort((a, b) => a - b)
+    
+    if (dates.length === 0) return null
+    
+    return {
+      earliest: dates[0],
+      latest: dates[dates.length - 1],
+      span: dates[dates.length - 1] - dates[0]
+    }
+  }
+
+  // Helper function to validate measurement for navigation
+  function validateMeasurementForNavigation(measurement) {
+    if (!measurement) return false
+    
+    const hasFilename = !!(measurement.filename)
+    const hasRecipe = !!(measurement.rcp_id || measurement.recipe_name)
+    
+    return hasFilename && hasRecipe
+  }
+
+  // Helper function to prepare measurement data for result page navigation
+  function prepareMeasurementForNavigation(measurement) {
+    if (!validateMeasurementForNavigation(measurement)) {
+      throw new Error('Invalid measurement data for navigation')
+    }
+    
+    return {
+      filename: measurement.filename,
+      recipeId: measurement.rcp_id || measurement.recipe_name,
+      tool: measurement.tool || selectedTool.value || 'MAP608'
+    }
+  }
+
   // Return everything that should be exposed
   return {
     // State
@@ -155,6 +217,8 @@ export const useDataStore = defineStore('data', () => {
     groupedCount,
     groupHistoryCount,
     isInGroup,
+    validGroupedData,
+    groupedDataSummary,
     
     // Actions
     addToHistory,
@@ -166,6 +230,11 @@ export const useDataStore = defineStore('data', () => {
     loadGroupFromHistory,
     removeFromGroupHistory,
     clearGroupHistory,
-    setSelectedTool
+    setSelectedTool,
+    
+    // Helper functions
+    getDateRange,
+    validateMeasurementForNavigation,
+    prepareMeasurementForNavigation
   }
 })

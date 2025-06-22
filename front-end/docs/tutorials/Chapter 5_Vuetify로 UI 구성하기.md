@@ -34,7 +34,7 @@ Vuetify는 [Vue.js](http://Vue.js)에 사용되는 인기 있는 UI 컴포넌트
 
 ```bash
 # Vuetify가 미리 설정된 새 프로젝트 생성
-npm create vuetify@latest my-project
+npm create vuetify@latest
 cd my-project
 npm install
 npm run dev

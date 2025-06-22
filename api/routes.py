@@ -281,7 +281,8 @@ def get_profile_data(filename, decoded_point_number):
                         z_vals = profile_data[z_key] if isinstance(profile_data[z_key], list) else [profile_data[z_key]]
                         
                         print(f"Coordinate data lengths: X={len(x_vals)}, Y={len(y_vals)}, Z={len(z_vals)}")
-                        
+
+
                         final_profile_data = []
                         for i in range(min(len(x_vals), len(y_vals), len(z_vals))):
                             final_profile_data.append({

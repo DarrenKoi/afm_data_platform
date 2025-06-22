@@ -30,7 +30,29 @@ const routes = [
   {
     path: '/result/:recipeId/:filename',
     name: 'ResultPage',
-    component: ResultPage
+    component: ResultPage,
+    props: true,
+    beforeEnter: (to, from, next) => {
+      // Validate required parameters
+      const { recipeId, filename } = to.params
+      
+      if (!recipeId || !filename) {
+        console.error('Missing required parameters for ResultPage:', { recipeId, filename })
+        // Redirect to main page if parameters are missing
+        next('/')
+        return
+      }
+      
+      // Decode parameters to ensure they're properly handled
+      try {
+        to.params.filename = decodeURIComponent(filename)
+        to.params.recipeId = decodeURIComponent(recipeId)
+        next()
+      } catch (error) {
+        console.error('Error decoding route parameters:', error)
+        next('/')
+      }
+    }
   },
   {
     path: '/result/data_trend',

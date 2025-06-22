@@ -4,7 +4,7 @@
     <div class="mb-3">
       <v-btn color="primary" variant="elevated" size="large" @click="goBack" class="back-button">
         <v-icon start>mdi-arrow-left</v-icon>
-        Back to Search
+        {{ referrer === 'data-trend' ? 'Back to Data Trend' : 'Back to Search' }}
       </v-btn>
     </div>
 
@@ -128,6 +128,9 @@ import EnhancedChartVisualization from '@/components/ResultPage/EnhancedChartVis
 
 const route = useRoute()
 const router = useRouter()
+
+// Navigation tracking
+const referrer = ref('')
 
 // Reactive data
 const filename = ref(decodeURIComponent(route.params.filename || ''))
@@ -472,11 +475,22 @@ function handleImageLoad(event) {
 }
 
 function goBack() {
-  router.push('/')
+  // Check if we came from DataTrendPage
+  if (referrer.value === 'data-trend') {
+    router.push('/result/data_trend')
+  } else {
+    // Default: go back to search page
+    router.push('/')
+  }
 }
 
 // Lifecycle
 onMounted(() => {
+  // Check if we have a referrer in the route query
+  if (route.query.from) {
+    referrer.value = route.query.from
+  }
+  
   loadData()
 })
 </script>

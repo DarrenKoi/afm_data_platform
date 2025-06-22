@@ -69,6 +69,24 @@
       </v-col>
     </v-row>
 
+    <!-- Loading Dialog for SEE TOGETHER -->
+    <v-dialog v-model="showLoadingDialog" max-width="400px" persistent>
+      <v-card>
+        <v-card-text class="text-center pa-6">
+          <v-progress-circular
+            indeterminate
+            color="primary"
+            size="64"
+            class="mb-4"
+          />
+          <h3 class="text-h6 mb-2">Loading Measurement Data</h3>
+          <p class="text-body-2 text-medium-emphasis">
+            {{ loadingMessage }}
+          </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
     <!-- Save Group Dialog -->
     <v-dialog v-model="showSaveDialog" max-width="500px" persistent>
       <v-card>
@@ -214,11 +232,96 @@ function addToGroup(measurement) {
   dataStore.addToGroup(measurement)
 }
 
-function viewTrendAnalysis() {
-  router.push('/result/data_trend')
+async function viewTrendAnalysis() {
+  console.log('🚀 [MainPage] Starting trend analysis with grouped data...')
+  
+  if (dataStore.groupedCount === 0) {
+    console.warn('⚠️ No measurements in group to analyze')
+    return
+  }
+  
+  // Show loading dialog
+  loadingMessage.value = `Loading data for ${dataStore.groupedCount} measurements...`
+  showLoadingDialog.value = true
+  
+  try {
+    // Track loading progress
+    let loadedCount = 0
+    const totalCount = dataStore.groupedData.length
+    
+    // Load detailed data for all measurements in the group
+    const loadPromises = dataStore.groupedData.map(async (measurement) => {
+      if (!measurement.filename) {
+        console.warn(`⚠️ Skipping measurement without filename:`, measurement)
+        loadedCount++
+        return null
+      }
+      
+      try {
+        console.log(`📊 Loading data for: ${measurement.filename}`)
+        const toolName = measurement.tool || dataStore.selectedTool || 'MAP608'
+        
+        // Use the apiService to fetch detailed measurement data
+        const { apiService } = await import('@/services/api.js')
+        const response = await apiService.getAfmFileDetail(measurement.filename, toolName)
+        
+        // Update progress
+        loadedCount++
+        loadingMessage.value = `Loading measurement ${loadedCount} of ${totalCount}...`
+        
+        if (response.success && response.data) {
+          return {
+            filename: measurement.filename,
+            tool: toolName,
+            info: response.data.information || {},
+            summary: response.data.summary || [],
+            detailedData: response.data.data || [],
+            availablePoints: response.data.available_points || []
+          }
+        } else {
+          console.error(`❌ Failed to load data for ${measurement.filename}:`, response.error)
+          return null
+        }
+      } catch (error) {
+        console.error(`❌ Error loading ${measurement.filename}:`, error)
+        loadedCount++
+        return null
+      }
+    })
+    
+    // Wait for all measurements to load
+    const results = await Promise.all(loadPromises)
+    const validResults = results.filter(r => r !== null)
+    
+    console.log(`✅ Loaded ${validResults.length} out of ${dataStore.groupedData.length} measurements`)
+    
+    // Store the loaded data in sessionStorage to pass to DataTrendPage
+    if (validResults.length > 0) {
+      sessionStorage.setItem('groupDetailedData', JSON.stringify(validResults))
+      
+      // Hide loading dialog before navigation
+      showLoadingDialog.value = false
+      
+      // Navigate to data trend page
+      router.push('/result/data_trend')
+    } else {
+      console.error('❌ No valid data loaded, cannot proceed to trend analysis')
+      showLoadingDialog.value = false
+      // Could show an error dialog here
+    }
+    
+  } catch (error) {
+    console.error('❌ Error during trend analysis data loading:', error)
+    showLoadingDialog.value = false
+    // Could show an error dialog here
+  }
 }
 
 
+
+// Loading dialog state
+const showLoadingDialog = ref(false)
+const loadingMessage = ref('')
 
 // Save group dialog state
 const showSaveDialog = ref(false)

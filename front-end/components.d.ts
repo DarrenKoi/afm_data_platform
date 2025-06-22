@@ -23,11 +23,13 @@ declare module 'vue' {
     ScatterChart: typeof import('./src/components/ResultPage/charts/ScatterChart.vue')['default']
     SearchHistoryCard: typeof import('./src/components/MainPage/SearchHistoryCard.vue')['default']
     SearchSection: typeof import('./src/components/MainPage/SearchSection.vue')['default']
+    SimplifiedMeasurementCard: typeof import('./src/components/DataTrend/SimplifiedMeasurementCard.vue')['default']
     SiteAveragesChart: typeof import('./src/components/ResultPage/charts/SiteAveragesChart.vue')['default']
     StatisticalInfo: typeof import('./src/components/ResultPage/StatisticalInfo.vue')['default']
     StatisticalInfoByPoints: typeof import('./src/components/ResultPage/StatisticalInfoByPoints.vue')['default']
     StatisticalScatterChart: typeof import('./src/components/ResultPage/charts/StatisticalScatterChart.vue')['default']
     SummaryDataTable: typeof import('./src/components/ResultPage/SummaryDataTable.vue')['default']
+    TimeSeriesChart: typeof import('./src/components/charts/TimeSeriesChart.vue')['default']
     ViewHistoryCard: typeof import('./src/components/MainPage/ViewHistoryCard.vue')['default']
     WaferHeatmapChart: typeof import('./src/components/ResultPage/charts/WaferHeatmapChart.vue')['default']
   }
