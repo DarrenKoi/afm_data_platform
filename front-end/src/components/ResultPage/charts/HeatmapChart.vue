@@ -17,7 +17,7 @@ const props = defineProps({
   },
   chartHeight: {
     type: Number,
-    default: 400
+    default: 700
   },
   compact: {
     type: Boolean,
@@ -30,17 +30,17 @@ let chartInstance = null
 
 const processedData = computed(() => {
   if (props.profileData.length === 0) return { data: [], xAxis: [], yAxis: [] }
-  
+
   // Get unique x and y values
   const xValues = [...new Set(props.profileData.map(p => p.x))].sort((a, b) => a - b)
   const yValues = [...new Set(props.profileData.map(p => p.y))].sort((a, b) => a - b)
-  
+
   // Create a map for fast lookup
   const dataMap = new Map()
   props.profileData.forEach(point => {
     dataMap.set(`${point.x},${point.y}`, point.z)
   })
-  
+
   // Create heatmap data
   const heatmapData = []
   xValues.forEach((x, xIndex) => {
@@ -51,7 +51,7 @@ const processedData = computed(() => {
       }
     })
   })
-  
+
   return {
     data: heatmapData,
     xAxis: xValues.map(v => v.toFixed(2)),
@@ -70,19 +70,44 @@ function initChart() {
 
   const { data, xAxis, yAxis } = processedData.value
 
+  // Calculate grid dimensions to maintain square aspect ratio
+  const containerWidth = chartContainer.value.offsetWidth
+  const containerHeight = chartContainer.value.offsetHeight
+
+  // Calculate available space for the heatmap (considering margins and visual map)
+  const leftMargin = containerWidth * 0.35  // 35%
+  const rightMargin = containerWidth * 0.15  // 15%
+  const topMargin = containerHeight * 0.08  // 8%
+  const bottomMargin = containerHeight * 0.12  // 12%
+
+  const availableWidth = containerWidth - leftMargin - rightMargin
+  const availableHeight = containerHeight - topMargin - bottomMargin
+
+  // Use the smaller dimension to maintain square aspect ratio
+  const squareSize = Math.min(availableWidth, availableHeight)
+
+  // Calculate centered margins
+  const totalHorizontalMargin = containerWidth - squareSize
+  const totalVerticalMargin = containerHeight - squareSize
+
+  const finalLeftMargin = totalHorizontalMargin * 0.8  // More on the left
+  const finalRightMargin = totalHorizontalMargin * 0.3  // Less on the right
+  const finalTopMargin = totalVerticalMargin * 0.5
+  const finalBottomMargin = totalVerticalMargin * 0.5
+
   const option = {
     tooltip: {
       position: 'top',
-      formatter: function(params) {
+      formatter: function (params) {
         const [xIndex, yIndex, value] = params.data
         return `X: ${xAxis[xIndex]} µm<br/>Y: ${yAxis[yIndex]} µm<br/>Z: ${value.toFixed(3)} nm`
       }
     },
     grid: {
-      left: props.compact ? '8%' : '10%',
-      right: props.compact ? '12%' : '15%',
-      bottom: props.compact ? '10%' : '12%',
-      top: props.compact ? '5%' : '8%',
+      left: finalLeftMargin,
+      right: finalRightMargin,
+      top: finalTopMargin,
+      bottom: finalBottomMargin,
       containLabel: true
     },
     xAxis: {
@@ -117,7 +142,7 @@ function initChart() {
       max: Math.max(...props.profileData.map(p => p.z)),
       calculable: true,
       orient: 'vertical',
-      right: 0,
+      right: '5%',
       top: 'center',
       text: ['High', 'Low'],
       inRange: {
@@ -174,5 +199,4 @@ onUnmounted(() => {
 })
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

@@ -4,14 +4,13 @@
       <v-progress-circular indeterminate color="primary" size="small" />
       <p class="mt-2 text-caption">Loading wafer data...</p>
     </div>
-    <div v-else-if="waferData.length > 0">
+    <div v-else-if="waferData.length > 0" class="heatmap-wrapper">
       <div 
         ref="waferHeatmapContainer" 
         class="heatmap-chart"
         :style="{ 
-          width: '100%', 
-          height: `${chartHeight}px`,
-          minHeight: '400px'
+          width: `${squareSize}px`, 
+          height: `${squareSize}px`
         }"
       ></div>
     </div>
@@ -23,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
 import { apiService } from '@/services/api.js'
 
@@ -54,6 +53,12 @@ const waferHeatmapContainer = ref(null)
 const isLoadingWaferData = ref(true)
 const waferData = ref([])
 const selectedWaferPoint = ref(null)
+
+// Computed property for square size
+const squareSize = computed(() => {
+  // Make the square size 90% of the available height to leave some padding
+  return Math.floor(props.chartHeight * 0.9)
+})
 
 // Chart instances
 let waferHeatmapChart = null
@@ -172,9 +177,14 @@ function initWaferHeatmap() {
       data: xValues,
       name: 'Die X',
       nameLocation: 'middle',
-      nameGap: 20,
+      nameGap: 35,
       nameTextStyle: {
-        fontSize: 11
+        fontSize: 12,
+        fontWeight: 'bold'
+      },
+      axisLabel: {
+        fontSize: 10,
+        margin: 8
       },
       splitArea: { show: true }
     },
@@ -183,9 +193,14 @@ function initWaferHeatmap() {
       data: yValues,
       name: 'Die Y',
       nameLocation: 'middle',
-      nameGap: 25,
+      nameGap: 40,
       nameTextStyle: {
-        fontSize: 11
+        fontSize: 12,
+        fontWeight: 'bold'
+      },
+      axisLabel: {
+        fontSize: 10,
+        margin: 8
       },
       splitArea: { show: true }
     },
@@ -219,10 +234,11 @@ function initWaferHeatmap() {
       }
     }],
     grid: {
-      left: '6%',
-      right: '18%',
-      bottom: '8%',
-      top: '3%'
+      left: '15%',
+      right: '12%',
+      bottom: '15%',
+      top: '8%',
+      containLabel: true
     }
   }
   
@@ -348,6 +364,17 @@ onUnmounted(() => {
   width: 100%;
   overflow: hidden;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heatmap-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
 }
 
 .heatmap-chart {
@@ -355,8 +382,6 @@ onUnmounted(() => {
   border-radius: 4px;
   background-color: transparent;
   overflow: hidden;
-  min-width: 300px;
-  min-height: 300px;
 }
 
 .heatmap-chart:hover {

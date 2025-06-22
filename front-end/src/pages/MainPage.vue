@@ -8,37 +8,33 @@
 
     <!-- Tool Selection Interface -->
     <div class="text-center mb-6">
-      <v-card class="pa-4 mx-auto" style="max-width: 400px;" elevation="2">
-        <v-card-title class="text-h6 text-center mb-3">
-          <v-icon color="primary" class="mr-2">mdi-tools</v-icon>
-          Analysis Tool
-        </v-card-title>
-        <v-card-text>
-          <div class="d-flex justify-center align-center flex-wrap gap-3">
-            <v-chip
-              v-for="tool in availableTools"
-              :key="tool.id"
-              :color="selectedTool === tool.id ? 'primary' : 'default'"
-              :variant="selectedTool === tool.id ? 'elevated' : 'outlined'"
-              size="large"
-              class="px-6 py-2"
-              @click="selectTool(tool.id)"
-            >
-              <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
-                {{ tool.icon }}
-              </v-icon>
-              <span class="font-weight-medium">{{ tool.name }}</span>
-              <v-badge
-                v-if="selectedTool === tool.id"
-                color="success"
-                icon="mdi-check"
-                floating
-                offset-x="10"
-                offset-y="10"
-              />
-            </v-chip>
-          </div>
-        </v-card-text>
+      <v-card class="pa-3 mx-auto" style="max-width: 300px;" elevation="2">
+        <div class="d-flex justify-center align-center gap-3">
+          <v-icon color="primary">mdi-tools</v-icon>
+          <span class="text-h6 font-weight-medium mr-3">Tool:</span>
+          <v-chip
+            v-for="tool in availableTools"
+            :key="tool.id"
+            :color="selectedTool === tool.id ? 'primary' : 'default'"
+            :variant="selectedTool === tool.id ? 'elevated' : 'outlined'"
+            size="large"
+            class="px-4"
+            @click="selectTool(tool.id)"
+          >
+            <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
+              {{ tool.icon }}
+            </v-icon>
+            <span class="font-weight-medium">{{ tool.name }}</span>
+            <v-badge
+              v-if="selectedTool === tool.id"
+              color="success"
+              icon="mdi-check"
+              floating
+              offset-x="8"
+              offset-y="8"
+            />
+          </v-chip>
+        </div>
       </v-card>
     </div>
 

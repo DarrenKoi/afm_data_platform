@@ -12,31 +12,26 @@
     <v-row dense class="mb-3">
       <!-- First column: Information -->
       <v-col cols="12" md="6">
-        <MeasurementInfo 
-          :measurement-info="measurementInfo" 
-          :summary-data="summaryData"
-          :compact="true" 
-        />
+        <MeasurementInfo :measurement-info="measurementInfo" :summary-data="summaryData" :compact="true" />
       </v-col>
 
       <!-- Second column: Scatter Chart -->
       <v-col cols="12" md="6">
-        <StatisticalInfoByPoints 
-          :summary-data="summaryData" 
-          @row-click="handleStatisticRowClick"
-          @statistic-selected="handleStatisticSelected" 
-          :compact="true" 
-        />
+        <StatisticalInfoByPoints :summary-data="summaryData" @row-click="handleStatisticRowClick"
+          @statistic-selected="handleStatisticSelected" :compact="true" />
       </v-col>
     </v-row>
 
     <!-- Second row: Two-column layout for detailed data and heat map -->
-    <v-row dense class="main-content-row">
+    <v-row dense>
       <!-- Column 1: Detailed Data (Half Width) -->
       <v-col cols="12" lg="6">
-        <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
-          :measurement-points="measurementPoints" :selected-point="selectedPoint" @point-selected="handlePointSelected"
-          @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
+        <div style="max-height: 1000px; overflow-y: auto;">
+          <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
+            :measurement-points="measurementPoints" :selected-point="selectedPoint"
+            @point-selected="handlePointSelected" @point-data-loaded="handlePointDataLoaded"
+            @simple-point-selected="selectPoint" />
+        </div>
       </v-col>
 
       <!-- Column 2: Heat Map and Charts -->
@@ -44,15 +39,14 @@
         <v-row dense>
           <!-- Heat Map -->
           <v-col cols="12">
-            <v-card class="heat-map-card mb-2" :height="(chartHeight * 0.75) - 6">
+            <v-card class="heat-map-card mb-3" height="500">
               <v-card-title class="py-2">
                 <v-icon start size="small">mdi-grid</v-icon>
                 <span class="text-subtitle-1">Wafer Heat Map</span>
               </v-card-title>
-              <v-card-text class="pa-2">
-                <EnhancedChartVisualization :filename="filename" :chart-height="(chartHeight * 0.75) - 50"
-                  :profile-data="profileData" :selected-point="selectedPoint"
-                  @point-selected="handleWaferPointSelected" />
+              <v-card-text class="pa-3">
+                <EnhancedChartVisualization :filename="filename" :chart-height="440" :profile-data="profileData"
+                  :selected-point="selectedPoint" @point-selected="handleWaferPointSelected" />
               </v-card-text>
             </v-card>
           </v-col>
@@ -62,7 +56,7 @@
             <v-row dense>
               <!-- Profile Image -->
               <v-col cols="12" md="6">
-                <v-card class="profile-card" :height="(chartHeight * 0.25) - 6">
+                <v-card class="profile-card" height="250">
                   <v-card-title class="py-2">
                     <v-icon start size="small">mdi-image</v-icon>
                     <span class="text-subtitle-1">Profile Image</span>
@@ -76,8 +70,10 @@
                       <v-progress-circular indeterminate color="primary" size="small" />
                       <p class="mt-2 text-caption">Loading profile image...</p>
                     </div>
-                    <div v-else-if="profileImageUrl" class="profile-image-container">
-                      <img :src="profileImageUrl" alt="Profile Image" class="profile-image" @error="handleImageError"
+                    <div v-else-if="profileImageUrl" class="profile-image-container"
+                      style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                      <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
+                        style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
                         @load="handleImageLoad" />
                     </div>
                     <div v-else class="text-center pa-4">
@@ -90,7 +86,7 @@
 
               <!-- Z-Value Distribution -->
               <v-col cols="12" md="6">
-                <v-card class="distribution-card" :height="(chartHeight * 0.25) - 6">
+                <v-card class="distribution-card" height="250">
                   <v-card-title class="py-2">
                     <v-icon start size="small">mdi-chart-bar</v-icon>
                     <span class="text-subtitle-1">Z-Value Distribution</span>
@@ -101,8 +97,7 @@
                   </v-card-title>
                   <v-card-text class="pa-2">
                     <ChartVisualization :selected-point="selectedPoint" :profile-data="profileData"
-                      :is-loading="isLoadingProfile" :chart-height="(chartHeight * 0.25) - 50" :compact="true"
-                      :chart-type="'histogram'" />
+                      :is-loading="isLoadingProfile" :chart-height="190" :compact="true" :chart-type="'histogram'" />
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -418,7 +413,7 @@ async function handlePointSelected(pointData) {
       console.log(`   siteInfo:`, siteInfo)
 
       const toolName = route.query.tool || 'MAP608'
-      
+
       const [profileResponse, imageResponse] = await Promise.allSettled([
         apiService.getProfileData(cleanFilename, cleanPointNumber, toolName, siteInfo),
         apiService.getProfileImage(cleanFilename, cleanPointNumber, toolName, siteInfo)
@@ -490,7 +485,7 @@ onMounted(() => {
   if (route.query.from) {
     referrer.value = route.query.from
   }
-  
+
   loadData()
 })
 </script>
@@ -512,10 +507,6 @@ onMounted(() => {
 }
 
 /* Professional layout */
-.main-content-row {
-  height: calc(100vh - 450px);
-  min-height: 500px;
-}
 
 .heat-map-card,
 .profile-card,
