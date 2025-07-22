@@ -5,7 +5,7 @@ __pycache__/
 
 # C extensions
 *.so
-
+itc-afm-data-platform-pjt-shared/
 # Distribution / packaging
 .Python
 build/
