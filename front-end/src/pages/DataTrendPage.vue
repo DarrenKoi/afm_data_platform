@@ -267,17 +267,6 @@
           </v-window>
         </v-card>
 
-        <!-- Action Buttons -->
-        <div class="d-flex justify-end mt-4">
-          <v-btn variant="outlined" class="mr-2" @click="exportData">
-            <v-icon left>mdi-download</v-icon>
-            Export Data
-          </v-btn>
-          <v-btn color="primary" @click="generateReport">
-            <v-icon left>mdi-file-document</v-icon>
-            Generate Report
-          </v-btn>
-        </div>
       </v-col>
     </v-row>
   </v-container>
@@ -289,7 +278,7 @@ import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore.js'
 import { apiService } from '@/services/api.js'
 import SimplifiedMeasurementCard from '@/components/DataTrend/SimplifiedMeasurementCard.vue'
-import TimeSeriesChart from '@/components/charts/TimeSeriesChart.vue'
+import TimeSeriesChart from '@/components/DataTrend/charts/TimeSeriesChart.vue'
 
 const router = useRouter()
 const dataStore = useDataStore()
@@ -690,72 +679,4 @@ async function loadGroupDataFromFlask() {
   }
 }
 
-function exportData() {
-  console.log('🔄 [DataTrendPage] Exporting grouped data:', dataStore.groupedData)
-  
-  // Create CSV content from enriched measurements
-  if (enrichedMeasurements.value.length === 0) {
-    console.warn('⚠️ No data to export')
-    return
-  }
-  
-  const headers = [
-    'Index',
-    'Fab',
-    'Lot ID',
-    'Wafer ID', 
-    'Recipe ID',
-    'Sample ID',
-    'Carrier ID',
-    'Tool',
-    'Event Time',
-    'Added At'
-  ]
-  
-  const rows = enrichedMeasurements.value.map(item => [
-    item.measurementIndex,
-    item.fab,
-    item.lot_id,
-    item.wf_id,
-    item.rcp_id,
-    item.sample_id,
-    item.carrier_id,
-    item.tool,
-    item.event_time,
-    item.addedAt || ''
-  ])
-  
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => 
-      typeof cell === 'string' && cell.includes(',') ? `"${cell}"` : cell
-    ).join(','))
-  ].join('\n')
-  
-  // Download CSV file
-  const blob = new Blob([csvContent], { type: 'text/csv' })
-  const url = window.URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `afm_measurements_comparison_${new Date().toISOString().split('T')[0]}.csv`
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  window.URL.revokeObjectURL(url)
-  
-  console.log('✅ [DataTrendPage] CSV export completed')
-}
-
-function generateReport() {
-  console.log('🔄 [DataTrendPage] Generating report for grouped data:', dataStore.groupedData)
-  
-  // Future implementation: generate PDF report with measurement comparison
-  // Could include:
-  // - Summary statistics
-  // - Trend charts
-  // - Data tables
-  // - Export metadata
-  
-  console.log('📊 [DataTrendPage] Report generation feature coming soon')
-}
 </script>

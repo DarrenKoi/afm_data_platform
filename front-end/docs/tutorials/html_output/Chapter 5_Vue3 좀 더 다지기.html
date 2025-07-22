@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 5_Vue3 좀 더 다지기</title>
+    
+    <style>
+    body {
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans CJK KR', 'Dotum', '돋움', 'Gulim', '굴림', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #fff;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        text-align: left;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+    }
+    
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
+    }
+    
+    code {
+        background-color: #f1f3f4;
+        border: 1px solid #e1e4e8;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+        font-size: 0.9em;
+        color: #24292e;
+    }
+    
+    pre {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 1em 0;
+        line-height: 1.45;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+    }
+    
+    pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced syntax highlighting support */
+    .highlight {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin: 1em 0;
+    }
+    
+    .highlight pre {
+        background: none;
+        border: none;
+        margin: 0;
+    }
+    
+    /* Fix Vue.js template syntax highlighting issues */
+    .highlight .err {
+        background: none !important;
+        border: none !important;
+        color: #24292e !important;
+    }
+    
+    /* Override error highlighting for Vue directives */
+    .highlight .nt {
+        color: #22863a;
+    }
+    
+    .highlight .na {
+        color: #6f42c1;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5em auto;
+    }
+    
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+    }
+    
+    table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin-bottom: 0.5em;
+    }
+    
+    hr {
+        border: none;
+        height: 2px;
+        background-color: #ecf0f1;
+        margin: 3em 0;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1em auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .highlight {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 1em 0;
+    }
+    
+    @media print {
+        body {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+    </style>
+    
+</head>
+<body>
+    <h1 id="vue-3">Vue 3 좀 더 다지기</h1>
+<p>이 장에서는 Vue 3의 더 고급 개념들을 배워보겠습니다. 이전 장에서 배운 기초 개념들을 바탕으로, 실제 개발에서 자주 사용되는 중요한 기능들을 살펴보겠습니다. 자세한 내용은 <a href="https://ko.vuejs.org/guide/introduction.html">Vue.js 공식 가이드 (한국어)</a>를 참고하세요.</p>
+<h2 id="computed-vs-watchers">Computed vs Watchers</h2>
+<p>Vue 3에서는 반응형 데이터를 다루는 두 가지 주요 방법이 있습니다. Computed와 Watchers는 비슷해 보이지만 사용 목적과 동작 방식이 다릅니다.</p>
+<h3 id="computed-properties">Computed Properties (계산된 속성)</h3>
+<p>Computed는 다른 반응형 데이터를 기반으로 계산된 값을 반환합니다. 종속된 데이터가 변경될 때만 재계산되며, 결과를 캐싱합니다.</p>
+<h3 id="_1">캐싱의 장점</h3>
+<p>Computed 속성의 캐싱은 다음과 같은 장점을 제공합니다:</p>
+<p><strong>성능 최적화</strong></p>
+<ul>
+<li>동일한 계산을 여러 번 수행하지 않고 결과를 재사용</li>
+<li>템플릿에서 여러 번 참조해도 한 번만 계산됨</li>
+<li>대용량 데이터 처리 시 특히 효과적</li>
+</ul>
+<p><strong>효율적인 리소스 관리</strong></p>
+<ul>
+<li>복잡한 연산(필터링, 정렬, 통계 계산 등)의 결과를 메모리에 저장</li>
+<li>종속된 데이터가 변경될 때만 재계산하여 불필요한 연산 방지</li>
+<li>CPU 사용량 감소로 전체적인 애플리케이션 성능 향상</li>
+</ul>
+<h3 id="watchers">Watchers (감시자)</h3>
+<p>Watchers는 특정 데이터의 변화를 감시하고, 변화가 발생했을 때 부수 효과(side effects)를 실행합니다. API 호출, 로깅, DOM 조작 등에 사용됩니다.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">scanSpeed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">50</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">errorLog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([]);</span>
+
+<span class="c1">// Watch - 스캔 속도 변화 감시 및 로깅</span>
+<span class="nx">watch</span><span class="p">(</span><span class="nx">scanSpeed</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newSpeed</span><span class="p">,</span><span class="w"> </span><span class="nx">oldSpeed</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`스캔 속도 변경: </span><span class="si">${</span><span class="nx">oldSpeed</span><span class="si">}</span><span class="sb"> → </span><span class="si">${</span><span class="nx">newSpeed</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 부수 효과: API 호출</span>
+<span class="w">  </span><span class="nx">updateEquipmentSettings</span><span class="p">({</span><span class="w"> </span><span class="nx">speed</span><span class="o">:</span><span class="w"> </span><span class="nx">newSpeed</span><span class="w"> </span><span class="p">});</span>
+
+<span class="w">  </span><span class="c1">// 부수 효과: 에러 로깅</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">newSpeed</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">100</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">errorLog</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">(),</span>
+<span class="w">      </span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="sb">`위험: 스캔 속도가 </span><span class="si">${</span><span class="nx">newSpeed</span><span class="si">}</span><span class="sb">로 설정됨`</span><span class="p">,</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h3 id="watch">Watch의 반환값과 감시 제어</h3>
+<p>Watch는 기본적으로 콜백 함수에서 반환값이 없지만, watch 함수 자체는 감시를 중단할 수 있는 함수를 반환합니다.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// watch는 stop 함수를 반환</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">stopWatching</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">watch</span><span class="p">(</span><span class="nx">scanSpeed</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;속도 변경:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">newValue</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// 콜백 함수는 반환값 없음 - 부수 효과만 실행</span>
+<span class="p">});</span>
+
+<span class="c1">// 필요 시 감시 중단</span>
+<span class="nx">stopWatching</span><span class="p">();</span><span class="w"> </span><span class="c1">// 더 이상 scanSpeed 변화를 감시하지 않음</span>
+</code></pre></div>
+
+<p><strong>조건부 감시 예제</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="p">,</span><span class="w"> </span><span class="nx">onBeforeUnmount</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">25</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isMonitoring</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+
+<span class="c1">// 조건부 감시 구현</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">stopTempWatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+
+<span class="nx">watch</span><span class="p">(</span><span class="nx">isMonitoring</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">shouldMonitor</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">shouldMonitor</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 모니터링 시작</span>
+<span class="w">    </span><span class="nx">stopTempWatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">watch</span><span class="p">(</span><span class="nx">temperature</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newTemp</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">newTemp</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">30</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="s2">&quot;온도가 너무 높습니다!&quot;</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">sendAlert</span><span class="p">(</span><span class="s2">&quot;high-temperature&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">newTemp</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 모니터링 중단</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">stopTempWatch</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">stopTempWatch</span><span class="p">();</span>
+<span class="w">      </span><span class="nx">stopTempWatch</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// 컴포넌트 정리 시 감시 중단</span>
+<span class="nx">onBeforeUnmount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">stopTempWatch</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">stopTempWatch</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h3 id="watch_1">Watch의 고급 옵션</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 1. immediate: 즉시 실행</span>
+<span class="nx">watch</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">dataSource</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">loadData</span><span class="p">(</span><span class="nx">newValue</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">immediate</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1">// 컴포넌트 생성 시 즉시 한 번 실행</span>
+<span class="p">);</span>
+
+<span class="c1">// 2. deep: 깊은 감시 (객체 내부 변화 감지)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">afmSettings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">speed</span><span class="o">:</span><span class="w"> </span><span class="mf">50</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">resolution</span><span class="o">:</span><span class="w"> </span><span class="mf">512</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">mode</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;contact&quot;</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="nx">watch</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">afmSettings</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="nx">newSettings</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;설정 변경됨:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">newSettings</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">saveSettings</span><span class="p">(</span><span class="nx">newSettings</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">deep</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1">// 객체 내부 속성 변화도 감시</span>
+<span class="p">);</span>
+
+<span class="c1">// 3. flush: 실행 타이밍 제어</span>
+<span class="nx">watch</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">source</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="nx">newValue</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">updateDOM</span><span class="p">();</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">flush</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;post&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// &#39;pre&#39; (기본값), &#39;post&#39; (DOM 업데이트 후), &#39;sync&#39; (동기적)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">);</span>
+</code></pre></div>
+
+<h3 id="watcheffect-">WatchEffect - 자동 종속성 추적</h3>
+<p><code>watchEffect</code>는 내부에서 사용하는 반응형 값들을 자동으로 추적합니다.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">watchEffect</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">temperature</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">25</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">humidity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">60</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">pressure</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">1013</span><span class="p">);</span>
+
+<span class="c1">// 자동으로 사용된 반응형 값들을 감시</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">stop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">watchEffect</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 내부에서 사용하는 값들을 자동으로 추적</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span>
+<span class="w">    </span><span class="sb">`환경 조건: 온도 </span><span class="si">${</span><span class="nx">temperature</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">°C, 습도 </span><span class="si">${</span><span class="nx">humidity</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">%, 압력 </span><span class="si">${</span><span class="nx">pressure</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">hPa`</span>
+<span class="w">  </span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 조건에 따른 경고</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">temperature</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">30</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="nx">humidity</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">80</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="s2">&quot;측정 환경이 적절하지 않습니다&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+
+<span class="c1">// vs watch - 명시적으로 감시 대상 지정</span>
+<span class="nx">watch</span><span class="p">([</span><span class="nx">temperature</span><span class="p">,</span><span class="w"> </span><span class="nx">humidity</span><span class="p">,</span><span class="w"> </span><span class="nx">pressure</span><span class="p">],</span><span class="w"> </span><span class="p">([</span><span class="nx">newTemp</span><span class="p">,</span><span class="w"> </span><span class="nx">newHumid</span><span class="p">,</span><span class="w"> </span><span class="nx">newPress</span><span class="p">])</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span>
+<span class="w">    </span><span class="sb">`환경 조건: 온도 </span><span class="si">${</span><span class="nx">newTemp</span><span class="si">}</span><span class="sb">°C, 습도 </span><span class="si">${</span><span class="nx">newHumid</span><span class="si">}</span><span class="sb">%, 압력 </span><span class="si">${</span><span class="nx">newPress</span><span class="si">}</span><span class="sb">hPa`</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h3 id="computed-vs-watch">Computed vs Watch 비교</h3>
+<table>
+<thead>
+<tr>
+<th>특징</th>
+<th>Computed</th>
+<th>Watch</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>주요 용도</strong></td>
+<td>파생된 상태 계산</td>
+<td>부수 효과 실행</td>
+</tr>
+<tr>
+<td><strong>반환값</strong></td>
+<td>계산된 값 반환</td>
+<td>반환값 없음</td>
+</tr>
+<tr>
+<td><strong>캐싱</strong></td>
+<td>결과를 캐싱함</td>
+<td>캐싱하지 않음</td>
+</tr>
+<tr>
+<td><strong>실행 시점</strong></td>
+<td>종속성이 변경될 때</td>
+<td>감시 대상이 변경될 때</td>
+</tr>
+<tr>
+<td><strong>사용 예시</strong></td>
+<td>필터링, 정렬, 계산</td>
+<td>API 호출, 로깅, DOM 조작</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre><span></span><code><span class="c1">// 실제 사용 예제: AFM 데이터 대시보드</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">computed</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">rawData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([]);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">filterThreshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">10</span><span class="p">);</span>
+
+<span class="c1">// ✅ Computed 사용이 적절한 경우</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">filteredData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">rawData</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">d</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nx">filterThreshold</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">dataStatistics</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">total</span><span class="o">:</span><span class="w"> </span><span class="nx">rawData</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">filtered</span><span class="o">:</span><span class="w"> </span><span class="nx">filteredData</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">percentage</span><span class="o">:</span><span class="w"> </span><span class="p">(</span>
+<span class="w">      </span><span class="p">(</span><span class="nx">filteredData</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="nx">rawData</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span><span class="w"> </span><span class="o">*</span>
+<span class="w">      </span><span class="mf">100</span>
+<span class="w">    </span><span class="p">).</span><span class="nx">toFixed</span><span class="p">(</span><span class="mf">2</span><span class="p">),</span>
+<span class="w">  </span><span class="p">};</span>
+<span class="p">});</span>
+
+<span class="c1">// ✅ Watch 사용이 적절한 경우</span>
+<span class="nx">watch</span><span class="p">(</span><span class="nx">filterThreshold</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">newThreshold</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 서버에 새로운 임계값 저장</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">saveThresholdToServer</span><span class="p">(</span><span class="nx">newThreshold</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 사용자에게 알림</span>
+<span class="w">  </span><span class="nx">showNotification</span><span class="p">(</span><span class="sb">`필터 임계값이 </span><span class="si">${</span><span class="nx">newThreshold</span><span class="si">}</span><span class="sb">로 변경되었습니다`</span><span class="p">);</span>
+<span class="p">});</span>
+
+<span class="c1">// ❌ 잘못된 사용 예시 - Watch로 계산된 값 만들기</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">wrongFilteredData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[];</span>
+<span class="nx">watch</span><span class="p">(</span><span class="nx">rawData</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 이런 경우는 computed를 사용해야 함</span>
+<span class="w">  </span><span class="nx">wrongFilteredData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">newData</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">d</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">d</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">10</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h2 id="props-emits">Props와 Emits (컴포넌트 통신)</h2>
+<p>Vue의 컴포넌트는 독립적이고 재사용 가능한 단위입니다. Props와 Emits는 이러한 컴포넌트들 간에 데이터를 주고받는 공식적인 방법입니다.</p>
+<h3 id="props">Props 심화 이해</h3>
+<p>Props는 부모 컴포넌트에서 자식 컴포넌트로 데이터를 전달하는 단방향 통신 방법입니다.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// MeasurementDisplay.vue - 자식 컴포넌트</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span>
+<span class="w">  </span><span class="c1">// 기본 타입 정의</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+
+<span class="w">  </span><span class="c1">// 상세 설정</span>
+<span class="w">  </span><span class="nx">measurement</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// 객체/배열의 기본값은 함수로 반환</span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">      </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;nm&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 커스텀 검증</span>
+<span class="w">  </span><span class="nx">threshold</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Number</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">validator</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">100</span><span class="p">;</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 여러 타입 허용</span>
+<span class="w">  </span><span class="nx">id</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nb">Number</span><span class="p">],</span>
+
+<span class="w">  </span><span class="c1">// 복잡한 타입 정의</span>
+<span class="w">  </span><span class="nx">config</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">,</span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({}),</span>
+<span class="w">    </span><span class="c1">// 객체 속성 검증</span>
+<span class="w">    </span><span class="nx">validator</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">config</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="nx">config</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="s2">&quot;mode&quot;</span><span class="p">)</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">        </span><span class="p">[</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;manual&quot;</span><span class="p">].</span><span class="nx">includes</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">mode</span><span class="p">)</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+
+<span class="c1">// Props는 읽기 전용!</span>
+<span class="c1">// ❌ 잘못된 사용</span>
+<span class="nx">props</span><span class="p">.</span><span class="nx">measurement</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100</span><span class="p">;</span><span class="w"> </span><span class="c1">// 이렇게 직접 수정하면 안 됨</span>
+
+<span class="c1">// ✅ 올바른 사용 - 로컬 복사본 만들기</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">localMeasurement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({</span><span class="w"> </span><span class="p">...</span><span class="nx">props</span><span class="p">.</span><span class="nx">measurement</span><span class="w"> </span><span class="p">});</span>
+<span class="nx">localMeasurement</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">100</span><span class="p">;</span><span class="w"> </span><span class="c1">// 로컬 복사본은 수정 가능</span>
+</code></pre></div>
+
+<h3 id="props_1">Props 전달 패턴</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 부모 컴포넌트 템플릿</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">정적</span><span class="w"> </span><span class="nx">Props</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">MeasurementDisplay</span>
+<span class="w">      </span><span class="nx">title</span><span class="o">=</span><span class="s2">&quot;표면 거칠기&quot;</span>
+<span class="w">      </span><span class="nx">unit</span><span class="o">=</span><span class="s2">&quot;nm&quot;</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">동적</span><span class="w"> </span><span class="nx">Props</span><span class="w"> </span><span class="p">(</span><span class="nx">v</span><span class="o">-</span><span class="nx">bind</span><span class="w"> </span><span class="nx">사용</span><span class="p">)</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">MeasurementDisplay</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">title</span><span class="o">=</span><span class="s2">&quot;dynamicTitle&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">measurement</span><span class="o">=</span><span class="s2">&quot;currentMeasurement&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">threshold</span><span class="o">=</span><span class="s2">&quot;warningThreshold&quot;</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">객체</span><span class="w"> </span><span class="nx">전체를</span><span class="w"> </span><span class="nx">Props로</span><span class="w"> </span><span class="nx">전달</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">MeasurementDisplay</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">bind</span><span class="o">=</span><span class="s2">&quot;measurementProps&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="c1">// 부모 컴포넌트 스크립트</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">dynamicTitle</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s1">&#39;실시간 측정&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">currentMeasurement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">23.5</span><span class="p">,</span><span class="w"> </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;nm&#39;</span><span class="w"> </span><span class="p">})</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">warningThreshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">50</span><span class="p">)</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">measurementProps</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Z축 높이&#39;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">measurement</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">45.2</span><span class="p">,</span><span class="w"> </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;nm&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">threshold</span><span class="o">:</span><span class="w"> </span><span class="mf">60</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="emits">Emits 심화 이해</h3>
+<p>Emits는 자식 컴포넌트에서 부모 컴포넌트로 이벤트를 전달하는 방법입니다.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// ControlPanel.vue - 자식 컴포넌트</span>
+<span class="c1">// 이벤트 정의 및 검증</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">emit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineEmits</span><span class="p">({</span>
+<span class="w">  </span><span class="c1">// 간단한 이벤트</span>
+<span class="w">  </span><span class="nx">start</span><span class="o">:</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span>
+
+<span class="w">  </span><span class="c1">// 페이로드 검증</span>
+<span class="w">  </span><span class="nx">update</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">payload</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 검증 로직 - true 반환하면 유효</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">payload</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">payload</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;number&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">payload</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 여러 파라미터를 가진 이벤트</span>
+<span class="w">  </span><span class="nx">change</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="p">,</span><span class="w"> </span><span class="nx">timestamp</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">      </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;string&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">      </span><span class="ow">typeof</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;number&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span>
+<span class="w">      </span><span class="nx">timestamp</span><span class="w"> </span><span class="ow">instanceof</span><span class="w"> </span><span class="nb">Date</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+
+<span class="c1">// 이벤트 발생시키기</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">handleStart</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 단순 이벤트</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">);</span>
+
+<span class="w">  </span><span class="c1">// 페이로드와 함께</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;update&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="mf">42.5</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">unit</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;nm&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">timestamp</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">(),</span>
+<span class="w">  </span><span class="p">});</span>
+
+<span class="w">  </span><span class="c1">// 여러 파라미터와 함께</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;change&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;sensor-01&quot;</span><span class="p">,</span><span class="w"> </span><span class="mf">23.4</span><span class="p">,</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Date</span><span class="p">());</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h3 id="v-model">양방향 바인딩 패턴 (v-model)</h3>
+<p>Props와 Emits를 조합하여 양방향 바인딩을 구현할 수 있습니다.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// CustomInput.vue - 자식 컴포넌트 템플릿</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">input</span>
+<span class="w">    </span><span class="o">:</span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;modelValue&quot;</span>
+<span class="w">    </span><span class="err">@</span><span class="nx">input</span><span class="o">=</span><span class="s2">&quot;$emit(&#39;update:modelValue&#39;, $event.target.value)&quot;</span>
+<span class="w">  </span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="c1">// CustomInput.vue - 자식 컴포넌트 스크립트</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="nx">defineProps</span><span class="p">([</span><span class="s1">&#39;modelValue&#39;</span><span class="p">])</span>
+<span class="nx">defineEmits</span><span class="p">([</span><span class="s1">&#39;update:modelValue&#39;</span><span class="p">])</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+
+<span class="c1">// 부모 컴포넌트에서 사용</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">CustomInput</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;searchQuery&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">위는</span><span class="w"> </span><span class="nx">아래와</span><span class="w"> </span><span class="nx">동일</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">CustomInput</span>
+<span class="w">    </span><span class="o">:</span><span class="nx">modelValue</span><span class="o">=</span><span class="s2">&quot;searchQuery&quot;</span>
+<span class="w">    </span><span class="err">@</span><span class="nx">update</span><span class="o">:</span><span class="nx">modelValue</span><span class="o">=</span><span class="s2">&quot;searchQuery = $event&quot;</span>
+<span class="w">  </span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+</code></pre></div>
+
+<h3 id="afm">실제 활용 예제: AFM 설정 패널</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// AFMSettingsPanel.vue - 자식 컴포넌트 템플릿</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;settings-panel&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">h3</span><span class="o">&gt;</span><span class="p">{{</span><span class="w"> </span><span class="nx">title</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/h3&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;setting-item&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="nx">스캔</span><span class="w"> </span><span class="nx">속도</span><span class="o">&lt;</span><span class="err">/label&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">input</span>
+<span class="w">        </span><span class="o">:</span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;settings.scanSpeed&quot;</span>
+<span class="w">        </span><span class="err">@</span><span class="nx">input</span><span class="o">=</span><span class="s2">&quot;updateSetting(&#39;scanSpeed&#39;, $event.target.value)&quot;</span>
+<span class="w">        </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;number&quot;</span>
+<span class="w">      </span><span class="o">/&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;setting-item&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">label</span><span class="o">&gt;</span><span class="nx">해상도</span><span class="o">&lt;</span><span class="err">/label&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">select</span>
+<span class="w">        </span><span class="o">:</span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;settings.resolution&quot;</span>
+<span class="w">        </span><span class="err">@</span><span class="nx">change</span><span class="o">=</span><span class="s2">&quot;updateSetting(&#39;resolution&#39;, $event.target.value)&quot;</span>
+<span class="w">      </span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">option</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;256&quot;</span><span class="o">&gt;</span><span class="mf">256</span><span class="nx">x256</span><span class="o">&lt;</span><span class="err">/option&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">option</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;512&quot;</span><span class="o">&gt;</span><span class="mf">512</span><span class="nx">x512</span><span class="o">&lt;</span><span class="err">/option&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">option</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;1024&quot;</span><span class="o">&gt;</span><span class="mf">1024</span><span class="nx">x1024</span><span class="o">&lt;</span><span class="err">/option&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/select&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;applySettings&quot;</span><span class="o">&gt;</span><span class="nx">적용</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;resetSettings&quot;</span><span class="o">&gt;</span><span class="nx">초기화</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="c1">// AFMSettingsPanel.vue - 자식 컴포넌트 스크립트</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+
+<span class="c1">// Props 정의</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;AFM 설정&#39;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">initialSettings</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">})</span>
+
+<span class="c1">// Emits 정의</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">emit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineEmits</span><span class="p">([</span><span class="s1">&#39;update&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;apply&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;reset&#39;</span><span class="p">])</span>
+
+<span class="c1">// 로컬 상태</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">settings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({</span><span class="w"> </span><span class="p">...</span><span class="nx">props</span><span class="p">.</span><span class="nx">initialSettings</span><span class="w"> </span><span class="p">})</span>
+
+<span class="c1">// Props 변경 감시</span>
+<span class="nx">watch</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">props</span><span class="p">.</span><span class="nx">initialSettings</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newSettings</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">newSettings</span><span class="w"> </span><span class="p">}</span>
+<span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">deep</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">})</span>
+
+<span class="c1">// 메서드</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">updateSetting</span><span class="p">(</span><span class="nx">key</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="p">[</span><span class="nx">key</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">Number</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span>
+
+<span class="w">  </span><span class="c1">// 부모에게 변경 사항 알림</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;update&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">key</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span>
+<span class="w">    </span><span class="nx">allSettings</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">applySettings</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;apply&#39;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">resetSettings</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">settings</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="p">...</span><span class="nx">props</span><span class="p">.</span><span class="nx">initialSettings</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s1">&#39;reset&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+
+<span class="c1">// 부모 컴포넌트에서 사용 - 템플릿</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">AFMSettingsPanel</span>
+<span class="w">    </span><span class="o">:</span><span class="nx">initial</span><span class="o">-</span><span class="nx">settings</span><span class="o">=</span><span class="s2">&quot;defaultSettings&quot;</span>
+<span class="w">    </span><span class="err">@</span><span class="nx">update</span><span class="o">=</span><span class="s2">&quot;handleSettingUpdate&quot;</span>
+<span class="w">    </span><span class="err">@</span><span class="nx">apply</span><span class="o">=</span><span class="s2">&quot;applySettingsToEquipment&quot;</span>
+<span class="w">    </span><span class="err">@</span><span class="nx">reset</span><span class="o">=</span><span class="s2">&quot;handleReset&quot;</span>
+<span class="w">  </span><span class="o">/&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="c1">// 부모 컴포넌트에서 사용 - 스크립트</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">defaultSettings</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">scanSpeed</span><span class="o">:</span><span class="w"> </span><span class="mf">50</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">resolution</span><span class="o">:</span><span class="w"> </span><span class="mf">512</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">force</span><span class="o">:</span><span class="w"> </span><span class="mf">1.5</span>
+<span class="p">})</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">handleSettingUpdate</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`설정 변경: </span><span class="si">${</span><span class="nx">data</span><span class="p">.</span><span class="nx">key</span><span class="si">}</span><span class="sb"> = </span><span class="si">${</span><span class="nx">data</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">applySettingsToEquipment</span><span class="p">(</span><span class="nx">settings</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">sendSettingsToAFM</span><span class="p">(</span><span class="nx">settings</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">showNotification</span><span class="p">(</span><span class="s1">&#39;설정이 적용되었습니다&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;success&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">showNotification</span><span class="p">(</span><span class="s1">&#39;설정 적용 실패&#39;</span><span class="p">,</span><span class="w"> </span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">handleReset</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;설정이 초기화되었습니다&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="lifecycle">생명주기 (Lifecycle) 이해와 활용</h2>
+<h3 id="_2">생명주기가 중요한 이유</h3>
+<p>Vue 컴포넌트의 생명주기를 이해하면 적절한 시점에 필요한 작업을 수행할 수 있습니다. 특히 다음과 같은 상황에서 중요합니다:</p>
+<ol>
+<li><strong>리소스 관리</strong>: 타이머, WebSocket 연결, 이벤트 리스너 등의 정리</li>
+<li><strong>외부 라이브러리 통합</strong>: DOM이 준비된 후 차트 라이브러리 초기화</li>
+<li><strong>데이터 로딩</strong>: 컴포넌트가 표시될 때 API 호출</li>
+<li><strong>메모리 누수 방지</strong>: 사용하지 않는 리소스 정리</li>
+</ol>
+<h3 id="_3">주요 생명주기 훅과 사용 시점</h3>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">onBeforeMount</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">onMounted</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">onBeforeUpdate</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">onUpdated</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">onBeforeUnmount</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">onUnmounted</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">ref</span><span class="p">,</span>
+<span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// AFM 실시간 모니터링 컴포넌트</span>
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">chartInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">websocket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateTimer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// 1. onBeforeMount - DOM 생성 전</span>
+<span class="w">    </span><span class="nx">onBeforeMount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;컴포넌트 마운트 준비&quot;</span><span class="p">);</span>
+<span class="w">      </span><span class="c1">// DOM에 접근할 수 없음</span>
+<span class="w">      </span><span class="c1">// 초기 데이터 준비, 설정 로드 등</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 2. onMounted - DOM 생성 후 (가장 많이 사용)</span>
+<span class="w">    </span><span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// ✅ DOM 요소 접근 가능</span>
+<span class="w">      </span><span class="nx">initializeChart</span><span class="p">();</span>
+
+<span class="w">      </span><span class="c1">// ✅ 외부 라이브러리 초기화</span>
+<span class="w">      </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ECharts</span><span class="p">(</span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s2">&quot;chart&quot;</span><span class="p">));</span>
+
+<span class="w">      </span><span class="c1">// ✅ API 호출</span>
+<span class="w">      </span><span class="nx">loadInitialData</span><span class="p">();</span>
+
+<span class="w">      </span><span class="c1">// ✅ 이벤트 리스너 등록</span>
+<span class="w">      </span><span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;resize&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleResize</span><span class="p">);</span>
+
+<span class="w">      </span><span class="c1">// ✅ 실시간 연결 시작</span>
+<span class="w">      </span><span class="nx">connectWebSocket</span><span class="p">();</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 3. onBeforeUpdate - 재렌더링 전</span>
+<span class="w">    </span><span class="nx">onBeforeUpdate</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// DOM 업데이트 전 현재 상태 저장</span>
+<span class="w">      </span><span class="nx">saveScrollPosition</span><span class="p">();</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 4. onUpdated - 재렌더링 후</span>
+<span class="w">    </span><span class="nx">onUpdated</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// DOM 업데이트 후 작업</span>
+<span class="w">      </span><span class="nx">restoreScrollPosition</span><span class="p">();</span>
+
+<span class="w">      </span><span class="c1">// 차트 업데이트</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">update</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 5. onBeforeUnmount - 컴포넌트 제거 전 (중요!)</span>
+<span class="w">    </span><span class="nx">onBeforeUnmount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// ✅ 타이머 정리</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">updateTimer</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">clearInterval</span><span class="p">(</span><span class="nx">updateTimer</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="c1">// ✅ 이벤트 리스너 제거</span>
+<span class="w">      </span><span class="nb">window</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s2">&quot;resize&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleResize</span><span class="p">);</span>
+
+<span class="w">      </span><span class="c1">// ✅ WebSocket 연결 종료</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">websocket</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">websocket</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="c1">// ✅ 진행 중인 API 요청 취소</span>
+<span class="w">      </span><span class="nx">cancelPendingRequests</span><span class="p">();</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 6. onUnmounted - 컴포넌트 제거 후</span>
+<span class="w">    </span><span class="nx">onUnmounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 최종 정리 작업</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;컴포넌트가 완전히 제거되었습니다&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 메서드들</span>
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">initializeChart</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 차트 초기화 로직</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">connectWebSocket</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">websocket</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">WebSocket</span><span class="p">(</span><span class="s2">&quot;ws://afm-server/realtime&quot;</span><span class="p">);</span>
+
+<span class="w">      </span><span class="nx">websocket</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 실시간 데이터 처리</span>
+<span class="w">      </span><span class="p">};</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">function</span><span class="w"> </span><span class="nx">handleResize</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">resize</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="_4">페이지 이동 시 생명주기</h3>
+<p>Vue Router를 사용한 페이지 이동 시 컴포넌트의 생명주기는 다음과 같이 동작합니다:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 페이지 A에서 페이지 B로 이동하는 경우</span>
+<span class="c1">// 1. 페이지 A 컴포넌트: onBeforeUnmount 호출</span>
+<span class="c1">// 2. 페이지 A 컴포넌트: onUnmounted 호출</span>
+<span class="c1">// 3. 페이지 B 컴포넌트: onBeforeMount 호출</span>
+<span class="c1">// 4. 페이지 B 컴포넌트: onMounted 호출</span>
+
+<span class="c1">// RouteGuard와 함께 사용하는 예제</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">onBeforeRouteLeave</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue-router&quot;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">setup</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">hasUnsavedChanges</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+
+<span class="w">    </span><span class="c1">// 라우트 이탈 전 확인</span>
+<span class="w">    </span><span class="nx">onBeforeRouteLeave</span><span class="p">((</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">hasUnsavedChanges</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">answer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">window</span><span class="p">.</span><span class="nx">confirm</span><span class="p">(</span>
+<span class="w">          </span><span class="s2">&quot;저장하지 않은 변경사항이 있습니다. 정말 나가시겠습니까?&quot;</span>
+<span class="w">        </span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">answer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">next</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">});</span>
+
+<span class="w">    </span><span class="c1">// 컴포넌트 언마운트 시 정리</span>
+<span class="w">    </span><span class="nx">onBeforeUnmount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 자동 저장</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">hasUnsavedChanges</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">saveDataToLocalStorage</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+
+<span class="w">      </span><span class="c1">// 리소스 정리</span>
+<span class="w">      </span><span class="nx">cleanupResources</span><span class="p">();</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="_5">실제 프로젝트에서의 생명주기 활용 예시</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// AFMDataViewer.vue - 실제 활용 예제 템플릿</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;afm-data-viewer&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">ref</span><span class="o">=</span><span class="s2">&quot;chartContainer&quot;</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;chart-container&quot;</span><span class="o">&gt;&lt;</span><span class="err">/div&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;loading&quot;</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;loading-overlay&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">로딩</span><span class="w"> </span><span class="nx">중</span><span class="p">...</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="c1">// AFMDataViewer.vue - 실제 활용 예제 스크립트</span>
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onBeforeUnmount</span><span class="p">,</span><span class="w"> </span><span class="nx">onActivated</span><span class="p">,</span><span class="w"> </span><span class="nx">onDeactivated</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">echarts</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;echarts&#39;</span>
+
+<span class="c1">// 상태</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartContainer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">loading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">dataUpdateInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">resizeObserver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+
+<span class="c1">// 마운트 시 초기화</span>
+<span class="nx">onMounted</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 1. 차트 인스턴스 생성</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// 2. 초기 데이터 로드</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetchAFMData</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">updateChart</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// 3. 실시간 업데이트 시작</span>
+<span class="w">    </span><span class="nx">startRealtimeUpdate</span><span class="p">()</span>
+
+<span class="w">    </span><span class="c1">// 4. ResizeObserver로 반응형 차트 구현</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ResizeObserver</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="o">?</span><span class="p">.</span><span class="nx">resize</span><span class="p">()</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span>
+
+<span class="w">    </span><span class="nx">loading</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;차트 초기화 실패:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">showErrorNotification</span><span class="p">(</span><span class="s1">&#39;데이터 로드 실패&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">})</span>
+
+<span class="c1">// 언마운트 전 정리 (메모리 누수 방지)</span>
+<span class="nx">onBeforeUnmount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 1. 차트 인스턴스 제거</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">dispose</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 2. 실시간 업데이트 중지</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearInterval</span><span class="p">(</span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 3. ResizeObserver 정리</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">disconnect</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 4. 진행 중인 API 요청 취소</span>
+<span class="w">  </span><span class="nx">abortController</span><span class="o">?</span><span class="p">.</span><span class="nx">abort</span><span class="p">()</span>
+<span class="p">})</span>
+
+<span class="c1">// keep-alive 사용 시</span>
+<span class="nx">onActivated</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 컴포넌트가 다시 활성화될 때</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">resize</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">startRealtimeUpdate</span><span class="p">()</span>
+<span class="p">})</span>
+
+<span class="nx">onDeactivated</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 컴포넌트가 비활성화될 때</span>
+<span class="w">  </span><span class="nx">stopRealtimeUpdate</span><span class="p">()</span>
+<span class="p">})</span>
+
+<span class="c1">// 헬퍼 함수들</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">startRealtimeUpdate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">setInterval</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">newData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetchLatestAFMData</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">updateChart</span><span class="p">(</span><span class="nx">newData</span><span class="p">)</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="mf">5000</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">stopRealtimeUpdate</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearInterval</span><span class="p">(</span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">dataUpdateInterval</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">fetchAFMData</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// API 호출 로직</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">updateChart</span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">setOption</span><span class="p">({</span>
+<span class="w">      </span><span class="c1">// 차트 옵션</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="_6">정리</h2>
+<p>이 장에서 배운 내용을 정리하면:</p>
+<ol>
+<li>
+<p><strong>Computed vs Watch</strong></p>
+</li>
+<li>
+<p>Computed: 파생된 상태 계산, 캐싱, 반환값 있음</p>
+</li>
+<li>
+<p>Watch: 부수 효과 실행, 캐싱 없음, 반환값 없음</p>
+</li>
+<li>
+<p><strong>Props와 Emits</strong></p>
+</li>
+<li>
+<p>Props: 부모→자식 단방향 데이터 전달, 읽기 전용</p>
+</li>
+<li>Emits: 자식→부모 이벤트 전달, 검증 가능</li>
+<li>
+<p>v-model: Props와 Emits를 조합한 양방향 바인딩</p>
+</li>
+<li>
+<p><strong>생명주기</strong></p>
+</li>
+<li>리소스 관리와 메모리 누수 방지에 필수</li>
+<li>onMounted: DOM 접근, 외부 라이브러리 초기화</li>
+<li>onBeforeUnmount: 타이머, 리스너, 연결 정리</li>
+<li>페이지 이동 시 컴포넌트 생명주기 이해</li>
+</ol>
+<p>이러한 개념들을 잘 이해하고 활용하면 더 효율적이고 안정적인 Vue 애플리케이션을 개발할 수 있습니다. 특히 AFM 데이터 뷰어와 같은 실시간 데이터를 다루는 애플리케이션에서는 생명주기 관리가 매우 중요합니다.</p>
+<p>다음 장에서는 Vuetify를 사용한 UI 구성에 대해 배워보겠습니다.</p>
+</body>
+</html>

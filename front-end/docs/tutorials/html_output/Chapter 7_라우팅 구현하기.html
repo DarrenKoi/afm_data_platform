@@ -1,0 +1,1249 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 7_라우팅 구현하기</title>
+    
+    <style>
+    body {
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans CJK KR', 'Dotum', '돋움', 'Gulim', '굴림', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #fff;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        text-align: left;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+    }
+    
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
+    }
+    
+    code {
+        background-color: #f1f3f4;
+        border: 1px solid #e1e4e8;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+        font-size: 0.9em;
+        color: #24292e;
+    }
+    
+    pre {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 1em 0;
+        line-height: 1.45;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+    }
+    
+    pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced syntax highlighting support */
+    .highlight {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin: 1em 0;
+    }
+    
+    .highlight pre {
+        background: none;
+        border: none;
+        margin: 0;
+    }
+    
+    /* Fix Vue.js template syntax highlighting issues */
+    .highlight .err {
+        background: none !important;
+        border: none !important;
+        color: #24292e !important;
+    }
+    
+    /* Override error highlighting for Vue directives */
+    .highlight .nt {
+        color: #22863a;
+    }
+    
+    .highlight .na {
+        color: #6f42c1;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5em auto;
+    }
+    
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+    }
+    
+    table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin-bottom: 0.5em;
+    }
+    
+    hr {
+        border: none;
+        height: 2px;
+        background-color: #ecf0f1;
+        margin: 3em 0;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1em auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .highlight {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 1em 0;
+    }
+    
+    @media print {
+        body {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+    </style>
+    
+</head>
+<body>
+    <h1 id="_1">라우팅 구현하기</h1>
+<h2 id="vue-router">Vue Router 소개 및 설치</h2>
+<h3 id="vue-router_1">Vue Router란 무엇인가?</h3>
+<p>Vue Router는 Vue.js의 공식 라우팅 라이브러리로, 단일 페이지 애플리케이션(SPA)에서 페이지 간 이동을 관리합니다. 전통적인 웹사이트처럼 서버에서 새로운 HTML 페이지를 받아오지 않고도, JavaScript를 통해 동적으로 컴포넌트를 교체하여 마치 여러 페이지가 있는 것처럼 사용자 경험을 제공합니다.</p>
+<p>공식 문서는 <a href="https://router.vuejs.org">Vue Router 공식 사이트</a>에서 확인할 수 있습니다.</p>
+<h3 id="vue-router_2">Vue Router의 주요 특징</h3>
+<p><strong>Single Page Application (SPA) 지원</strong></p>
+<ul>
+<li>페이지 새로고침 없이 부드러운 화면 전환</li>
+<li>빠른 페이지 로딩과 자연스러운 사용자 경험</li>
+</ul>
+<p><strong>브라우저 히스토리 관리</strong></p>
+<ul>
+<li>뒤로/앞으로 가기 버튼 지원</li>
+<li>URL 변경을 통한 직접 페이지 접근 가능</li>
+</ul>
+<p><strong>동적 라우팅</strong></p>
+<ul>
+<li>URL 매개변수를 통한 유연한 페이지 구성</li>
+<li>중첩된 라우트로 복잡한 레이아웃 구현</li>
+</ul>
+<p><strong>네비게이션 가드</strong></p>
+<ul>
+<li>페이지 접근 권한 제어</li>
+<li>로그인 검증, 데이터 검증 등</li>
+</ul>
+<p><strong>지연 로딩 (Lazy Loading)</strong></p>
+<ul>
+<li>필요한 시점에만 컴포넌트 로드</li>
+<li>초기 번들 크기 최적화</li>
+</ul>
+<h3 id="vue-router_3">Vue Router 설치하기</h3>
+<p>대부분의 Vue 프로젝트 템플릿에는 Vue Router가 이미 포함되어 있거나 함께 설치하게 됩니다. 수동으로 추가해야 하는 경우 다음을 진행합니다.</p>
+<p><strong>설치 방법</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># Vue Router 설치</span>
+npm<span class="w"> </span>install<span class="w"> </span>vue-router@4
+</code></pre></div>
+
+<p><strong>main.js 파일 설정</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/main.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createApp</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createVuetify</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vuetify&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./App.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./router&quot;</span><span class="p">;</span>
+
+<span class="c1">// Vuetify 설정</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">vuetify</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createVuetify</span><span class="p">();</span>
+
+<span class="c1">// 앱 생성 및 플러그인 등록</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createApp</span><span class="p">(</span><span class="nx">App</span><span class="p">);</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">router</span><span class="p">);</span><span class="w"> </span><span class="c1">// 라우터 등록</span>
+<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">vuetify</span><span class="p">);</span><span class="w"> </span><span class="c1">// Vuetify 등록</span>
+
+<span class="nx">app</span><span class="p">.</span><span class="nx">mount</span><span class="p">(</span><span class="s2">&quot;#app&quot;</span><span class="p">);</span>
+</code></pre></div>
+
+<p><strong>⚠️ 설치 시 주의사항</strong></p>
+<ul>
+<li>Vue 3 프로젝트에는 Vue Router 4를 사용해야 합니다</li>
+<li>Vue 2 프로젝트에는 Vue Router 3을 사용합니다</li>
+<li>버전 호환성을 확인하고 설치하세요</li>
+</ul>
+<h2 id="_2">라우터 설정의 기본 이해</h2>
+<h3 id="_3">라우터 설정 파일 구조</h3>
+<p>Vue Router 설정은 일반적으로 <code>src/router/index.js</code> 파일에서 관리합니다:</p>
+<p><strong>src/router/index.js</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">,</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue-router&quot;</span><span class="p">;</span>
+
+<span class="c1">// 페이지 컴포넌트 임포트</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">MainPage</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/pages/MainPage.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">ResultPage</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/pages/ResultPage.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">DataTrendPage</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/pages/DataTrendPage.vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// 라우트 정의</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Main&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">MainPage</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;AFM 데이터 검색&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/result&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Result&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">ResultPage</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;검색 결과&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/trends&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;DataTrend&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">DataTrendPage</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">title</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;데이터 트렌드&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+
+<span class="c1">// 라우터 생성</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">history</span><span class="o">:</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="p">(),</span>
+<span class="w">  </span><span class="nx">routes</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">router</span><span class="p">;</span>
+</code></pre></div>
+
+<h3 id="appvue">App.vue에서 라우터 뷰 설정</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">상단</span><span class="w"> </span><span class="nx">네비게이션</span><span class="w"> </span><span class="nx">바</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">-</span><span class="nx">bar</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="w"> </span><span class="nx">dark</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">toolbar</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">AFM</span><span class="w"> </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">플랫폼</span><span class="o">&lt;</span><span class="err">/v-toolbar-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">spacer</span><span class="o">&gt;&lt;</span><span class="err">/v-spacer&gt;</span>
+
+<span class="w">      </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">네비게이션</span><span class="w"> </span><span class="nx">메뉴</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="w"> </span><span class="nx">left</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">home</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">        </span><span class="nx">홈</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/result&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="w"> </span><span class="nx">left</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">chart</span><span class="o">-</span><span class="nx">box</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">        </span><span class="nx">결과</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/trends&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="w"> </span><span class="nx">left</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">trending</span><span class="o">-</span><span class="nx">up</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">        </span><span class="nx">트렌드</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-app-bar&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">메인</span><span class="w"> </span><span class="nx">콘텐츠</span><span class="w"> </span><span class="nx">영역</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">main</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">여기에</span><span class="w"> </span><span class="nx">각</span><span class="w"> </span><span class="nx">페이지</span><span class="w"> </span><span class="nx">컴포넌트가</span><span class="w"> </span><span class="nx">렌더링됩니다</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">router</span><span class="o">-</span><span class="nx">view</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-main&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">하단</span><span class="w"> </span><span class="nx">푸터</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">footer</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;grey lighten-3&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">spacer</span><span class="o">&gt;&lt;</span><span class="err">/v-spacer&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">span</span><span class="o">&gt;&amp;</span><span class="nx">copy</span><span class="p">;</span><span class="w"> </span><span class="mf">2024</span><span class="w"> </span><span class="nx">SK</span><span class="w"> </span><span class="nx">hynix</span><span class="w"> </span><span class="nx">AFM</span><span class="w"> </span><span class="nx">Platform</span><span class="o">&lt;</span><span class="err">/span&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-footer&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-app&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">onMounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRouter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">()</span>
+
+<span class="c1">// 페이지 타이틀 업데이트</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">afterEach</span><span class="p">((</span><span class="nx">to</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nb">document</span><span class="p">.</span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">title</span><span class="w"> </span><span class="o">?</span>
+<span class="w">    </span><span class="sb">`</span><span class="si">${</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb"> - AFM Platform`</span><span class="w"> </span><span class="o">:</span>
+<span class="w">    </span><span class="s1">&#39;AFM Data Platform&#39;</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="history-vs-hash">History 모드 vs Hash 모드</h3>
+<p>Vue Router는 두 가지 히스토리 모드를 제공합니다:</p>
+<p><strong>1. History 모드 (createWebHistory) - 권장</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">history</span><span class="o">:</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="p">(),</span><span class="w"> </span><span class="c1">// 깔끔한 URL</span>
+<span class="w">  </span><span class="nx">routes</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="c1">// URL 예시: https://example.com/result</span>
+</code></pre></div>
+
+<p><strong>장점:</strong></p>
+<ul>
+<li>깔끔한 URL (# 없음)</li>
+<li>SEO에 유리</li>
+<li>사용자 친화적</li>
+</ul>
+<p><strong>단점:</strong></p>
+<ul>
+<li>서버 설정 필요 (모든 경로를 index.html로 리다이렉트)</li>
+</ul>
+<p><strong>2. Hash 모드 (createWebHashHistory)</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">history</span><span class="o">:</span><span class="w"> </span><span class="nx">createWebHashHistory</span><span class="p">(),</span><span class="w"> </span><span class="c1">// # 포함 URL</span>
+<span class="w">  </span><span class="nx">routes</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="c1">// URL 예시: https://example.com/#/result</span>
+</code></pre></div>
+
+<p><strong>장점:</strong></p>
+<ul>
+<li>서버 설정 불필요</li>
+<li>정적 파일 호스팅에서도 작동</li>
+</ul>
+<p><strong>단점:</strong></p>
+<ul>
+<li>URL에 # 포함</li>
+<li>SEO에 다소 불리</li>
+</ul>
+<h2 id="seo">SEO란 무엇인가?</h2>
+<p>SEO는 <strong>검색 엔진 최적화(Search Engine Optimization)</strong>의 약자로, 웹사이트가 구글, 네이버 등의 검색 엔진에서 더 높은 순위로 노출되도록 최적화하는 기법입니다. 저희는 사내에서만 사용되는 Web Application이므로 SEO는 신경쓰지 않아도 되지만, 비지니스용 웹서비스라면 SEO에 대해 고려해야 합니다.</p>
+<p>왜 SEO가 중요한가?</p>
+<ul>
+<li>무료 트래픽 증가: 광고비 없이 자연스럽게 방문자 유입</li>
+<li>신뢰도 향상: 검색 상위 노출은 브랜드 신뢰도를 높임</li>
+<li>장기적 효과: 한 번 최적화하면 지속적인 효과</li>
+<li>타겟팅: 관련 키워드로 검색하는 잠재 고객에게 노출</li>
+</ul>
+<h2 id="_4">기본 네비게이션 구현</h2>
+<h3 id="_5">선언적 네비게이션</h3>
+<p>템플릿에서 <code>&lt;router-link&gt;</code> 또는 Vuetify 컴포넌트의 <code>to</code> 속성을 사용:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">기본</span><span class="w"> </span><span class="nx">router</span><span class="o">-</span><span class="nx">link</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">router</span><span class="o">-</span><span class="nx">link</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/result&quot;</span><span class="o">&gt;</span><span class="nx">결과</span><span class="w"> </span><span class="nx">페이지로</span><span class="w"> </span><span class="nx">이동</span><span class="o">&lt;</span><span class="err">/router-link&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">Vuetify</span><span class="w"> </span><span class="nx">버튼과</span><span class="w"> </span><span class="nx">함께</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/result&quot;</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="w"> </span><span class="nx">left</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">chart</span><span class="o">-</span><span class="nx">box</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">      </span><span class="nx">결과</span><span class="w"> </span><span class="nx">보기</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">네비게이션</span><span class="w"> </span><span class="nx">드로어</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">navigation</span><span class="o">-</span><span class="nx">drawer</span><span class="w"> </span><span class="nx">permanent</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="w"> </span><span class="nx">link</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">메인</span><span class="w"> </span><span class="nx">페이지</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/result&quot;</span><span class="w"> </span><span class="nx">link</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">검색</span><span class="w"> </span><span class="nx">결과</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/trends&quot;</span><span class="w"> </span><span class="nx">link</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">데이터</span><span class="w"> </span><span class="nx">트렌드</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-list&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-navigation-drawer&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+</code></pre></div>
+
+<h3 id="_6">프로그래매틱 네비게이션</h3>
+<p>JavaScript 코드에서 라우터를 직접 제어:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">데이터</span><span class="w"> </span><span class="nx">검색</span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">form</span><span class="w"> </span><span class="err">@</span><span class="nx">submit</span><span class="p">.</span><span class="nx">prevent</span><span class="o">=</span><span class="s2">&quot;searchData&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">text</span><span class="o">-</span><span class="nx">field</span>
+<span class="w">            </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;searchQuery&quot;</span>
+<span class="w">            </span><span class="nx">label</span><span class="o">=</span><span class="s2">&quot;검색어를 입력하세요&quot;</span>
+<span class="w">            </span><span class="nx">required</span>
+<span class="w">          </span><span class="o">&gt;&lt;</span><span class="err">/v-text-field&gt;</span>
+
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;submit&quot;</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="nx">검색</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-form&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRouter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">()</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">searchQuery</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">searchData</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">trim</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 검색 결과 페이지로 이동 (히스토리에 추가)</span>
+<span class="w">    </span><span class="nx">router</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/result&#39;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">q</span><span class="o">:</span><span class="w"> </span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="p">}</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">goBack</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 이전 페이지로 돌아가기</span>
+<span class="w">  </span><span class="nx">router</span><span class="p">.</span><span class="nx">go</span><span class="p">(</span><span class="o">-</span><span class="mf">1</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">goToHome</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 현재 히스토리 항목을 교체 (뒤로 가기 불가)</span>
+<span class="w">  </span><span class="nx">router</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="_7">현재 라우트 정보 활용</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">breadcrumbs</span><span class="w"> </span><span class="o">:</span><span class="nx">items</span><span class="o">=</span><span class="s2">&quot;breadcrumbItems&quot;</span><span class="w"> </span><span class="nx">divider</span><span class="o">=</span><span class="s2">&quot;&gt;&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-breadcrumbs&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="nx">현재</span><span class="w"> </span><span class="nx">페이지</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">currentPageName</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">경로</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">$route</span><span class="p">.</span><span class="nx">path</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">쿼리</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">$route</span><span class="p">.</span><span class="nx">query</span><span class="p">)</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">p</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;$route.params.id&quot;</span><span class="o">&gt;</span><span class="nx">ID</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">$route</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">computed</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRoute</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRoute</span><span class="p">()</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">currentPageName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;알 수 없음&#39;</span><span class="p">)</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">breadcrumbItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;홈&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}]</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="nx">currentPageName</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">    </span><span class="p">})</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">items</span>
+<span class="p">})</span>
+
+<span class="c1">// 라우트 변경 감지</span>
+<span class="nx">watch</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newPath</span><span class="p">,</span><span class="w"> </span><span class="nx">oldPath</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`페이지 이동: </span><span class="si">${</span><span class="nx">oldPath</span><span class="si">}</span><span class="sb"> → </span><span class="si">${</span><span class="nx">newPath</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="_8">동적 라우팅과 매개변수</h2>
+<h3 id="url">URL 매개변수 사용</h3>
+<p>동적인 라우트 패턴으로 유연한 페이지 구성:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/router/index.js</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="c1">// 기본 매개변수</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/measurement/:id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;MeasurementDetail&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/MeasurementDetail.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">props</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="c1">// props로 매개변수 전달</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 여러 매개변수</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/sample/:sampleId/measurement/:measurementId&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;SampleMeasurement&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/SampleMeasurement.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">props</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 선택적 매개변수</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/analysis/:type?&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Analysis&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Analysis.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">props</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 와일드카드 매치</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/files/:pathMatch(.*)*&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;FileViewer&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/FileViewer.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<h3 id="_9">매개변수를 사용하는 컴포넌트</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">src</span><span class="o">/</span><span class="nx">pages</span><span class="o">/</span><span class="nx">MeasurementDetail</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;measurement&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">측정</span><span class="w"> </span><span class="nx">데이터</span><span class="w"> </span><span class="err">#</span><span class="p">{{</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;6&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">h3</span><span class="o">&gt;</span><span class="nx">기본</span><span class="w"> </span><span class="nx">정보</span><span class="o">&lt;</span><span class="err">/h3&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">샘플명</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">sampleName</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">측정일</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">date</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">장비</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">equipment</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;6&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">h3</span><span class="o">&gt;</span><span class="nx">측정값</span><span class="o">&lt;</span><span class="err">/h3&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">거칠기</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">roughness</span><span class="w"> </span><span class="p">}}</span><span class="w"> </span><span class="nx">nm</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">높이</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">height</span><span class="w"> </span><span class="p">}}</span><span class="w"> </span><span class="nx">nm</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">actions</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;$router.go(-1)&quot;</span><span class="o">&gt;</span><span class="nx">뒤로</span><span class="w"> </span><span class="nx">가기</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="o">:</span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;`/measurement/${id}/edit`&quot;</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="nx">수정</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-actions&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">else</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">progress</span><span class="o">-</span><span class="nx">circular</span><span class="w"> </span><span class="nx">indeterminate</span><span class="o">&gt;&lt;</span><span class="err">/v-progress-circular&gt;</span>
+<span class="w">        </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">로딩</span><span class="w"> </span><span class="nx">중</span><span class="p">...</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+
+<span class="c1">// Props로 라우트 매개변수 받기</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">measurement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">loadMeasurement</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// API에서 측정 데이터 로드</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/measurements/</span><span class="si">${</span><span class="nx">props</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">measurement</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;측정 데이터 로드 실패:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 컴포넌트 마운트 시 데이터 로드</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">loadMeasurement</span><span class="p">()</span>
+<span class="p">})</span>
+
+<span class="c1">// ID가 변경되면 데이터 다시 로드</span>
+<span class="nx">watch</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">props</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">loadMeasurement</span><span class="p">()</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="_10">쿼리 매개변수 활용</h3>
+<p>검색, 필터링, 페이지네이션에 쿼리 매개변수 사용:</p>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">src</span><span class="o">/</span><span class="nx">pages</span><span class="o">/</span><span class="nx">SearchResults</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">검색</span><span class="w"> </span><span class="nx">필터</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;mb-4&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">text</span><span class="o">-</span><span class="nx">field</span>
+<span class="w">              </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;searchQuery&quot;</span>
+<span class="w">              </span><span class="nx">label</span><span class="o">=</span><span class="s2">&quot;검색어&quot;</span>
+<span class="w">              </span><span class="err">@</span><span class="nx">input</span><span class="o">=</span><span class="s2">&quot;updateQuery&quot;</span>
+<span class="w">              </span><span class="nx">prepend</span><span class="o">-</span><span class="nx">icon</span><span class="o">=</span><span class="s2">&quot;mdi-magnify&quot;</span>
+<span class="w">            </span><span class="o">&gt;&lt;</span><span class="err">/v-text-field&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">select</span>
+<span class="w">              </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;filterType&quot;</span>
+<span class="w">              </span><span class="o">:</span><span class="nx">items</span><span class="o">=</span><span class="s2">&quot;typeOptions&quot;</span>
+<span class="w">              </span><span class="nx">label</span><span class="o">=</span><span class="s2">&quot;데이터 타입&quot;</span>
+<span class="w">              </span><span class="err">@</span><span class="nx">change</span><span class="o">=</span><span class="s2">&quot;updateQuery&quot;</span>
+<span class="w">            </span><span class="o">&gt;&lt;</span><span class="err">/v-select&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">select</span>
+<span class="w">              </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;sortBy&quot;</span>
+<span class="w">              </span><span class="o">:</span><span class="nx">items</span><span class="o">=</span><span class="s2">&quot;sortOptions&quot;</span>
+<span class="w">              </span><span class="nx">label</span><span class="o">=</span><span class="s2">&quot;정렬 기준&quot;</span>
+<span class="w">              </span><span class="err">@</span><span class="nx">change</span><span class="o">=</span><span class="s2">&quot;updateQuery&quot;</span>
+<span class="w">            </span><span class="o">&gt;&lt;</span><span class="err">/v-select&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">검색</span><span class="w"> </span><span class="nx">결과</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span>
+<span class="w">        </span><span class="nx">v</span><span class="o">-</span><span class="k">for</span><span class="o">=</span><span class="s2">&quot;result in searchResults&quot;</span>
+<span class="w">        </span><span class="o">:</span><span class="nx">key</span><span class="o">=</span><span class="s2">&quot;result.id&quot;</span>
+<span class="w">        </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;6&quot;</span><span class="w"> </span><span class="nx">lg</span><span class="o">=</span><span class="s2">&quot;4&quot;</span>
+<span class="w">      </span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="p">{{</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">title</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span><span class="p">{{</span><span class="w"> </span><span class="nx">result</span><span class="p">.</span><span class="nx">description</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">actions</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="o">:</span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;`/measurement/${result.id}`&quot;</span><span class="o">&gt;</span>
+<span class="w">              </span><span class="nx">상세보기</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-card-actions&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">페이지네이션</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">pagination</span>
+<span class="w">      </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;totalPages &gt; 1&quot;</span>
+<span class="w">      </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;currentPage&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">length</span><span class="o">=</span><span class="s2">&quot;totalPages&quot;</span>
+<span class="w">      </span><span class="err">@</span><span class="nx">input</span><span class="o">=</span><span class="s2">&quot;updateQuery&quot;</span>
+<span class="w">      </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;mt-4&quot;</span>
+<span class="w">    </span><span class="o">&gt;&lt;</span><span class="err">/v-pagination&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">computed</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRoute</span><span class="p">,</span><span class="w"> </span><span class="nx">useRouter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRoute</span><span class="p">()</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">()</span>
+
+<span class="c1">// 검색 상태</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">searchQuery</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s1">&#39;&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">filterType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">sortBy</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s1">&#39;date&#39;</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">currentPage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">1</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">searchResults</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([])</span>
+
+<span class="c1">// 옵션 데이터</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">typeOptions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;전체&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;all&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;AFM&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;afm&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;SEM&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;sem&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">sortOptions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;날짜순&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;date&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;이름순&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;name&#39;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;크기순&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;size&#39;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">totalPages</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">Math</span><span class="p">.</span><span class="nx">ceil</span><span class="p">(</span><span class="nx">searchResults</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">10</span><span class="p">)</span>
+<span class="p">})</span>
+
+<span class="c1">// URL 쿼리와 상태 동기화</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">syncWithQuery</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">q</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;&#39;</span>
+<span class="w">  </span><span class="nx">filterType</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;all&#39;</span>
+<span class="w">  </span><span class="nx">sortBy</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">sort</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s1">&#39;date&#39;</span>
+<span class="w">  </span><span class="nx">currentPage</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">query</span><span class="p">.</span><span class="nx">page</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">1</span>
+<span class="p">}</span>
+
+<span class="c1">// 상태를 URL 쿼리에 반영</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">updateQuery</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{}</span>
+
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="nx">query</span><span class="p">.</span><span class="nx">q</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">filterType</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;all&#39;</span><span class="p">)</span><span class="w"> </span><span class="nx">query</span><span class="p">.</span><span class="nx">type</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">filterType</span><span class="p">.</span><span class="nx">value</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">sortBy</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s1">&#39;date&#39;</span><span class="p">)</span><span class="w"> </span><span class="nx">query</span><span class="p">.</span><span class="nx">sort</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">sortBy</span><span class="p">.</span><span class="nx">value</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">currentPage</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">1</span><span class="p">)</span><span class="w"> </span><span class="nx">query</span><span class="p">.</span><span class="nx">page</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">currentPage</span><span class="p">.</span><span class="nx">value</span>
+
+<span class="w">  </span><span class="nx">router</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">query</span><span class="w"> </span><span class="p">})</span>
+<span class="p">}</span>
+
+<span class="c1">// 검색 실행</span>
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">performSearch</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">URLSearchParams</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">q</span><span class="o">:</span><span class="w"> </span><span class="nx">searchQuery</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nx">filterType</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">sort</span><span class="o">:</span><span class="w"> </span><span class="nx">sortBy</span><span class="p">.</span><span class="nx">value</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">page</span><span class="o">:</span><span class="w"> </span><span class="nx">currentPage</span><span class="p">.</span><span class="nx">value</span>
+<span class="w">    </span><span class="p">})</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/search?</span><span class="si">${</span><span class="nx">params</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">searchResults</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;검색 실패:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// 라우트 변경 감지</span>
+<span class="nx">watch</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">route</span><span class="p">.</span><span class="nx">query</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">syncWithQuery</span><span class="p">()</span>
+<span class="w">  </span><span class="nx">performSearch</span><span class="p">()</span>
+<span class="p">},</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">immediate</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="_11">중첩 라우트와 레이아웃</h2>
+<h3 id="_12">중첩 라우트 정의</h3>
+<p>복잡한 페이지 구조를 위한 중첩 라우트:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/router/index.js</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/dashboard&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/layouts/DashboardLayout.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">children</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// /dashboard</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;DashboardHome&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Dashboard/Home.vue&quot;</span><span class="p">),</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;measurements&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// /dashboard/measurements</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Measurements&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Dashboard/Measurements.vue&quot;</span><span class="p">),</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;analysis&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// /dashboard/analysis</span>
+<span class="w">        </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Analysis&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Dashboard/Analysis.vue&quot;</span><span class="p">),</span>
+<span class="w">        </span><span class="nx">children</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;surface&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// /dashboard/analysis/surface</span>
+<span class="w">            </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Dashboard/SurfaceAnalysis.vue&quot;</span><span class="p">),</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">          </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;roughness&quot;</span><span class="p">,</span><span class="w"> </span><span class="c1">// /dashboard/analysis/roughness</span>
+<span class="w">            </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Dashboard/RoughnessAnalysis.vue&quot;</span><span class="p">),</span>
+<span class="w">          </span><span class="p">},</span>
+<span class="w">        </span><span class="p">],</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">],</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<h3 id="_13">레이아웃 컴포넌트 구현</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">src</span><span class="o">/</span><span class="nx">layouts</span><span class="o">/</span><span class="nx">DashboardLayout</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">네비게이션</span><span class="w"> </span><span class="nx">드로어</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">navigation</span><span class="o">-</span><span class="nx">drawer</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;drawer&quot;</span><span class="w"> </span><span class="nx">app</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/dashboard&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">action</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">view</span><span class="o">-</span><span class="nx">dashboard</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-action&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">대시보드</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/dashboard/measurements&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">action</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">chart</span><span class="o">-</span><span class="nx">box</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-action&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">측정</span><span class="w"> </span><span class="nx">데이터</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">group</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">slot</span><span class="o">:</span><span class="nx">activator</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">action</span><span class="o">&gt;</span>
+<span class="w">              </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">chart</span><span class="o">-</span><span class="nx">line</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/v-list-item-action&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">content</span><span class="o">&gt;</span>
+<span class="w">              </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">분석</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/v-list-item-content&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/dashboard/analysis/surface&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">표면</span><span class="w"> </span><span class="nx">분석</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/dashboard/analysis/roughness&quot;</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">거칠기</span><span class="w"> </span><span class="nx">분석</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-list-group&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-list&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-navigation-drawer&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">상단</span><span class="w"> </span><span class="nx">앱</span><span class="w"> </span><span class="nx">바</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">-</span><span class="nx">bar</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="w"> </span><span class="nx">dark</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">-</span><span class="nx">bar</span><span class="o">-</span><span class="nx">nav</span><span class="o">-</span><span class="nx">icon</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;drawer = !drawer&quot;</span><span class="o">&gt;&lt;</span><span class="err">/v-app-bar-nav-icon&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">toolbar</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">AFM</span><span class="w"> </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">대시보드</span><span class="o">&lt;</span><span class="err">/v-toolbar-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">spacer</span><span class="o">&gt;&lt;</span><span class="err">/v-spacer&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">icon</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">icon</span><span class="o">&gt;</span><span class="nx">mdi</span><span class="o">-</span><span class="nx">account</span><span class="o">&lt;</span><span class="err">/v-icon&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-app-bar&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">메인</span><span class="w"> </span><span class="nx">콘텐츠</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">main</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="w"> </span><span class="nx">fluid</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">브레드크럼</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">breadcrumbs</span><span class="w"> </span><span class="o">:</span><span class="nx">items</span><span class="o">=</span><span class="s2">&quot;breadcrumbItems&quot;</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;pa-0 mb-4&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-breadcrumbs&gt;</span>
+
+<span class="w">        </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">자식</span><span class="w"> </span><span class="nx">라우트</span><span class="w"> </span><span class="nx">컴포넌트가</span><span class="w"> </span><span class="nx">렌더링되는</span><span class="w"> </span><span class="nx">곳</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">router</span><span class="o">-</span><span class="nx">view</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-main&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-app&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">computed</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRoute</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">route</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRoute</span><span class="p">()</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">drawer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">true</span><span class="p">)</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">breadcrumbItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[{</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;홈&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">}]</span>
+
+<span class="w">  </span><span class="c1">// 현재 경로 기반으로 브레드크럼 생성</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">&#39;/dashboard&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;대시보드&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/dashboard&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">})</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">&#39;/measurements&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;측정 데이터&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/dashboard/measurements&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">})</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">&#39;/analysis&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;분석&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">to</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/dashboard/analysis&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="p">})</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">&#39;/surface&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;표면 분석&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">})</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">&#39;/roughness&#39;</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">items</span><span class="p">.</span><span class="nx">push</span><span class="p">({</span><span class="w"> </span><span class="nx">text</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;거칠기 분석&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">disabled</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">})</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">items</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="_14">라우트 가드와 인증</h2>
+<h3 id="_15">전역 가드 설정</h3>
+<p>모든 라우트 변경에 대한 인증 및 권한 검사:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/router/index.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useAuthStore</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/stores/auth&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">history</span><span class="o">:</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="p">(),</span>
+<span class="w">  </span><span class="nx">routes</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="c1">// 전역 Before 가드</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">beforeEach</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">authStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useAuthStore</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// 로딩 상태 시작</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">loadingStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useLoadingStore</span><span class="p">();</span>
+<span class="w">  </span><span class="nx">loadingStore</span><span class="p">.</span><span class="nx">start</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// 인증이 필요한 페이지 확인</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">requiresAuth</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="nx">authStore</span><span class="p">.</span><span class="nx">isAuthenticated</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 로그인 페이지로 리다이렉트</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Login&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">query</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">redirect</span><span class="o">:</span><span class="w"> </span><span class="nx">to</span><span class="p">.</span><span class="nx">fullPath</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 권한 확인</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">roles</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">roles</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">authStore</span><span class="p">.</span><span class="nx">userRole</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Forbidden&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="c1">// 이미 로그인한 사용자가 로그인 페이지 접근 시</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;Login&quot;</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">authStore</span><span class="p">.</span><span class="nx">isAuthenticated</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Dashboard&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+
+<span class="w">  </span><span class="nx">next</span><span class="p">();</span>
+<span class="p">});</span>
+
+<span class="c1">// 전역 After 가드</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">afterEach</span><span class="p">((</span><span class="nx">to</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">loadingStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useLoadingStore</span><span class="p">();</span>
+<span class="w">  </span><span class="nx">loadingStore</span><span class="p">.</span><span class="nx">finish</span><span class="p">();</span>
+
+<span class="w">  </span><span class="c1">// 페이지 타이틀 설정</span>
+<span class="w">  </span><span class="nb">document</span><span class="p">.</span><span class="nx">title</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">title</span>
+<span class="w">    </span><span class="o">?</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">title</span><span class="si">}</span><span class="sb"> - AFM Platform`</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;AFM Data Platform&quot;</span><span class="p">;</span>
+<span class="p">});</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">router</span><span class="p">;</span>
+</code></pre></div>
+
+<h3 id="_16">라우트별 가드</h3>
+<p>특정 라우트에만 적용되는 가드:</p>
+<div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/admin&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/Admin.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">meta</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">requiresAuth</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nx">roles</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;admin&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">    </span><span class="nx">beforeEnter</span><span class="o">:</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">authStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useAuthStore</span><span class="p">();</span>
+
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">authStore</span><span class="p">.</span><span class="nx">userRole</span><span class="w"> </span><span class="o">!==</span><span class="w"> </span><span class="s2">&quot;admin&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">next</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Forbidden&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/measurement/:id&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/pages/MeasurementDetail.vue&quot;</span><span class="p">),</span>
+<span class="w">    </span><span class="nx">beforeEnter</span><span class="o">:</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="c1">// 데이터 존재 여부 확인</span>
+<span class="w">      </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/measurements/</span><span class="si">${</span><span class="nx">to</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="mf">404</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">next</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;NotFound&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">next</span><span class="p">({</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Error&quot;</span><span class="w"> </span><span class="p">});</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<h3 id="_17">컴포넌트 내 가드</h3>
+<p>컴포넌트 레벨에서의 가드 구현:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">측정</span><span class="w"> </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">편집</span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">form</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;isFormValid&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">text</span><span class="o">-</span><span class="nx">field</span>
+<span class="w">            </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;measurementData.name&quot;</span>
+<span class="w">            </span><span class="nx">label</span><span class="o">=</span><span class="s2">&quot;측정명&quot;</span>
+<span class="w">            </span><span class="err">@</span><span class="nx">input</span><span class="o">=</span><span class="s2">&quot;markAsChanged&quot;</span>
+<span class="w">            </span><span class="nx">required</span>
+<span class="w">          </span><span class="o">&gt;&lt;</span><span class="err">/v-text-field&gt;</span>
+<span class="w">          </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">기타</span><span class="w"> </span><span class="nx">폼</span><span class="w"> </span><span class="nx">필드들</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-form&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">actions</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;saveMeasurement&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">disabled</span><span class="o">=</span><span class="s2">&quot;!isFormValid&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="nx">저장</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;$router.go(-1)&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="nx">취소</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-card-actions&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="o">&gt;</span>
+<span class="c1">// Note: &lt;script setup&gt; should be used in actual implementation</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">,</span><span class="w"> </span><span class="nx">onBeforeRouteLeave</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">()</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">([</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">measurementData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">({})</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isFormValid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">hasUnsavedChanges</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">originalData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">markAsChanged</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">hasUnsavedChanges</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="p">}</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">loadMeasurement</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="sb">`/api/measurements/</span><span class="si">${</span><span class="nx">props</span><span class="p">.</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">measurementData</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">()</span>
+<span class="w">    </span><span class="nx">originalData</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">measurementData</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;데이터 로드 실패:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">saveMeasurement</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 저장 로직</span>
+<span class="w">  </span><span class="nx">hasUnsavedChanges</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="nx">router</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="s1">&#39;/dashboard/measurements&#39;</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">loadMeasurement</span><span class="p">()</span>
+<span class="p">})</span>
+
+<span class="c1">// 컴포넌트에서 나가기 전 확인</span>
+<span class="nx">onBeforeRouteLeave</span><span class="p">((</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">hasUnsavedChanges</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">answer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">window</span><span class="p">.</span><span class="nx">confirm</span><span class="p">(</span>
+<span class="w">      </span><span class="s1">&#39;저장되지 않은 변경사항이 있습니다. 정말 나가시겠습니까?&#39;</span>
+<span class="w">    </span><span class="p">)</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">(</span><span class="nx">answer</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="vue-router_4">Vue Router 효과적으로 활용하기</h2>
+<h3 id="_18">실용적인 접근 방법</h3>
+<p>Vue Router를 처음 배울 때는 모든 기능을 완벽히 이해하려 하지 마세요. 필요한 기능부터 단계적으로 적용해보는 것이 효과적입니다.</p>
+<p><strong>학습 vs 실무 접근법</strong></p>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>학습 중심</th>
+<th>실무 중심 (권장)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>방식</td>
+<td>모든 기능 완벽 숙지</td>
+<td>기본 라우팅부터 점진적 확장</td>
+</tr>
+<tr>
+<td>시간</td>
+<td>며칠~몇 주</td>
+<td>즉시 시작 가능</td>
+</tr>
+<tr>
+<td>효과</td>
+<td>이론적 완벽함</td>
+<td>빠른 결과물</td>
+</tr>
+<tr>
+<td>스트레스</td>
+<td>높음</td>
+<td>낮음</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_19">단계별 구현 전략</h3>
+<p><strong>1단계: 기본 라우팅부터 시작</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 1단계: 가장 단순한 라우팅</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">Home</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/about&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">About</span><span class="w"> </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<p><strong>2단계: 동적 라우팅 추가</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 2단계: ID 매개변수 추가</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">Home</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/measurement/:id&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">MeasurementDetail</span><span class="w"> </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<p><strong>3단계: 네비게이션 가드 적용</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 3단계: 인증 가드 추가</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">beforeEach</span><span class="p">((</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">requiresAuth</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="nx">isLoggedIn</span><span class="p">())</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">(</span><span class="s2">&quot;/login&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h3 id="_20">자주 사용하는 핵심 패턴</h3>
+<p>AFM 데이터 플랫폼에서 90% 이상 사용하게 될 패턴들:</p>
+<p><strong>기본 네비게이션</strong></p>
+<ul>
+<li><code>router.push()</code> - 새 페이지로 이동</li>
+<li><code>router.go(-1)</code> - 뒤로 가기</li>
+<li><code>&lt;router-link to="/path"&gt;</code> - 선언적 네비게이션</li>
+</ul>
+<p><strong>매개변수 처리</strong></p>
+<ul>
+<li><code>$route.params.id</code> - URL 매개변수 접근</li>
+<li><code>$route.query.search</code> - 쿼리 매개변수 접근</li>
+<li><code>props: true</code> - 매개변수를 props로 전달</li>
+</ul>
+<p><strong>조건부 네비게이션</strong></p>
+<ul>
+<li><code>v-if="$route.name === 'Home'"</code> - 현재 페이지 확인</li>
+<li><code>meta: { requiresAuth: true }</code> - 인증 필요 표시</li>
+</ul>
+<h3 id="vuetify">Vuetify와 함께 사용하기</h3>
+<p><strong>네비게이션 컴포넌트</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">아름다운</span><span class="w"> </span><span class="nx">네비게이션</span><span class="w"> </span><span class="nx">바</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">-</span><span class="nx">bar</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="w"> </span><span class="nx">dark</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span><span class="nx">홈</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/measurements&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span><span class="nx">측정</span><span class="w"> </span><span class="nx">데이터</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/analysis&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span><span class="nx">분석</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="o">&lt;</span><span class="err">/v-app-bar&gt;</span>
+</code></pre></div>
+
+<p><strong>드로어 네비게이션</strong></p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">navigation</span><span class="o">-</span><span class="nx">drawer</span><span class="w"> </span><span class="nx">app</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/dashboard&quot;</span><span class="w"> </span><span class="nx">link</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">list</span><span class="o">-</span><span class="nx">item</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="nx">대시보드</span><span class="o">&lt;</span><span class="err">/v-list-item-title&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-list-item&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-list&gt;</span>
+<span class="o">&lt;</span><span class="err">/v-navigation-drawer&gt;</span>
+</code></pre></div>
+
+<h3 id="_21">개발 워크플로우</h3>
+<p><strong>실제 개발할 때 이렇게 하세요:</strong></p>
+<ol>
+<li><strong>페이지 목록 작성</strong> → "어떤 페이지들이 필요한가?"</li>
+<li><strong>라우트 기본 구조 생성</strong> → 간단한 경로부터 시작</li>
+<li><strong>네비게이션 추가</strong> → Vuetify 컴포넌트로 예쁘게</li>
+<li><strong>동적 기능 확장</strong> → 매개변수, 가드 등 필요시 추가</li>
+<li><strong>사용자 경험 개선</strong> → 로딩, 오류 처리 등</li>
+</ol>
+<p>실제 예시: AFM 플랫폼 라우팅 구축</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 1. 기본 구조 (30분)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">MainPage</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/result&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">ResultPage</span><span class="w"> </span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="c1">// 2. 네비게이션 추가 (20분)</span>
+<span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">app</span><span class="o">-</span><span class="nx">bar</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/&quot;</span><span class="o">&gt;</span><span class="nx">검색</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">&quot;/result&quot;</span><span class="o">&gt;</span><span class="nx">결과</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="o">&lt;</span><span class="err">/v-app-bar&gt;</span>
+
+<span class="c1">// 3. 동적 기능 추가 (필요시)</span>
+<span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;/measurement/:id&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">Detail</span><span class="w"> </span><span class="p">}</span>
+</code></pre></div>
+
+<h3 id="_22">문제 해결 가이드</h3>
+<p><strong>자주 발생하는 문제들:</strong></p>
+<ol>
+<li><strong>"페이지가 안 나와요"</strong></li>
+</ol>
+<p><code>javascript
+   // router-view가 있는지 확인
+   &lt;router-view /&gt;</code></p>
+<ol>
+<li><strong>"뒤로 가기가 안 돼요"</strong></li>
+</ol>
+<p><code>javascript
+   // replace 대신 push 사용
+   router.push("/path"); // ✅ 히스토리에 추가
+   router.replace("/path"); // ❌ 히스토리 교체</code></p>
+<ol>
+<li><strong>"새로고침하면 404 오류"</strong></li>
+</ol>
+<p><code>javascript
+   // History 모드 사용 시 서버 설정 필요
+   // 또는 Hash 모드 사용
+   createWebHashHistory(); // /#/ 형태</code></p>
+<h3 id="_23">추천 학습 순서</h3>
+<p><strong>즉시 활용 가능한 순서:</strong></p>
+<ol>
+<li><strong><a href="https://router.vuejs.org/guide/">Vue Router 기본 가이드</a></strong> - 공식 문서 필수 부분만</li>
+<li><strong>실제 프로젝트 적용</strong> - 간단한 페이지 2-3개로 시작</li>
+<li><strong>Vuetify 네비게이션 컴포넌트</strong> - 예쁜 메뉴 만들기</li>
+<li><strong>고급 기능</strong> - 필요할 때마다 하나씩 추가</li>
+</ol>
+<h3 id="_24">핵심 메시지</h3>
+<p><strong>"완벽한 라우팅을 처음부터 만들려 하지 마세요!"</strong></p>
+<p>AFM 데이터 플랫폼을 개발하면서 라우팅 기능을 하나씩 추가해 나가는 것이 가장 효율적입니다. 기본 페이지 이동부터 시작해서, 필요에 따라 동적 라우팅, 가드, 중첩 라우트를 점진적으로 도입하세요!</p>
+</body>
+</html>

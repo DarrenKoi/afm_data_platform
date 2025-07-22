@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 10_API 통신-데이터교환</title>
+    
+    <style>
+    body {
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans CJK KR', 'Dotum', '돋움', 'Gulim', '굴림', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #fff;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        text-align: left;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+    }
+    
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
+    }
+    
+    code {
+        background-color: #f1f3f4;
+        border: 1px solid #e1e4e8;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+        font-size: 0.9em;
+        color: #24292e;
+    }
+    
+    pre {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 1em 0;
+        line-height: 1.45;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+    }
+    
+    pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced syntax highlighting support */
+    .highlight {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin: 1em 0;
+    }
+    
+    .highlight pre {
+        background: none;
+        border: none;
+        margin: 0;
+    }
+    
+    /* Fix Vue.js template syntax highlighting issues */
+    .highlight .err {
+        background: none !important;
+        border: none !important;
+        color: #24292e !important;
+    }
+    
+    /* Override error highlighting for Vue directives */
+    .highlight .nt {
+        color: #22863a;
+    }
+    
+    .highlight .na {
+        color: #6f42c1;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5em auto;
+    }
+    
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+    }
+    
+    table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin-bottom: 0.5em;
+    }
+    
+    hr {
+        border: none;
+        height: 2px;
+        background-color: #ecf0f1;
+        margin: 3em 0;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1em auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .highlight {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 1em 0;
+    }
+    
+    @media print {
+        body {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+    </style>
+    
+</head>
+<body>
+    <h1 id="api-axios">API 통신 - Axios 라이브러리 사용하기</h1>
+<h2 id="rest-api">REST API 기초</h2>
+<h3 id="rest-api_1">REST API란 무엇인가?</h3>
+<p>REST(Representational State Transfer) API는 웹 서비스 간 데이터를 주고받는 표준화된 방법입니다. 레스토랑에서 주문하는 과정을 생각해보면 이해하기 쉽습니다. 고객(프론트엔드)이 웨이터(API)에게 주문(요청)을 하면, 주방(백엔드)에서 요리(데이터)를 만들어 다시 고객에게 전달하는 것과 같은 원리입니다.</p>
+<h3 id="http">HTTP 메서드 이해하기</h3>
+<p>REST API는 HTTP 프로토콜의 메서드를 사용하여 다양한 작업을 수행합니다:</p>
+<table>
+<thead>
+<tr>
+<th>메서드</th>
+<th>용도</th>
+<th>예시</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GET</td>
+<td>데이터 조회</td>
+<td>AFM 측정 데이터 목록 가져오기</td>
+</tr>
+<tr>
+<td>POST</td>
+<td>새 데이터 생성</td>
+<td>새로운 측정 결과 저장하기</td>
+</tr>
+<tr>
+<td>PUT</td>
+<td>전체 데이터 수정</td>
+<td>장비 정보 전체 업데이트</td>
+</tr>
+<tr>
+<td>PATCH</td>
+<td>일부 데이터 수정</td>
+<td>장비 상태만 변경하기</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td>데이터 삭제</td>
+<td>오래된 측정 데이터 삭제</td>
+</tr>
+</tbody>
+</table>
+<h3 id="api">API 엔드포인트 구조 예시</h3>
+<div class="highlight"><pre><span></span><code>https://api.skhynix.com/afm/v1/equipments/AFM-001/measurements
+</code></pre></div>
+
+<p>이 URL을 분해해보면:</p>
+<ul>
+<li><code>https://api.skhynix.com</code> - API 서버 주소</li>
+<li><code>/afm/v1</code> - API 버전</li>
+<li><code>/equipments</code> - 리소스 타입 (장비)</li>
+<li><code>/AFM-001</code> - 특정 장비 ID</li>
+<li><code>/measurements</code> - 하위 리소스 (측정 데이터)</li>
+</ul>
+<h3 id="_1">상태 코드 이해하기</h3>
+<p>서버는 요청 처리 결과를 상태 코드로 알려줍니다:</p>
+<p><strong>200번대: 성공</strong></p>
+<ul>
+<li><code>200 OK</code> - 요청 성공</li>
+<li><code>201 Created</code> - 생성 성공</li>
+<li><code>204 No Content</code> - 삭제 성공</li>
+</ul>
+<p><strong>400번대: 클라이언트 오류</strong></p>
+<ul>
+<li><code>400 Bad Request</code> - 잘못된 요청</li>
+<li><code>401 Unauthorized</code> - 인증 필요</li>
+<li><code>404 Not Found</code> - 리소스 없음</li>
+</ul>
+<p><strong>500번대: 서버 오류</strong></p>
+<ul>
+<li><code>500 Internal Server Error</code> - 서버 내부 오류</li>
+<li><code>503 Service Unavailable</code> - 서비스 이용 불가</li>
+</ul>
+<h2 id="axios">Axios 라이브러리 소개</h2>
+<h3 id="axios_1">Axios란?</h3>
+<p>Axios는 브라우저와 Node.js에서 사용할 수 있는 Promise 기반 HTTP 클라이언트입니다. Vue.js 커뮤니티에서 가장 널리 사용되는 HTTP 라이브러리로, 간단하고 직관적인 API를 제공합니다.</p>
+<h3 id="axios_2">Axios의 주요 특징</h3>
+<ul>
+<li><strong>Promise 기반</strong>: async/await 문법과 완벽하게 호환됩니다.</li>
+<li><strong>요청/응답 인터셉터</strong>: 모든 요청과 응답을 가로채어 전처리할 수 있습니다.</li>
+<li><strong>자동 JSON 변환</strong>: JSON 데이터를 자동으로 파싱하고 문자열로 변환합니다.</li>
+<li><strong>에러 처리</strong>: HTTP 에러를 자동으로 감지하고 처리합니다.</li>
+<li><strong>요청 취소</strong>: 진행 중인 요청을 취소할 수 있습니다.</li>
+<li><strong>XSRF 보호</strong>: 크로스 사이트 요청 위조 공격을 방지합니다.</li>
+</ul>
+<h3 id="axios_3">Axios 설치하기</h3>
+<div class="highlight"><pre><span></span><code><span class="c1"># npm을 사용한 설치</span>
+npm<span class="w"> </span>install<span class="w"> </span>axios
+</code></pre></div>
+
+<h3 id="_2">기본 설정</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/api/index.js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">axios</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;axios&quot;</span><span class="p">;</span>
+
+<span class="c1">// Axios 기본 인스턴스 생성</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">axios</span><span class="p">.</span><span class="nx">create</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">baseURL</span><span class="o">:</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">VITE_API_URL</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;http://localhost:5000/api&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timeout</span><span class="o">:</span><span class="w"> </span><span class="mf">10000</span><span class="p">,</span><span class="w"> </span><span class="c1">// 10초 타임아웃</span>
+<span class="w">  </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;application/json&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="vite">Vite 환경 변수 설정</h2>
+<h3 id="_3">환경 변수란?</h3>
+<p>환경 변수는 애플리케이션이 실행되는 환경(개발, 스테이징, 프로덕션)에 따라 다른 설정값을 사용할 수 있게 해주는 기능입니다. Vite에서는 <code>.env</code> 파일을 통해 환경 변수를 관리합니다.</p>
+<h3 id="vite_">VITE_ 접두사 규칙</h3>
+<p>보안을 위해 Vite는 <code>VITE_</code> 접두사가 붙은 환경 변수만 클라이언트 코드에서 접근할 수 있도록 제한합니다. 이는 민감한 서버 정보가 브라우저에 노출되는 것을 방지합니다.</p>
+<h3 id="_4">환경별 설정 파일 생성</h3>
+<p>프로젝트 루트에 다음 파일들을 생성합니다:</p>
+<p><strong>개발 환경 (.env.development)</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 개발 서버 설정</span>
+<span class="nv">VITE_API_URL</span><span class="o">=</span>http://localhost:5000/api
+<span class="nv">VITE_APP_TITLE</span><span class="o">=</span>AFM<span class="w"> </span>Data<span class="w"> </span>Viewer<span class="w"> </span><span class="o">(</span>개발<span class="o">)</span>
+<span class="nv">VITE_DEBUG_MODE</span><span class="o">=</span><span class="nb">true</span>
+
+<span class="c1"># 개발용 기능 플래그</span>
+<span class="nv">VITE_FEATURE_CHART_EXPORT</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">VITE_FEATURE_REALTIME</span><span class="o">=</span><span class="nb">false</span>
+</code></pre></div>
+
+<p><strong>프로덕션 환경 (.env.production)</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 프로덕션 서버 설정</span>
+<span class="nv">VITE_API_URL</span><span class="o">=</span>https://api.skhynix.com/afm
+<span class="nv">VITE_APP_TITLE</span><span class="o">=</span>AFM<span class="w"> </span>Data<span class="w"> </span>Viewer
+<span class="nv">VITE_DEBUG_MODE</span><span class="o">=</span><span class="nb">false</span>
+
+<span class="c1"># 프로덕션 기능 설정</span>
+<span class="nv">VITE_FEATURE_CHART_EXPORT</span><span class="o">=</span><span class="nb">true</span>
+<span class="nv">VITE_FEATURE_REALTIME</span><span class="o">=</span><span class="nb">true</span>
+</code></pre></div>
+
+<p><strong>로컬 전용 설정 (.env.local)</strong></p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 개발자별 개인 설정 (Git에 커밋하지 않음)</span>
+<span class="nv">VITE_API_URL</span><span class="o">=</span>http://192.168.1.100:5000/api
+<span class="nv">VITE_DEVELOPER_NAME</span><span class="o">=</span>아무개
+</code></pre></div>
+
+<h3 id="_5">환경 변수 사용하기</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 환경 변수 접근</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">apiUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">VITE_API_URL</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isDev</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">DEV</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isProd</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PROD</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">mode</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">MODE</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="http_1">HTTP 요청 보내기</h2>
+<h3 id="get-">GET 요청 - 데이터 조회</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/api/equipment.js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./index&quot;</span><span class="p">;</span>
+
+<span class="c1">// 모든 장비 목록 조회</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getEquipments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;/equipments&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;장비 목록 조회 실패:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 특정 장비 상세 정보 조회</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getEquipmentById</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`장비 </span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb"> 조회 실패:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 쿼리 파라미터를 사용한 필터링</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getEquipmentsByStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;/equipments&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="nx">status</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">sort</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">limit</span><span class="o">:</span><span class="w"> </span><span class="mf">50</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;장비 상태별 조회 실패:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="post-">POST 요청 - 데이터 생성</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 새 측정 데이터 생성</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">createMeasurement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">equipmentId</span><span class="p">,</span><span class="w"> </span><span class="nx">measurementData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span>
+<span class="w">      </span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">equipmentId</span><span class="si">}</span><span class="sb">/measurements`</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">measurementData</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;측정 데이터 생성 실패:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 파일 업로드 예제</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">uploadMeasurementFile</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">equipmentId</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">formData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">FormData</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">formData</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;file&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">file</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">formData</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="s2">&quot;equipmentId&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">equipmentId</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s2">&quot;/measurements/upload&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">formData</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="s2">&quot;Content-Type&quot;</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;multipart/form-data&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;파일 업로드 실패:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="putpatch-">PUT/PATCH 요청 - 데이터 수정</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 장비 정보 전체 수정 (PUT)</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateEquipment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">equipmentData</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">put</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="nx">equipmentData</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`장비 </span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb"> 수정 실패:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+
+<span class="c1">// 장비 상태만 수정 (PATCH)</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">updateEquipmentStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">patch</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="nx">status</span><span class="p">,</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`장비 </span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb"> 상태 변경 실패:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="delete-">DELETE 요청 - 데이터 삭제</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 측정 데이터 삭제</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">deleteMeasurement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">measurementId</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="sb">`/measurements/</span><span class="si">${</span><span class="nx">measurementId</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="sb">`측정 데이터 </span><span class="si">${</span><span class="nx">measurementId</span><span class="si">}</span><span class="sb"> 삭제 실패:`</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="nx">error</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h2 id="_6">에러 처리</h2>
+<h3 id="_7">전역 에러 처리</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/api/errorHandler.js</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">handleApiError</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">response</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 서버가 응답을 반환한 경우</span>
+<span class="w">    </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mf">400</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;잘못된 요청입니다. 입력값을 확인해주세요.&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mf">401</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;인증이 필요합니다. 다시 로그인해주세요.&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mf">403</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;접근 권한이 없습니다.&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mf">404</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;요청한 리소스를 찾을 수 없습니다.&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="k">case</span><span class="w"> </span><span class="mf">500</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.&quot;</span><span class="p">;</span>
+<span class="w">      </span><span class="k">default</span><span class="o">:</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="sb">`오류가 발생했습니다: </span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">response</span><span class="p">.</span><span class="nx">statusText</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">.</span><span class="nx">request</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 요청은 보냈지만 응답을 받지 못한 경우</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;서버에 연결할 수 없습니다. 네트워크를 확인해주세요.&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 요청 설정 중 오류가 발생한 경우</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;요청 처리 중 오류가 발생했습니다.&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="_8">컴포넌트에서 에러 처리</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">로딩</span><span class="w"> </span><span class="nx">상태</span><span class="w"> </span><span class="nx">표시</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">progress</span><span class="o">-</span><span class="nx">linear</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;loading&quot;</span><span class="w"> </span><span class="nx">indeterminate</span><span class="o">&gt;&lt;</span><span class="err">/v-progress-linear&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">에러</span><span class="w"> </span><span class="nx">메시지</span><span class="w"> </span><span class="nx">표시</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">alert</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="w"> </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="w"> </span><span class="nx">dismissible</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">:</span><span class="nx">close</span><span class="o">=</span><span class="s2">&quot;error = null&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="p">{{</span><span class="w"> </span><span class="nx">error</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-alert&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">데이터</span><span class="w"> </span><span class="nx">표시</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;!loading &amp;&amp; !error&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">for</span><span class="o">=</span><span class="s2">&quot;equipment in equipments&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">key</span><span class="o">=</span><span class="s2">&quot;equipment.id&quot;</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">equipment</span><span class="o">-</span><span class="nx">card</span><span class="w"> </span><span class="o">:</span><span class="nx">equipment</span><span class="o">=</span><span class="s2">&quot;equipment&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getEquipments</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@/api/equipment&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">handleApiError</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@/api/errorHandler&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">EquipmentCard</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@/components/EquipmentCard.vue&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">equipments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([])</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">loading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">error</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">)</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">fetchEquipments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">loading</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="nx">error</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span>
+
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">equipments</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">getEquipments</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">err</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">error</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">handleApiError</span><span class="p">(</span><span class="nx">err</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">&#39;장비 목록 로드 실패:&#39;</span><span class="p">,</span><span class="w"> </span><span class="nx">err</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">loading</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">fetchEquipments</span><span class="p">()</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="api_1">API 서비스 모듈화</h2>
+<h3 id="api_2">장비 관리 API 서비스</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/api/services/equipment.js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;../index&quot;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">equipmentAPI</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 모든 장비 조회</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">getAll</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s2">&quot;/equipments&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 장비 상세 조회</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">getById</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 새 장비 등록</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">create</span><span class="p">(</span><span class="nx">equipment</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span><span class="s2">&quot;/equipments&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">equipment</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 장비 정보 수정</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">update</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">equipment</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">put</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span><span class="w"> </span><span class="nx">equipment</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 장비 삭제</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="ow">delete</span><span class="p">(</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 장비 상태 변경</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">updateStatus</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">status</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">patch</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">id</span><span class="si">}</span><span class="sb">/status`</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">status</span><span class="p">,</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="api_3">측정 데이터 API 서비스</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// src/api/services/measurement.js</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">apiClient</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;../index&quot;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">measurementAPI</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 측정 데이터 목록 조회</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">getByEquipment</span><span class="p">(</span><span class="nx">equipmentId</span><span class="p">,</span><span class="w"> </span><span class="nx">params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span>
+<span class="w">      </span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">equipmentId</span><span class="si">}</span><span class="sb">/measurements`</span><span class="p">,</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">params</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">page</span><span class="o">:</span><span class="w"> </span><span class="nx">params</span><span class="p">.</span><span class="nx">page</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">1</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">limit</span><span class="o">:</span><span class="w"> </span><span class="nx">params</span><span class="p">.</span><span class="nx">limit</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">20</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">startDate</span><span class="o">:</span><span class="w"> </span><span class="nx">params</span><span class="p">.</span><span class="nx">startDate</span><span class="p">,</span>
+<span class="w">          </span><span class="nx">endDate</span><span class="o">:</span><span class="w"> </span><span class="nx">params</span><span class="p">.</span><span class="nx">endDate</span><span class="p">,</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 새 측정 데이터 생성</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">create</span><span class="p">(</span><span class="nx">equipmentId</span><span class="p">,</span><span class="w"> </span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span>
+<span class="w">      </span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">equipmentId</span><span class="si">}</span><span class="sb">/measurements`</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">data</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 측정 데이터 다운로드</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">download</span><span class="p">(</span><span class="nx">measurementId</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span>
+<span class="w">      </span><span class="sb">`/measurements/</span><span class="si">${</span><span class="nx">measurementId</span><span class="si">}</span><span class="sb">/download`</span><span class="p">,</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">responseType</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;blob&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+
+<span class="w">  </span><span class="c1">// 측정 데이터 분석 요청</span>
+<span class="w">  </span><span class="k">async</span><span class="w"> </span><span class="nx">analyze</span><span class="p">(</span><span class="nx">measurementId</span><span class="p">,</span><span class="w"> </span><span class="nx">analysisType</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">apiClient</span><span class="p">.</span><span class="nx">post</span><span class="p">(</span>
+<span class="w">      </span><span class="sb">`/measurements/</span><span class="si">${</span><span class="nx">measurementId</span><span class="si">}</span><span class="sb">/analyze`</span><span class="p">,</span>
+<span class="w">      </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nx">analysisType</span><span class="p">,</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h3 id="api_4">컴포넌트에서 API 서비스 사용</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">h2</span><span class="o">&gt;</span><span class="nx">AFM</span><span class="w"> </span><span class="nx">장비</span><span class="w"> </span><span class="nx">관리</span><span class="o">&lt;</span><span class="err">/h2&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;refreshData&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">loading</span><span class="o">=</span><span class="s2">&quot;loading&quot;</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;primary&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="nx">새로고침</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">for</span><span class="o">=</span><span class="s2">&quot;equipment in equipments&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">key</span><span class="o">=</span><span class="s2">&quot;equipment.id&quot;</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="w"> </span><span class="nx">md</span><span class="o">=</span><span class="s2">&quot;4&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">title</span><span class="o">&gt;</span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/v-card-title&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">상태</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">위치</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">location</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-card-text&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">card</span><span class="o">-</span><span class="nx">actions</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;viewDetails(equipment.id)&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span><span class="nx">상세보기</span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;toggleStatus(equipment)&quot;</span><span class="w"> </span><span class="nx">text</span><span class="o">&gt;</span>
+<span class="w">              </span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">&#39;비활성화&#39;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;활성화&#39;</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/v-card-actions&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-card&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useRouter</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;vue-router&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">equipmentAPI</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@/api/services/equipment&#39;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useNotificationStore</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">&#39;@/stores/notification&#39;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useRouter</span><span class="p">()</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">equipments</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([])</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">loading</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">)</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">notificationStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useNotificationStore</span><span class="p">()</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">refreshData</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">loading</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">equipments</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">equipmentAPI</span><span class="p">.</span><span class="nx">getAll</span><span class="p">()</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">notificationStore</span><span class="p">.</span><span class="nx">showError</span><span class="p">(</span><span class="s1">&#39;장비 목록을 불러오는데 실패했습니다.&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">finally</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">loading</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">viewDetails</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">equipmentId</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">router</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="sb">`/equipments/</span><span class="si">${</span><span class="nx">equipmentId</span><span class="si">}</span><span class="sb">`</span><span class="p">)</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">toggleStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">equipment</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">newStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s1">&#39;inactive&#39;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;active&#39;</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">equipmentAPI</span><span class="p">.</span><span class="nx">updateStatus</span><span class="p">(</span><span class="nx">equipment</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span><span class="w"> </span><span class="nx">newStatus</span><span class="p">)</span>
+
+<span class="w">    </span><span class="c1">// 로컬 상태 업데이트</span>
+<span class="w">    </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">newStatus</span>
+
+<span class="w">    </span><span class="nx">notificationStore</span><span class="p">.</span><span class="nx">showSuccess</span><span class="p">(</span><span class="s1">&#39;장비 상태가 변경되었습니다.&#39;</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">notificationStore</span><span class="p">.</span><span class="nx">showError</span><span class="p">(</span><span class="s1">&#39;상태 변경에 실패했습니다.&#39;</span><span class="p">)</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="nx">error</span><span class="p">)</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">refreshData</span><span class="p">()</span>
+<span class="p">})</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="axios-ky">Axios 대안: Ky 라이브러리</h2>
+<h3 id="ky">Ky 소개</h3>
+<p>Ky는 브라우저의 Fetch API를 기반으로 만들어진 가볍고 현대적인 HTTP 클라이언트입니다. Axios보다 작은 번들 크기를 가지며, 더 간결한 API를 제공합니다.</p>
+<h3 id="ky-vs-axios">Ky vs Axios 비교</h3>
+<table>
+<thead>
+<tr>
+<th>특징</th>
+<th>Axios</th>
+<th>Ky</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>번들 크기</td>
+<td>~45KB</td>
+<td>~18KB</td>
+</tr>
+<tr>
+<td>학습 곡선</td>
+<td>쉬움</td>
+<td>매우 쉬움</td>
+</tr>
+<tr>
+<td>브라우저 지원</td>
+<td>IE11+</td>
+<td>최신 브라우저</td>
+</tr>
+<tr>
+<td>사용자 수</td>
+<td>매우 많음</td>
+<td>성장 중</td>
+</tr>
+</tbody>
+</table>
+<h3 id="ky_1">언제 Ky를 선택할까?</h3>
+<p><strong>Ky를 선택하는 경우:</strong></p>
+<ul>
+<li>번들 크기를 최소화하고 싶을 때</li>
+<li>최신 브라우저만 지원해도 될 때</li>
+<li>간단한 API 호출만 필요할 때</li>
+</ul>
+<p><strong>Axios를 선택하는 경우:</strong></p>
+<ul>
+<li>더 많은 커뮤니티 지원과 자료가 필요할 때</li>
+<li>구형 브라우저 지원이 필요할 때</li>
+<li>팀원들이 이미 Axios에 익숙할 때</li>
+</ul>
+<h2 id="_9">정리</h2>
+<h3 id="api_5">API 통신의 핵심 포인트</h3>
+<ol>
+<li><strong>에러 처리</strong>: try-catch와 에러 핸들러를 활용하여 에러를 체계적으로 관리</li>
+<li><strong>로딩 상태 관리</strong>: 사용자 경험 향상을 위한 로딩 표시</li>
+<li><strong>환경 변수 활용</strong>: 개발/프로덕션 환경에 맞는 API 설정</li>
+<li><strong>재사용성</strong>: 공통 API 로직을 서비스 모듈로 분리</li>
+<li><strong>보안</strong>: 민감한 정보는 환경 변수로 관리</li>
+</ol>
+<h3 id="_10">베스트 프랙티스</h3>
+<ul>
+<li><strong>모듈화</strong>: API 호출 로직을 별도 파일로 분리하여 관리</li>
+<li><strong>에러 처리</strong>: 사용자 친화적인 에러 메시지 제공</li>
+<li><strong>환경별 설정</strong>: 개발/운영 환경에 맞는 API URL 설정</li>
+<li><strong>일관된 구조</strong>: API 서비스별로 일관된 메서드 구조 유지</li>
+</ul>
+<p>이러한 방법들을 활용하면 안정적이고 사용자 친화적인 AFM 데이터 플랫폼을 구축할 수 있습니다.</p>
+</body>
+</html>

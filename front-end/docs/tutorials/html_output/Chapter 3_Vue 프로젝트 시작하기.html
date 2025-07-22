@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 3_Vue 프로젝트 시작하기</title>
+    
+    <style>
+    body {
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans CJK KR', 'Dotum', '돋움', 'Gulim', '굴림', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #fff;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        text-align: left;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+    }
+    
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
+    }
+    
+    code {
+        background-color: #f1f3f4;
+        border: 1px solid #e1e4e8;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+        font-size: 0.9em;
+        color: #24292e;
+    }
+    
+    pre {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 1em 0;
+        line-height: 1.45;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+    }
+    
+    pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced syntax highlighting support */
+    .highlight {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin: 1em 0;
+    }
+    
+    .highlight pre {
+        background: none;
+        border: none;
+        margin: 0;
+    }
+    
+    /* Fix Vue.js template syntax highlighting issues */
+    .highlight .err {
+        background: none !important;
+        border: none !important;
+        color: #24292e !important;
+    }
+    
+    /* Override error highlighting for Vue directives */
+    .highlight .nt {
+        color: #22863a;
+    }
+    
+    .highlight .na {
+        color: #6f42c1;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5em auto;
+    }
+    
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+    }
+    
+    table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin-bottom: 0.5em;
+    }
+    
+    hr {
+        border: none;
+        height: 2px;
+        background-color: #ecf0f1;
+        margin: 3em 0;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1em auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .highlight {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 1em 0;
+    }
+    
+    @media print {
+        body {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+    </style>
+    
+</head>
+<body>
+    <h1 id="vue">Vue 프로젝트 시작하기</h1>
+<h2 id="vuejs">Vue.js 프레임워크 이해하기</h2>
+<h3 id="vuejs_1">Vue.js란 무엇인가?</h3>
+<p>Vue.js는 사용자 인터페이스를 구축하기 위한 <strong>프로그레시브 자바스크립트 프레임워크</strong>입니다. 다른 단일체 프레임워크와 달리 Vue는 점진적으로 채택할 수 있도록 설계되었습니다.</p>
+<h4 id="vuejs_2">건물 건축으로 이해하는 Vue.js</h4>
+<ul>
+<li><strong>HTML</strong>: 건물의 기본 구조 (골조)</li>
+<li><strong>CSS</strong>: 건물의 외관과 인테리어 (디자인)</li>
+<li><strong>Vue.js</strong>: 건물의 지능형 시스템 (자동화, 상호작용)</li>
+</ul>
+<h3 id="progressive">점진적(Progressive)이라는 의미</h3>
+<p>Vue는 처음부터 모든 기능을 다 배워야 하는 "올인원 프레임워크"가 아닙니다. 필요한 부분만 골라서 작은 부분에만 적용할 수 있고, 나중에 필요할 때 더 많은 기능을 점점 추가해나갈 수 있습니다.</p>
+<h4 id="_1">아파트 리모델링으로 이해하기</h4>
+<ol>
+<li><strong>1단계</strong>: 거실 한 곳만 스마트홈 적용 (간단한 데이터 바인딩)</li>
+<li><strong>2단계</strong>: 전체 방에 스마트 시스템 확장 (컴포넌트 활용)</li>
+<li><strong>3단계</strong>: 건물 전체 통합 관리 시스템 (라우터, 상태관리)</li>
+</ol>
+<h4 id="afm">AFM 프로젝트 적용 예시</h4>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>기능</th>
+<th>적용 범위</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1단계</strong></td>
+<td><code>{{ measurementData }}</code></td>
+<td>단순 데이터 표시</td>
+</tr>
+<tr>
+<td><strong>2단계</strong></td>
+<td>검색 컴포넌트, 차트 컴포넌트</td>
+<td>재사용 가능한 UI</td>
+</tr>
+<tr>
+<td><strong>3단계</strong></td>
+<td>페이지 라우팅, 전역 상태 관리</td>
+<td>완전한 SPA</td>
+</tr>
+</tbody>
+</table>
+<h3 id="vuejs_3">Vue.js의 주요 특징</h3>
+<h4 id="1">1. 템플릿 문법</h4>
+<ul>
+<li>HTML 기반 템플릿 문법을 사용하여 DOM에 데이터를 선언적으로 바인딩</li>
+<li>기존 HTML/CSS/JS 지식을 가진 개발자들이 쉽게 접근 가능</li>
+</ul>
+<div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- 기존 HTML --&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>AFM 측정 데이터<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+
+<span class="cm">&lt;!-- Vue 템플릿 --&gt;</span>
+<span class="p">&lt;</span><span class="nt">h1</span><span class="p">&gt;</span>{{ pageTitle }}<span class="p">&lt;/</span><span class="nt">h1</span><span class="p">&gt;</span>
+<span class="cm">&lt;!-- 동적으로 변경 가능! --&gt;</span>
+</code></pre></div>
+
+<h4 id="2">2. 반응성 시스템</h4>
+<p>반응형 데이터 바인딩 시스템으로 데이터 변경 시 자동으로 화면 업데이트됩니다. DOM 직접 조작의 복잡성을 해결하고 상태 관리에 집중할 수 있는 개발 환경을 제공합니다.</p>
+<p>Vue 3에서는 <code>ref()</code>를 사용하여 반응성 데이터를 생성합니다. <code>ref()</code>로 감싼 데이터는 <code>.value</code> 속성을 통해 접근하며, 이 값이 변경되면 템플릿에서 자동으로 화면이 업데이트됩니다.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// 반응성 데이터 생성</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">measurementCount</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">0</span><span class="p">);</span>
+
+<span class="c1">// 값 변경 시 화면에 자동 반영</span>
+<span class="nx">measurementCount</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">150</span><span class="p">;</span>
+</code></pre></div>
+
+<blockquote>
+<p><strong>DOM이란?</strong></p>
+<p>DOM은 웹 페이지의 구조를 프로그래밍적으로 표현하는 인터페이스입니다. 브라우저는 HTML 문서를 트리 구조의 객체로 변환하여, 개발자가 JavaScript를 통해 웹 페이지의 내용과 구조를 동적으로 접근하고 조작할 수 있게 합니다.</p>
+</blockquote>
+<p><strong>전통적인 DOM 조작 방식의 한계:</strong></p>
+<ul>
+<li>복잡한 상태 변경 시 수동 업데이트 필요</li>
+<li>직접적인 요소 조작으로 인한 성능 오버헤드</li>
+<li>코드의 가독성과 유지보수성 저하</li>
+</ul>
+<p><strong>반응성 시스템의 장점:</strong></p>
+<ul>
+<li>자동 화면 동기화</li>
+<li>선언적이고 직관적인 상태 관리</li>
+<li>성능 최적화 및 코드 간소화</li>
+</ul>
+<h4 id="3">3. 컴포넌트 기반 아키텍처</h4>
+<p>재사용 가능한 컴포넌트를 통해 애플리케이션을 구축하여 코드의 모듈성과 유지보수성을 향상시킵니다.</p>
+<div class="highlight"><pre><span></span><code>AFM 데이터 뷰어
+├── 검색 컴포넌트 (SearchComponent)
+├── 차트 컴포넌트 (ChartComponent)
+├── 데이터 테이블 컴포넌트 (DataTableComponent)
+└── 태그 컴포넌트 (TagComponent)
+</code></pre></div>
+
+<h4 id="4-sfc">4. 싱글 파일 컴포넌트 (SFC)</h4>
+<p><code>.vue</code> 파일 안에 HTML, JavaScript, CSS를 함께 작성하여 컴포넌트 단위의 개발과 관리가 용이합니다.</p>
+<div class="highlight"><pre><span></span><code><span class="p">&lt;</span><span class="nt">template</span><span class="p">&gt;</span>
+  <span class="cm">&lt;!-- HTML 구조 --&gt;</span>
+<span class="p">&lt;/</span><span class="nt">template</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">setup</span><span class="p">&gt;</span>
+<span class="c1">// JavaScript 로직</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">style</span> <span class="na">scoped</span><span class="p">&gt;</span>
+<span class="c">/* CSS 스타일 */</span>
+<span class="p">&lt;/</span><span class="nt">style</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<h2 id="_2">다른 프레임워크와의 비교</h2>
+<h3 id="_3">주요 프레임워크 비교표</h3>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>Vue.js</th>
+<th>React</th>
+<th>Angular</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>개발사</strong></td>
+<td>Evan You &amp; 커뮤니티</td>
+<td>Meta (Facebook)</td>
+<td>Google</td>
+</tr>
+<tr>
+<td><strong>유형</strong></td>
+<td>프로그레시브 프레임워크</td>
+<td>라이브러리</td>
+<td>완전한 프레임워크</td>
+</tr>
+<tr>
+<td><strong>학습 곡선</strong></td>
+<td>⭐⭐ 완만함</td>
+<td>⭐⭐⭐ 중간</td>
+<td>⭐⭐⭐⭐ 가파름</td>
+</tr>
+<tr>
+<td><strong>유연성</strong></td>
+<td>⭐⭐⭐⭐ 높음</td>
+<td>⭐⭐⭐⭐⭐ 매우 높음</td>
+<td>⭐⭐ 구조화됨</td>
+</tr>
+<tr>
+<td><strong>상태 관리</strong></td>
+<td>Pinia, Vuex</td>
+<td>Redux, MobX</td>
+<td>내장 상태 관리</td>
+</tr>
+<tr>
+<td><strong>커뮤니티</strong></td>
+<td>⭐⭐⭐ 성장 중</td>
+<td>⭐⭐⭐⭐⭐ 매우 활발</td>
+<td>⭐⭐⭐ 안정적</td>
+</tr>
+</tbody>
+</table>
+<h3 id="_4">자동차로 비유한 프레임워크 특징</h3>
+<h4 id="vuejs_4">Vue.js = 현대 아반떼</h4>
+<ul>
+<li>배우기 쉽고 운전하기 편함</li>
+<li>적당한 가격에 필요한 기능 모두 포함</li>
+<li>유지보수 비용이 적절함</li>
+<li>가족용으로 적당함 (중소규모 프로젝트)</li>
+</ul>
+<h4 id="react-bmw-3">React = BMW 3시리즈</h4>
+<ul>
+<li>높은 성능과 인지도</li>
+<li>커스터마이징 옵션이 매우 많음</li>
+<li>개발 비용이 높을 수 있음</li>
+<li>프리미엄 브랜드 (대기업 선호)</li>
+</ul>
+<h4 id="angular-e">Angular = 벤츠 E클래스</h4>
+<ul>
+<li>안전하고 체계적인 구조</li>
+<li>모든 기능이 기본으로 포함</li>
+<li>전문 기술자 필요 (고급 개발자)</li>
+<li>기업용으로 적합 (대규모 프로젝트)</li>
+</ul>
+<h3 id="vuejs_5">Vue.js를 사용하는 주요 기업들</h3>
+<h4 id="_5">해외 기업</h4>
+<ul>
+<li><strong>Netflix</strong> - 일부 사용자 인터페이스</li>
+<li><strong>Adobe</strong> - 포트폴리오 관리 도구</li>
+<li><strong>GitLab</strong> - 메인 웹 애플리케이션</li>
+<li><strong>Xiaomi</strong> - 공식 웹사이트</li>
+<li><strong>Alibaba</strong> - 일부 전자상거래 플랫폼</li>
+<li><strong>Nintendo</strong> - 공식 웹사이트 일부</li>
+</ul>
+<h4 id="_6">국내 기업</h4>
+<ul>
+<li><strong>카카오</strong> - 일부 서비스 인터페이스</li>
+<li><strong>네이버 바이브</strong> - 음악 스트리밍 플랫폼</li>
+<li><strong>쿠팡플레이</strong> - 동영상 서비스 일부</li>
+</ul>
+<h2 id="vue_1">첫 번째 Vue 컴포넌트 만들기</h2>
+<h3 id="hello-world">Hello World 예제</h3>
+<p><strong>src/components/HelloWorld.vue 수정</strong></p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="p">{{</span><span class="w"> </span><span class="nx">greeting</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">현재</span><span class="w"> </span><span class="nx">카운트</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">count</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;increment&quot;</span><span class="o">&gt;</span><span class="nx">카운트</span><span class="w"> </span><span class="nx">증가</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// ref()로 반응성 데이터 생성</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">greeting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s2">&quot;Vue3 학습을 시작합니다!&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">count</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="mf">0</span><span class="p">);</span>
+
+<span class="c1">// 함수에서 .value로 값 접근 및 수정</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">increment</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">count</span><span class="p">.</span><span class="nx">value</span><span class="o">++</span><span class="p">;</span><span class="w"> </span><span class="c1">// 이 값이 변경되면 템플릿에 자동 반영</span>
+<span class="p">};</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">style</span><span class="w"> </span><span class="nx">scoped</span><span class="o">&gt;</span>
+<span class="p">.</span><span class="nx">hello</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">text</span><span class="o">-</span><span class="nx">align</span><span class="o">:</span><span class="w"> </span><span class="nx">center</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">padding</span><span class="o">:</span><span class="w"> </span><span class="mf">20</span><span class="nx">px</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">button</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">background</span><span class="o">-</span><span class="nx">color</span><span class="o">:</span><span class="w"> </span><span class="err">#</span><span class="mf">42</span><span class="nx">b883</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">color</span><span class="o">:</span><span class="w"> </span><span class="nx">white</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">border</span><span class="o">:</span><span class="w"> </span><span class="nx">none</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">padding</span><span class="o">:</span><span class="w"> </span><span class="mf">10</span><span class="nx">px</span><span class="w"> </span><span class="mf">20</span><span class="nx">px</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">border</span><span class="o">-</span><span class="nx">radius</span><span class="o">:</span><span class="w"> </span><span class="mf">4</span><span class="nx">px</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">cursor</span><span class="o">:</span><span class="w"> </span><span class="nx">pointer</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">button</span><span class="o">:</span><span class="nx">hover</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">background</span><span class="o">-</span><span class="nx">color</span><span class="o">:</span><span class="w"> </span><span class="err">#</span><span class="mf">35955</span><span class="nx">f</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/style&gt;</span>
+</code></pre></div>
+
+<h3 id="_7">데이터 바인딩 실습</h3>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">h2</span><span class="o">&gt;</span><span class="nx">데이터</span><span class="w"> </span><span class="nx">바인딩</span><span class="w"> </span><span class="nx">예제</span><span class="o">&lt;</span><span class="err">/h2&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">텍스트</span><span class="w"> </span><span class="nx">보간</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="nx">메시지</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">message</span><span class="w"> </span><span class="p">}}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">양방향</span><span class="w"> </span><span class="nx">바인딩</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">input</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;message&quot;</span><span class="w"> </span><span class="nx">placeholder</span><span class="o">=</span><span class="s2">&quot;메시지를 입력하세요&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">조건부</span><span class="w"> </span><span class="nx">렌더링</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">p</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;message.length &gt; 0&quot;</span><span class="o">&gt;</span><span class="nx">입력한</span><span class="w"> </span><span class="nx">메시지</span><span class="w"> </span><span class="nx">길이</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">message</span><span class="p">.</span><span class="nx">length</span><span class="w"> </span><span class="p">}}</span><span class="nx">자</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">리스트</span><span class="w"> </span><span class="nx">렌더링</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">ul</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">li</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">for</span><span class="o">=</span><span class="s2">&quot;(item, index) in items&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">key</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="p">{{</span><span class="w"> </span><span class="nx">index</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="w"> </span><span class="p">}}.</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">item</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/li&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/ul&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// ref()로 생성된 반응성 데이터</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">message</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">items</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([</span><span class="s2">&quot;Vue 학습&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Component 만들기&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;실습하기&quot;</span><span class="p">]);</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h2 id="_8">개발 환경 문제 해결</h2>
+<h3 id="_9">자주 발생하는 문제들</h3>
+<h4 id="_10">포트 충돌 문제</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// package.json 수정</span>
+<span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;scripts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">&quot;dev&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;vite --port 3000&quot;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+<h4 id="npm">npm 패키지 설치 오류</h4>
+<div class="highlight"><pre><span></span><code><span class="c1"># 캐시 삭제</span>
+npm<span class="w"> </span>cache<span class="w"> </span>clean<span class="w"> </span>--force
+
+<span class="c1"># node_modules 삭제 후 재설치</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>node_modules<span class="w"> </span>package-lock.json
+npm<span class="w"> </span>install
+</code></pre></div>
+
+<h4 id="vite-hmrhot-module-replacement">Vite HMR(Hot Module Replacement) 문제</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// vite.config.js</span>
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">server</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">watch</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">usePolling</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="c1">// Windows에서 파일 변경 감지 문제 해결</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<h4 id="windows">Windows 환경 고려사항</h4>
+<p><strong>PowerShell 실행 정책 설정</strong></p>
+<p>Windows에서 npm 스크립트 실행 시 오류가 발생하는 경우:</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># 관리자 권한으로 PowerShell 실행 후</span>
+Set-ExecutionPolicy<span class="w"> </span>-Scope<span class="w"> </span>CurrentUser<span class="w"> </span>-ExecutionPolicy<span class="w"> </span>RemoteSigned
+</code></pre></div>
+
+<p><strong>경로 구분자 주의</strong></p>
+<p>Windows에서는 경로 구분자로 백슬래시(<code>\</code>)를 사용하지만, import 문에서는 슬래시(<code>/</code>)를 사용해야 합니다:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// 올바른 예</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">HelloWorld</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./components/HelloWorld.vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// 잘못된 예 (Windows 경로 스타일)</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">HelloWorld</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;.\\components\\HelloWorld.vue&quot;</span><span class="p">;</span>
+</code></pre></div>
+
+<h2 id="vue2-vs-vue3">Vue2 vs Vue3 주요 차이점</h2>
+<p>가장 큰 변화는 Composition API의 도입입니다. Vue2에서는 데이터와 메서드를 각각 data()와 methods 객체에 분리해서 작성했다면, Vue3에서는 setup() 함수 안에서 관련된 로직들을 함께 묶어서 관리할 수 있게 되었습니다. 이는 특히 복잡한 컴포넌트에서 코드의 가독성과 재사용성을 크게 향상시킵니다.</p>
+<p>성능 면에서도 상당한 개선이 있습니다. 번들 크기가 최대 41% 줄어들어 애플리케이션 로딩 속도가 빨라졌고, 초기 렌더링 속도는 최대 55% 향상되었습니다. 또한 메모리 사용량도 최대 54% 감소하여 더 효율적인 애플리케이션 개발이 가능합니다.</p>
+<p>TypeScript 지원도 크게 강화되었습니다. 타입 추론 기능이 개선되어 개발 중 오류를 사전에 발견하기 쉬워졌고, VS Code 같은 IDE에서의 자동 완성과 오류 감지 기능도 훨씬 정확해졌습니다.</p>
+<h2 id="_11">추가 학습 권장사항</h2>
+<p>이 가이드는 Vue.js의 핵심 개념을 간추린 설명이 주를 이루므로, 더 자세한 내용을 학습하기 위해서는 <a href="https://ko.vuejs.org/guide/introduction.html">Vue.js 공식 가이드 (한국어)</a>를 적극 활용하시길 권장합니다.</p>
+</body>
+</html>

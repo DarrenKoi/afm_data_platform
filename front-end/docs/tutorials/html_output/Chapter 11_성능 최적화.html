@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chapter 11_성능 최적화</title>
+    
+    <style>
+    body {
+        font-family: 'Malgun Gothic', '맑은 고딕', 'Noto Sans CJK KR', 'Dotum', '돋움', 'Gulim', '굴림', Arial, sans-serif;
+        line-height: 1.6;
+        color: #333;
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 20px;
+        background-color: #fff;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        color: #2c3e50;
+        margin-top: 2em;
+        margin-bottom: 1em;
+        text-align: left;
+    }
+    
+    h1 {
+        border-bottom: 3px solid #3498db;
+        padding-bottom: 10px;
+        text-align: center;
+        margin-bottom: 2em;
+    }
+    
+    h2 {
+        border-bottom: 2px solid #ecf0f1;
+        padding-bottom: 8px;
+    }
+    
+    p {
+        margin-bottom: 1em;
+        text-align: justify;
+    }
+    
+    code {
+        background-color: #f1f3f4;
+        border: 1px solid #e1e4e8;
+        border-radius: 3px;
+        padding: 2px 6px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+        font-size: 0.9em;
+        color: #24292e;
+    }
+    
+    pre {
+        background-color: #f6f8fa;
+        border: 1px solid #e1e4e8;
+        border-radius: 6px;
+        padding: 16px;
+        overflow-x: auto;
+        margin: 1em 0;
+        line-height: 1.45;
+        font-family: 'Consolas', 'Monaco', 'Courier New', 'D2Coding', 'Nanum Gothic Coding', monospace;
+    }
+    
+    pre code {
+        background: none;
+        border: none;
+        padding: 0;
+        color: inherit;
+        font-size: 0.9em;
+    }
+    
+    /* Enhanced syntax highlighting support */
+    .highlight {
+        background-color: #f6f8fa;
+        border-radius: 6px;
+        margin: 1em 0;
+    }
+    
+    .highlight pre {
+        background: none;
+        border: none;
+        margin: 0;
+    }
+    
+    /* Fix Vue.js template syntax highlighting issues */
+    .highlight .err {
+        background: none !important;
+        border: none !important;
+        color: #24292e !important;
+    }
+    
+    /* Override error highlighting for Vue directives */
+    .highlight .nt {
+        color: #22863a;
+    }
+    
+    .highlight .na {
+        color: #6f42c1;
+    }
+    
+    table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 1.5em auto;
+    }
+    
+    table th, table td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+    }
+    
+    table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        text-align: center;
+    }
+    
+    blockquote {
+        border-left: 4px solid #3498db;
+        margin: 1em 0;
+        padding-left: 20px;
+        color: #7f8c8d;
+        font-style: italic;
+    }
+    
+    ul, ol {
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    li {
+        margin-bottom: 0.5em;
+    }
+    
+    hr {
+        border: none;
+        height: 2px;
+        background-color: #ecf0f1;
+        margin: 3em 0;
+    }
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        margin: 1em auto;
+        border-radius: 5px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .highlight {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 5px;
+        padding: 10px;
+        margin: 1em 0;
+    }
+    
+    @media print {
+        body {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+        }
+    }
+    </style>
+    
+</head>
+<body>
+    <h1 id="_1">성능 최적화</h1>
+<p>Vue 애플리케이션이 성장하면서 성능 문제가 발생할 수 있습니다. 특히 AFM 데이터 뷰어처럼 대용량 데이터와 복잡한 차트를 다루는 애플리케이션에서는 성능 최적화가 필요할 수 있습니다. 이 장에서는 Vue 3 애플리케이션의 성능을 향상시키는 기법들을 살펴보겠습니다. 웹 어플리케이션 개발이 익숙해지고 점차 기능이 추가되고 고도화되는 시점에 익히면 좋습니다.</p>
+<hr />
+<h2 id="_2">컴포넌트 지연 로딩</h2>
+<h3 id="_3">지연 로딩이란?</h3>
+<p>지연 로딩(Lazy Loading)은 사용자가 실제로 필요한 시점에 컴포넌트를 로드하는 기법입니다. 초기 페이지 로딩 시 모든 컴포넌트를 한 번에 불러오는 대신, 필요할 때만 불러와서 초기 로딩 시간을 단축시킵니다.</p>
+<p>반도체 장비 대시보드처럼 여러 페이지와 복잡한 컴포넌트를 가진 애플리케이션에서는 지연 로딩이 특히 중요합니다. 사용자가 처음 접속했을 때 모든 차트 라이브러리와 데이터 분석 도구를 로드하면 초기 로딩이 매우 느려질 수 있습니다.</p>
+<h3 id="vue-router">Vue Router에서 지연 로딩 구현</h3>
+<h4 id="_4">기본 라우터 설정 (지연 로딩 미적용)</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// router/index.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">,</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue-router&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">Dashboard</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/views/Dashboard.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">DataAnalysis</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/views/DataAnalysis.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">EquipmentManagement</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/views/EquipmentManagement.vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">Settings</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/views/Settings.vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Dashboard&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">Dashboard</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/analysis&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;DataAnalysis&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">DataAnalysis</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/equipment&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EquipmentManagement&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">EquipmentManagement</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/settings&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Settings&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">Settings</span><span class="w"> </span><span class="p">},</span>
+<span class="p">];</span>
+</code></pre></div>
+
+<h4 id="_5">지연 로딩 적용</h4>
+<div class="highlight"><pre><span></span><code><span class="c1">// router/index.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">,</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue-router&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Dashboard&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/views/Dashboard.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/analysis&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;DataAnalysis&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/views/DataAnalysis.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/equipment&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;EquipmentManagement&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/views/EquipmentManagement.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;/settings&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;Settings&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/views/Settings.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRouter</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">history</span><span class="o">:</span><span class="w"> </span><span class="nx">createWebHistory</span><span class="p">(),</span>
+<span class="w">  </span><span class="nx">routes</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">router</span><span class="p">;</span>
+</code></pre></div>
+
+<h3 id="_6">컴포넌트 레벨에서 지연 로딩</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">DashboardView</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">h1</span><span class="o">&gt;</span><span class="nx">대시보드</span><span class="o">&lt;</span><span class="err">/h1&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">탭</span><span class="w"> </span><span class="nx">기반</span><span class="w"> </span><span class="nx">지연</span><span class="w"> </span><span class="nx">로딩</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tabs</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;activeTab&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;overview&quot;</span><span class="o">&gt;</span><span class="nx">개요</span><span class="o">&lt;</span><span class="err">/v-tab&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;charts&quot;</span><span class="o">&gt;</span><span class="nx">차트</span><span class="w"> </span><span class="nx">분석</span><span class="o">&lt;</span><span class="err">/v-tab&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;reports&quot;</span><span class="o">&gt;</span><span class="nx">리포트</span><span class="o">&lt;</span><span class="err">/v-tab&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-tabs&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tabs</span><span class="o">-</span><span class="nx">items</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">model</span><span class="o">=</span><span class="s2">&quot;activeTab&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;overview&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">OverviewPanel</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-tab-item&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;charts&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">Suspense</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="n">#default</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">ChartsPanel</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="n">#fallback</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">progress</span><span class="o">-</span><span class="nx">circular</span><span class="w"> </span><span class="nx">indeterminate</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/Suspense&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-tab-item&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">tab</span><span class="o">-</span><span class="nx">item</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="s2">&quot;reports&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">Suspense</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="n">#default</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">ReportsPanel</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="n">#fallback</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">skeleton</span><span class="o">-</span><span class="nx">loader</span><span class="w"> </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;article&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/Suspense&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-tab-item&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-tabs-items&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">OverviewPanel</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/components/dashboard/OverviewPanel.vue&quot;</span><span class="p">;</span>
+
+<span class="c1">// 무거운 컴포넌트들은 지연 로딩</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ChartsPanel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/dashboard/ChartsPanel.vue&quot;</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">ReportsPanel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">loader</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/dashboard/ReportsPanel.vue&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">loadingComponent</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">h</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Loading...&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">errorComponent</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">h</span><span class="p">(</span><span class="s2">&quot;div&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;Error loading component&quot;</span><span class="p">),</span>
+<span class="w">  </span><span class="nx">delay</span><span class="o">:</span><span class="w"> </span><span class="mf">200</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">timeout</span><span class="o">:</span><span class="w"> </span><span class="mf">10000</span><span class="p">,</span>
+<span class="p">});</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">activeTab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s2">&quot;overview&quot;</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="_7">조건부 컴포넌트 로딩</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">EquipmentDetail</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">container</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">btn</span><span class="w"> </span><span class="err">@</span><span class="nx">click</span><span class="o">=</span><span class="s2">&quot;showAdvancedAnalysis = !showAdvancedAnalysis&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="nx">고급</span><span class="w"> </span><span class="nx">분석</span><span class="w"> </span><span class="nx">도구</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">showAdvancedAnalysis</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s2">&quot;숨기기&quot;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;보기&quot;</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-btn&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">사용자가</span><span class="w"> </span><span class="nx">요청할</span><span class="w"> </span><span class="nx">때만</span><span class="w"> </span><span class="nx">로드</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;showAdvancedAnalysis&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">col</span><span class="w"> </span><span class="nx">cols</span><span class="o">=</span><span class="s2">&quot;12&quot;</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">AdvancedAnalysisTools</span>
+<span class="w">          </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;isComponentLoaded&quot;</span>
+<span class="w">          </span><span class="o">:</span><span class="nx">equipment</span><span class="o">-</span><span class="nx">id</span><span class="o">=</span><span class="s2">&quot;equipmentId&quot;</span>
+<span class="w">        </span><span class="o">/&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/v-col&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/v-container&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="p">,</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span><span class="w"> </span><span class="nx">equipmentId</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">showAdvancedAnalysis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isComponentLoaded</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+
+<span class="c1">// 컴포넌트 동적 로드</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">AdvancedAnalysisTools</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/analysis/AdvancedAnalysisTools.vue&quot;</span><span class="p">)</span>
+<span class="p">);</span>
+
+<span class="c1">// 사용자가 고급 분석을 열 때만 컴포넌트 로드</span>
+<span class="nx">watch</span><span class="p">(</span><span class="nx">showAdvancedAnalysis</span><span class="p">,</span><span class="w"> </span><span class="p">(</span><span class="nx">newVal</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">newVal</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">!</span><span class="nx">isComponentLoaded</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">isComponentLoaded</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="_8">이미지 최적화</h2>
+<h3 id="_9">이미지 최적화의 중요성</h3>
+<p>AFM 데이터 뷰어에서는 장비 사진, 측정 결과 이미지, 사용자 프로필 등 다양한 이미지를 사용합니다. 최적화되지 않은 이미지는 페이지 로딩 속도를 크게 저하시킬 수 있습니다.</p>
+<h3 id="_10">이미지 지연 로딩 구현</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">ImageLazyLoad</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">ref</span><span class="o">=</span><span class="s2">&quot;imageContainer&quot;</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;image-container&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">img</span>
+<span class="w">      </span><span class="nx">v</span><span class="o">-</span><span class="k">if</span><span class="o">=</span><span class="s2">&quot;isIntersecting&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">src</span><span class="o">=</span><span class="s2">&quot;src&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">alt</span><span class="o">=</span><span class="s2">&quot;alt&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">aspect</span><span class="o">-</span><span class="nx">ratio</span><span class="o">=</span><span class="s2">&quot;aspectRatio&quot;</span>
+<span class="w">      </span><span class="err">@</span><span class="nx">load</span><span class="o">=</span><span class="s2">&quot;onImageLoad&quot;</span>
+<span class="w">      </span><span class="err">@</span><span class="nx">error</span><span class="o">=</span><span class="s2">&quot;onImageError&quot;</span>
+<span class="w">    </span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">template</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="nx">slot</span><span class="o">:</span><span class="nx">placeholder</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">row</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;fill-height ma-0&quot;</span><span class="w"> </span><span class="nx">align</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="w"> </span><span class="nx">justify</span><span class="o">=</span><span class="s2">&quot;center&quot;</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">progress</span><span class="o">-</span><span class="nx">circular</span><span class="w"> </span><span class="nx">indeterminate</span><span class="w"> </span><span class="nx">color</span><span class="o">=</span><span class="s2">&quot;grey lighten-5&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/v-row&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/template&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/v-img&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">이미지</span><span class="w"> </span><span class="nx">로드</span><span class="w"> </span><span class="nx">전</span><span class="w"> </span><span class="nx">플레이스홀더</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">v</span><span class="o">-</span><span class="nx">skeleton</span><span class="o">-</span><span class="nx">loader</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">else</span><span class="w"> </span><span class="o">:</span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;skeletonType&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">height</span><span class="o">=</span><span class="s2">&quot;height&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onUnmounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">src</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">alt</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">aspectRatio</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nb">Number</span><span class="p">],</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="mf">1.7778</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nb">Number</span><span class="p">],</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="mf">200</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">skeletonType</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;image&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">emit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineEmits</span><span class="p">([</span><span class="s2">&quot;load&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">]);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">imageContainer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">isIntersecting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">observer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="c1">// Intersection Observer 설정</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">observer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">IntersectionObserver</span><span class="p">(</span>
+<span class="w">    </span><span class="p">(</span><span class="nx">entries</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">entries</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">entry</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">isIntersecting</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="nx">isIntersecting</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">          </span><span class="nx">observer</span><span class="p">.</span><span class="nx">unobserve</span><span class="p">(</span><span class="nx">entry</span><span class="p">.</span><span class="nx">target</span><span class="p">);</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">      </span><span class="p">});</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nx">rootMargin</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;50px&quot;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">imageContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">observer</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nx">imageContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="nx">onUnmounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">observer</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">imageContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">observer</span><span class="p">.</span><span class="nx">unobserve</span><span class="p">(</span><span class="nx">imageContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">onImageLoad</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;load&quot;</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">onImageError</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">emit</span><span class="p">(</span><span class="s2">&quot;error&quot;</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">style</span><span class="w"> </span><span class="nx">scoped</span><span class="o">&gt;</span>
+<span class="p">.</span><span class="nx">image</span><span class="o">-</span><span class="nx">container</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="mf">100</span><span class="o">%</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">overflow</span><span class="o">:</span><span class="w"> </span><span class="nx">hidden</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/style&gt;</span>
+</code></pre></div>
+
+<h3 id="_11">이미지 포맷 최적화</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">OptimizedImage</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">picture</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">WebP</span><span class="w"> </span><span class="nx">지원</span><span class="w"> </span><span class="nx">브라우저용</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">source</span><span class="w"> </span><span class="o">:</span><span class="nx">srcset</span><span class="o">=</span><span class="s2">&quot;webpSrcset&quot;</span><span class="w"> </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;image/webp&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">JPEG</span><span class="w"> </span><span class="nx">폴백</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">source</span><span class="w"> </span><span class="o">:</span><span class="nx">srcset</span><span class="o">=</span><span class="s2">&quot;jpegSrcset&quot;</span><span class="w"> </span><span class="nx">type</span><span class="o">=</span><span class="s2">&quot;image/jpeg&quot;</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">기본</span><span class="w"> </span><span class="nx">이미지</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">img</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">src</span><span class="o">=</span><span class="s2">&quot;defaultSrc&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">alt</span><span class="o">=</span><span class="s2">&quot;alt&quot;</span>
+<span class="w">      </span><span class="o">:</span><span class="nx">loading</span><span class="o">=</span><span class="s2">&quot;loading&quot;</span>
+<span class="w">      </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;responsive-image&quot;</span>
+<span class="w">    </span><span class="o">/&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/picture&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">computed</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">src</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">alt</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">sizes</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Array</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="mf">320</span><span class="p">,</span><span class="w"> </span><span class="mf">640</span><span class="p">,</span><span class="w"> </span><span class="mf">1024</span><span class="p">,</span><span class="w"> </span><span class="mf">1920</span><span class="p">]</span><span class="w"> </span><span class="p">},</span>
+<span class="w">  </span><span class="nx">loading</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">String</span><span class="p">,</span><span class="w"> </span><span class="k">default</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;lazy&quot;</span><span class="w"> </span><span class="p">},</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">baseName</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="nx">props</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mf">0</span><span class="p">,</span><span class="w"> </span><span class="nx">props</span><span class="p">.</span><span class="nx">src</span><span class="p">.</span><span class="nx">lastIndexOf</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">))</span>
+<span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">webpSrcset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="nx">props</span><span class="p">.</span><span class="nx">sizes</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">size</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">baseName</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">-</span><span class="si">${</span><span class="nx">size</span><span class="si">}</span><span class="sb">w.webp </span><span class="si">${</span><span class="nx">size</span><span class="si">}</span><span class="sb">w`</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">jpegSrcset</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">  </span><span class="nx">props</span><span class="p">.</span><span class="nx">sizes</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">size</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">baseName</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">-</span><span class="si">${</span><span class="nx">size</span><span class="si">}</span><span class="sb">w.jpg </span><span class="si">${</span><span class="nx">size</span><span class="si">}</span><span class="sb">w`</span><span class="p">)</span>
+<span class="w">    </span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">)</span>
+<span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">defaultSrc</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">baseName</span><span class="p">.</span><span class="nx">value</span><span class="si">}</span><span class="sb">-</span><span class="si">${</span><span class="nx">props</span><span class="p">.</span><span class="nx">sizes</span><span class="p">[</span><span class="mf">1</span><span class="p">]</span><span class="si">}</span><span class="sb">w.jpg`</span><span class="p">);</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">style</span><span class="w"> </span><span class="nx">scoped</span><span class="o">&gt;</span>
+<span class="p">.</span><span class="nx">responsive</span><span class="o">-</span><span class="nx">image</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="mf">100</span><span class="o">%</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">height</span><span class="o">:</span><span class="w"> </span><span class="nx">auto</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">display</span><span class="o">:</span><span class="w"> </span><span class="nx">block</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="o">&lt;</span><span class="err">/style&gt;</span>
+</code></pre></div>
+
+<h3 id="_12">이미지 프리로딩 전략</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// utils/imagePreloader.js</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">class</span><span class="w"> </span><span class="nx">ImagePreloader</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kr">constructor</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 단일 이미지 프리로드</span>
+<span class="w">  </span><span class="nx">preload</span><span class="p">(</span><span class="nx">src</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">src</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">src</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">promise</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Promise</span><span class="p">((</span><span class="nx">resolve</span><span class="p">,</span><span class="w"> </span><span class="nx">reject</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">img</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Image</span><span class="p">();</span>
+<span class="w">      </span><span class="nx">img</span><span class="p">.</span><span class="nx">onload</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">resolve</span><span class="p">(</span><span class="nx">img</span><span class="p">);</span>
+<span class="w">      </span><span class="nx">img</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">reject</span><span class="p">;</span>
+<span class="w">      </span><span class="nx">img</span><span class="p">.</span><span class="nx">src</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">src</span><span class="p">;</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">cache</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">src</span><span class="p">,</span><span class="w"> </span><span class="nx">promise</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">promise</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 여러 이미지 프리로드</span>
+<span class="w">  </span><span class="nx">preloadMultiple</span><span class="p">(</span><span class="nx">sources</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nb">Promise</span><span class="p">.</span><span class="nx">all</span><span class="p">(</span><span class="nx">sources</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">src</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">preload</span><span class="p">(</span><span class="nx">src</span><span class="p">)));</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 우선순위 기반 프리로드</span>
+<span class="w">  </span><span class="nx">preloadWithPriority</span><span class="p">(</span><span class="nx">images</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">high</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">images</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">priority</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;high&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">medium</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">images</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">priority</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;medium&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">low</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">images</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">priority</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;low&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="c1">// 높은 우선순위부터 순차적으로 로드</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">preloadMultiple</span><span class="p">(</span><span class="nx">high</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">src</span><span class="p">))</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">preloadMultiple</span><span class="p">(</span><span class="nx">medium</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">src</span><span class="p">)))</span>
+<span class="w">      </span><span class="p">.</span><span class="nx">then</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">preloadMultiple</span><span class="p">(</span><span class="nx">low</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">img</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">img</span><span class="p">.</span><span class="nx">src</span><span class="p">)));</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+<span class="c1">// 사용 예시</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">preloader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ImagePreloader</span><span class="p">();</span>
+<span class="c1">// 라우트 진입 전 중요 이미지 프리로드</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">beforeEach</span><span class="p">(</span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">,</span><span class="w"> </span><span class="kr">from</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">to</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;Dashboard&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">preloader</span><span class="p">.</span><span class="nx">preloadMultiple</span><span class="p">([</span>
+<span class="w">      </span><span class="s2">&quot;/images/dashboard-hero.jpg&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="s2">&quot;/images/equipment-overview.png&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">]);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">next</span><span class="p">();</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<hr />
+<h2 id="_13">번들 크기 줄이기</h2>
+<h3 id="_14">번들 분석</h3>
+<p>번들 크기를 줄이기 전에 먼저 현재 상태를 분석해야 합니다.</p>
+<div class="highlight"><pre><span></span><code><span class="c1">// vite.config.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">defineConfig</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vite&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">vue</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@vitejs/plugin-vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">visualizer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;rollup-plugin-visualizer&quot;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">defineConfig</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">plugins</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="nx">vue</span><span class="p">(),</span>
+<span class="w">    </span><span class="c1">// 번들 크기 시각화</span>
+<span class="w">    </span><span class="nx">visualizer</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">open</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">filename</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;dist/stats.html&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">gzipSize</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">brotliSize</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nx">build</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 번들 크기 경고 임계값</span>
+<span class="w">    </span><span class="nx">chunkSizeWarningLimit</span><span class="o">:</span><span class="w"> </span><span class="mf">500</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">rollupOptions</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">output</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="c1">// 수동 청크 분할</span>
+<span class="w">        </span><span class="nx">manualChunks</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">          </span><span class="s2">&quot;vue-vendor&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;vue&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;vue-router&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;pinia&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="s2">&quot;ui-vendor&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;vuetify&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="s2">&quot;chart-vendor&quot;</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;echarts&quot;</span><span class="p">],</span>
+<span class="w">          </span><span class="nx">utils</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;lodash-es&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;date-fns&quot;</span><span class="p">],</span>
+<span class="w">        </span><span class="p">},</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<h3 id="_15">트리 쉐이킹 최적화</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// 잘못된 예 - 전체 라이브러리 import</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">_</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;lodash&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">echarts</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">VBtn</span><span class="p">,</span><span class="w"> </span><span class="nx">VCard</span><span class="p">,</span><span class="w"> </span><span class="nx">VContainer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vuetify/components&quot;</span><span class="p">;</span>
+
+<span class="c1">// 올바른 예 - 필요한 것만 import</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">debounce</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;lodash-es/debounce&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">groupBy</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;lodash-es/groupBy&quot;</span><span class="p">;</span>
+<span class="c1">// ECharts 모듈별 import</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">use</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts/core&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">CanvasRenderer</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts/renderers&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">LineChart</span><span class="p">,</span><span class="w"> </span><span class="nx">BarChart</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts/charts&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">TitleComponent</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">TooltipComponent</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">GridComponent</span><span class="p">,</span>
+<span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts/components&quot;</span><span class="p">;</span>
+
+<span class="nx">use</span><span class="p">([</span>
+<span class="w">  </span><span class="nx">CanvasRenderer</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">LineChart</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">BarChart</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">TitleComponent</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">TooltipComponent</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">GridComponent</span><span class="p">,</span>
+<span class="p">]);</span>
+</code></pre></div>
+
+<h3 id="import">동적 import를 통한 코드 분할</h3>
+<div class="highlight"><pre><span></span><code><span class="cm">&lt;!-- ChartContainer.vue --&gt;</span>
+<span class="p">&lt;</span><span class="nt">template</span><span class="p">&gt;</span>
+  <span class="p">&lt;</span><span class="nt">div</span> <span class="na">class</span><span class="o">=</span><span class="s">&quot;chart-container&quot;</span><span class="p">&gt;</span>
+    <span class="p">&lt;</span><span class="nt">v-select</span>
+      <span class="na">v-model</span><span class="o">=</span><span class="s">&quot;</span><span class="nx">selectedChartType</span><span class="s">&quot;</span>
+      <span class="p">:</span><span class="na">items</span><span class="o">=</span><span class="s">&quot;</span><span class="nx">chartTypes</span><span class="s">&quot;</span>
+      <span class="na">label</span><span class="o">=</span><span class="s">&quot;차트 타입 선택&quot;</span>
+    <span class="p">/&gt;</span>
+    <span class="p">&lt;</span><span class="nt">component</span> <span class="na">v-if</span><span class="o">=</span><span class="s">&quot;</span><span class="nx">chartComponent</span><span class="s">&quot;</span> <span class="p">:</span><span class="na">is</span><span class="o">=</span><span class="s">&quot;</span><span class="nx">chartComponent</span><span class="s">&quot;</span> <span class="p">:</span><span class="na">data</span><span class="o">=</span><span class="s">&quot;</span><span class="nx">chartData</span><span class="s">&quot;</span> <span class="p">/&gt;</span>
+  <span class="p">&lt;/</span><span class="nt">div</span><span class="p">&gt;</span>
+<span class="p">&lt;/</span><span class="nt">template</span><span class="p">&gt;</span>
+
+<span class="p">&lt;</span><span class="nt">script</span> <span class="na">setup</span><span class="p">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">computed</span><span class="p">,</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span><span class="w"> </span><span class="nx">chartData</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Array</span><span class="p">,</span><span class="w"> </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">selectedChartType</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="s2">&quot;line&quot;</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartTypes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;line&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;bar&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;scatter&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;heatmap&quot;</span><span class="p">];</span>
+<span class="c1">// 선택된 차트 타입에 따라 동적으로 컴포넌트 로드</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartComponent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">computed</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">switch</span><span class="w"> </span><span class="p">(</span><span class="nx">selectedChartType</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;line&quot;</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">        </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/charts/LineChart.vue&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;bar&quot;</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">        </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/charts/BarChart.vue&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;scatter&quot;</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">        </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/charts/ScatterChart.vue&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">    </span><span class="k">case</span><span class="w"> </span><span class="s2">&quot;heatmap&quot;</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">defineAsyncComponent</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span>
+<span class="w">        </span><span class="k">import</span><span class="p">(</span><span class="s2">&quot;@/components/charts/HeatmapChart.vue&quot;</span><span class="p">)</span>
+<span class="w">      </span><span class="p">);</span>
+<span class="w">    </span><span class="k">default</span><span class="o">:</span>
+<span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="p">&lt;/</span><span class="nt">script</span><span class="p">&gt;</span>
+</code></pre></div>
+
+<h3 id="production">Production 빌드 최적화</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// vite.config.js</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">defineConfig</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vite&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">vue</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@vitejs/plugin-vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">viteCompression</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vite-plugin-compression&quot;</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">defineConfig</span><span class="p">({</span>
+<span class="w">  </span><span class="nx">plugins</span><span class="o">:</span><span class="w"> </span><span class="p">[</span>
+<span class="w">    </span><span class="nx">vue</span><span class="p">(),</span>
+<span class="w">    </span><span class="c1">// Gzip 압축</span>
+<span class="w">    </span><span class="nx">viteCompression</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">verbose</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">disable</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">threshold</span><span class="o">:</span><span class="w"> </span><span class="mf">10240</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">algorithm</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;gzip&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ext</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;.gz&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">    </span><span class="c1">// Brotli 압축</span>
+<span class="w">    </span><span class="nx">viteCompression</span><span class="p">({</span>
+<span class="w">      </span><span class="nx">verbose</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">disable</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">threshold</span><span class="o">:</span><span class="w"> </span><span class="mf">10240</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">algorithm</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;brotliCompress&quot;</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">ext</span><span class="o">:</span><span class="w"> </span><span class="s2">&quot;.br&quot;</span><span class="p">,</span>
+<span class="w">    </span><span class="p">}),</span>
+<span class="w">  </span><span class="p">],</span>
+<span class="w">  </span><span class="nx">build</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// CSS 코드 분할</span>
+<span class="w">    </span><span class="nx">cssCodeSplit</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// 소스맵 생성 비활성화 (프로덕션)</span>
+<span class="w">    </span><span class="nx">sourcemap</span><span class="o">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">    </span><span class="c1">// Terser 옵션</span>
+<span class="w">    </span><span class="nx">terserOptions</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">compress</span><span class="o">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">drop_console</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nx">drop_debugger</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="p">},</span>
+<span class="w">    </span><span class="p">},</span>
+<span class="w">    </span><span class="c1">// 작은 에셋 인라인 임계값</span>
+<span class="w">    </span><span class="nx">assetsInlineLimit</span><span class="o">:</span><span class="w"> </span><span class="mf">4096</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">});</span>
+</code></pre></div>
+
+<hr />
+<h2 id="_16">메모리 누수 방지</h2>
+<h3 id="_17">일반적인 메모리 누수 원인</h3>
+<p>Vue 애플리케이션에서 메모리 누수는 주로 다음과 같은 상황에서 발생합니다:</p>
+<ul>
+<li>이벤트 리스너를 제거하지 않은 경우</li>
+<li>타이머나 인터벌을 정리하지 않은 경우</li>
+<li>전역 변수나 클로저에 대한 참조가 남아있는 경우</li>
+<li>제3자 라이브러리의 인스턴스를 정리하지 않은 경우</li>
+</ul>
+<h3 id="_18">이벤트 리스너 관리</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">EventHandlingComponent</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">ref</span><span class="o">=</span><span class="s2">&quot;chartContainer&quot;</span><span class="w"> </span><span class="kd">class</span><span class="o">=</span><span class="s2">&quot;chart-wrapper&quot;</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">canvas</span><span class="w"> </span><span class="nx">ref</span><span class="o">=</span><span class="s2">&quot;canvas&quot;</span><span class="o">&gt;&lt;</span><span class="err">/canvas&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onUnmounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartContainer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">canvas</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="c1">// 이벤트 핸들러를 별도 변수로 저장</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">handleResize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">canvas</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">width</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">clientWidth</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">canvas</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">height</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">clientHeight</span><span class="p">;</span>
+<span class="w">    </span><span class="nx">redrawChart</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">handleScroll</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 스크롤 처리 로직</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Scroll position:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">event</span><span class="p">.</span><span class="nx">target</span><span class="p">.</span><span class="nx">scrollTop</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">handleKeydown</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">.</span><span class="nx">key</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;Escape&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// ESC 키 처리</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 이벤트 리스너 등록</span>
+<span class="w">  </span><span class="nb">window</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;resize&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleResize</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="o">?</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;scroll&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleScroll</span><span class="p">);</span>
+<span class="w">  </span><span class="nb">document</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="s2">&quot;keydown&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleKeydown</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// 초기 캔버스 크기 설정</span>
+<span class="w">  </span><span class="nx">handleResize</span><span class="p">();</span>
+<span class="p">});</span>
+<span class="nx">onUnmounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 모든 이벤트 리스너 제거</span>
+<span class="w">  </span><span class="nb">window</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s2">&quot;resize&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleResize</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">chartContainer</span><span class="p">.</span><span class="nx">value</span><span class="o">?</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s2">&quot;scroll&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleScroll</span><span class="p">);</span>
+<span class="w">  </span><span class="nb">document</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="s2">&quot;keydown&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">handleKeydown</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">redrawChart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 차트 다시 그리기 로직</span>
+<span class="p">};</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="_19">타이머 및 인터벌 정리</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">DataPollingComponent</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">h3</span><span class="o">&gt;</span><span class="nx">실시간</span><span class="w"> </span><span class="nx">장비</span><span class="w"> </span><span class="nx">상태</span><span class="o">&lt;</span><span class="err">/h3&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">v</span><span class="o">-</span><span class="k">for</span><span class="o">=</span><span class="s2">&quot;equipment in equipmentStatus&quot;</span><span class="w"> </span><span class="o">:</span><span class="nx">key</span><span class="o">=</span><span class="s2">&quot;equipment.id&quot;</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">name</span><span class="w"> </span><span class="p">}}</span><span class="o">:</span><span class="w"> </span><span class="p">{{</span><span class="w"> </span><span class="nx">equipment</span><span class="p">.</span><span class="nx">status</span><span class="w"> </span><span class="p">}}</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onUnmounted</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useEquipmentStore</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;@/stores/equipment&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">equipmentStore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useEquipmentStore</span><span class="p">();</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">equipmentStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">([]);</span>
+<span class="c1">// 타이머 ID 저장</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">pollingInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">debounceTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="c1">// 데이터 폴링 함수</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">fetchEquipmentStatus</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">fetch</span><span class="p">(</span><span class="s2">&quot;/api/equipment/status&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">equipmentStatus</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;Failed to fetch equipment status:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="c1">// 디바운스된 업데이트 함수</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">debouncedUpdate</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">data</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 이전 타임아웃 취소</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">debounceTimeout</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearTimeout</span><span class="p">(</span><span class="nx">debounceTimeout</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">debounceTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">equipmentStore</span><span class="p">.</span><span class="nx">updateStatus</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="mf">300</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 초기 데이터 로드</span>
+<span class="w">  </span><span class="nx">fetchEquipmentStatus</span><span class="p">();</span>
+<span class="w">  </span><span class="c1">// 5초마다 폴링</span>
+<span class="w">  </span><span class="nx">pollingInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">setInterval</span><span class="p">(</span><span class="nx">fetchEquipmentStatus</span><span class="p">,</span><span class="w"> </span><span class="mf">5000</span><span class="p">);</span>
+<span class="p">});</span>
+<span class="nx">onUnmounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 모든 타이머 정리</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">pollingInterval</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearInterval</span><span class="p">(</span><span class="nx">pollingInterval</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">pollingInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">debounceTimeout</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearTimeout</span><span class="p">(</span><span class="nx">debounceTimeout</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">debounceTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="3">제3자 라이브러리 정리</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">EChartsComponent</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">ref</span><span class="o">=</span><span class="s2">&quot;chartDiv&quot;</span><span class="w"> </span><span class="nx">style</span><span class="o">=</span><span class="s2">&quot;width: 100%; height: 400px;&quot;</span><span class="o">&gt;&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onUnmounted</span><span class="p">,</span><span class="w"> </span><span class="nx">watch</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">echarts</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;echarts&quot;</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">props</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">defineProps</span><span class="p">({</span><span class="w"> </span><span class="nx">option</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">type</span><span class="o">:</span><span class="w"> </span><span class="nb">Object</span><span class="p">,</span><span class="w"> </span><span class="nx">required</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="p">});</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">chartDiv</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">chartInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="kd">let</span><span class="w"> </span><span class="nx">resizeObserver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="c1">// 차트 초기화</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">initChart</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartDiv</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 기존 인스턴스가 있으면 먼저 정리</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">dispose</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">echarts</span><span class="p">.</span><span class="nx">init</span><span class="p">(</span><span class="nx">chartDiv</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">props</span><span class="p">.</span><span class="nx">option</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="c1">// ResizeObserver를 사용한 반응형 차트</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">observeResize</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">resizeObserver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">ResizeObserver</span><span class="p">((</span><span class="nx">entries</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">entry</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">entries</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">resize</span><span class="p">();</span>
+<span class="w">      </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartDiv</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">observe</span><span class="p">(</span><span class="nx">chartDiv</span><span class="p">.</span><span class="nx">value</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">};</span>
+<span class="c1">// props 변경 감지</span>
+<span class="nx">watch</span><span class="p">(</span>
+<span class="w">  </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">props</span><span class="p">.</span><span class="nx">option</span><span class="p">,</span>
+<span class="w">  </span><span class="p">(</span><span class="nx">newOption</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">setOption</span><span class="p">(</span><span class="nx">newOption</span><span class="p">,</span><span class="w"> </span><span class="kc">true</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nx">deep</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<span class="p">);</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">initChart</span><span class="p">();</span>
+<span class="w">  </span><span class="nx">observeResize</span><span class="p">();</span>
+<span class="p">});</span>
+<span class="nx">onUnmounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// ECharts 인스턴스 정리</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">chartInstance</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="p">.</span><span class="nx">dispose</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">chartInstance</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// ResizeObserver 정리</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">resizeObserver</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="p">.</span><span class="nx">disconnect</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">resizeObserver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<h3 id="_20">컴포넌트 수명 주기 관리 베스트 프랙티스</h3>
+<div class="highlight"><pre><span></span><code><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">BestPracticeComponent</span><span class="p">.</span><span class="nx">vue</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="o">&lt;</span><span class="nx">template</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">    </span><span class="c">&lt;!--</span><span class="w"> </span><span class="nx">컴포넌트</span><span class="w"> </span><span class="nx">내용</span><span class="w"> </span><span class="o">--&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="o">&lt;</span><span class="err">/template&gt;</span>
+
+<span class="o">&lt;</span><span class="nx">script</span><span class="w"> </span><span class="nx">setup</span><span class="o">&gt;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">ref</span><span class="p">,</span><span class="w"> </span><span class="nx">onMounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onUnmounted</span><span class="p">,</span><span class="w"> </span><span class="nx">onBeforeUnmount</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;vue&quot;</span><span class="p">;</span>
+<span class="c1">// 정리가 필요한 리소스들을 추적</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">resources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">timers</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(),</span>
+<span class="w">  </span><span class="nx">listeners</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">(),</span>
+<span class="w">  </span><span class="nx">subscriptions</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Set</span><span class="p">(),</span>
+<span class="p">};</span>
+<span class="c1">// 타이머 래퍼 함수</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">setManagedInterval</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span><span class="w"> </span><span class="nx">delay</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">setInterval</span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span><span class="w"> </span><span class="nx">delay</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">timers</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">id</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">setManagedTimeout</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">callback</span><span class="p">,</span><span class="w"> </span><span class="nx">delay</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">setTimeout</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">callback</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">resources</span><span class="p">.</span><span class="nx">timers</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="nx">delay</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">timers</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">id</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="c1">// 이벤트 리스너 래퍼 함수</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">addManagedListener</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="nx">event</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">target</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">);</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">resources</span><span class="p">.</span><span class="nx">listeners</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">target</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">resources</span><span class="p">.</span><span class="nx">listeners</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">target</span><span class="p">,</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">());</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">listeners</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">target</span><span class="p">).</span><span class="nx">set</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">);</span>
+<span class="p">};</span>
+<span class="c1">// WebSocket 연결 관리</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">ws</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">ref</span><span class="p">(</span><span class="kc">null</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">connectWebSocket</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">WebSocket</span><span class="p">(</span><span class="s2">&quot;ws://localhost:8080/realtime&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">onmessage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="c1">// 메시지 처리</span>
+<span class="w">  </span><span class="p">};</span>
+<span class="w">  </span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">onerror</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s2">&quot;WebSocket error:&quot;</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">  </span><span class="p">};</span>
+<span class="p">};</span>
+<span class="c1">// 모든 리소스 정리</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">cleanup</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 타이머 정리</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">timers</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">id</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">clearInterval</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">clearTimeout</span><span class="p">(</span><span class="nx">id</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">timers</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+<span class="w">  </span><span class="c1">// 이벤트 리스너 정리</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">listeners</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">events</span><span class="p">,</span><span class="w"> </span><span class="nx">target</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">events</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">handler</span><span class="p">,</span><span class="w"> </span><span class="nx">event</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">target</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span><span class="w"> </span><span class="nx">handler</span><span class="p">);</span>
+<span class="w">    </span><span class="p">});</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">listeners</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+<span class="w">  </span><span class="c1">// WebSocket 정리</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="p">.</span><span class="nx">close</span><span class="p">();</span>
+<span class="w">    </span><span class="nx">ws</span><span class="p">.</span><span class="nx">value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// 기타 구독 정리</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">subscriptions</span><span class="p">.</span><span class="nx">forEach</span><span class="p">((</span><span class="nx">unsubscribe</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="ow">typeof</span><span class="w"> </span><span class="nx">unsubscribe</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="s2">&quot;function&quot;</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">unsubscribe</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="w">  </span><span class="nx">resources</span><span class="p">.</span><span class="nx">subscriptions</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+<span class="p">};</span>
+<span class="nx">onMounted</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// 리소스 초기화</span>
+<span class="w">  </span><span class="nx">connectWebSocket</span><span class="p">();</span>
+<span class="w">  </span><span class="c1">// 관리되는 타이머 설정</span>
+<span class="w">  </span><span class="nx">setManagedInterval</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Periodic task&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">},</span><span class="w"> </span><span class="mf">5000</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// 관리되는 이벤트 리스너</span>
+<span class="w">  </span><span class="nx">addManagedListener</span><span class="p">(</span><span class="nb">window</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resize&quot;</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">&quot;Window resized&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="p">});</span>
+<span class="p">});</span>
+<span class="c1">// 컴포넌트 정리</span>
+<span class="nx">onBeforeUnmount</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">cleanup</span><span class="p">();</span>
+<span class="p">});</span>
+<span class="o">&lt;</span><span class="err">/script&gt;</span>
+</code></pre></div>
+
+<hr />
+<h2 id="_21">성능 모니터링 도구</h2>
+<h3 id="vue-devtools">Vue DevTools 활용</h3>
+<p>Vue DevTools는 컴포넌트 트리, 상태 관리, 성능 프로파일링 등을 제공합니다. Chrome 웹 스토어에서 설치할 수 있으며, 개발 중 성능 문제를 진단하는 데 매우 유용합니다.</p>
+<h3 id="performance-api">Performance API 활용</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">// utils/performanceMonitor.js</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">performanceMonitor</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">marks</span><span class="o">:</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nb">Map</span><span class="p">(),</span>
+<span class="w">  </span><span class="c1">// 성능 측정 시작</span>
+<span class="w">  </span><span class="nx">start</span><span class="p">(</span><span class="nx">label</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">performance</span><span class="p">.</span><span class="nx">mark</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb">-start`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">marks</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="nx">label</span><span class="p">,</span><span class="w"> </span><span class="nx">performance</span><span class="p">.</span><span class="nx">now</span><span class="p">());</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="c1">// 성능 측정 종료</span>
+<span class="w">  </span><span class="nx">end</span><span class="p">(</span><span class="nx">label</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="k">this</span><span class="p">.</span><span class="nx">marks</span><span class="p">.</span><span class="nx">has</span><span class="p">(</span><span class="nx">label</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">console</span><span class="p">.</span><span class="nx">warn</span><span class="p">(</span><span class="sb">`No start mark found for </span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">      </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="nx">performance</span><span class="p">.</span><span class="nx">mark</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb">-end`</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">performance</span><span class="p">.</span><span class="nx">measure</span><span class="p">(</span><span class="nx">label</span><span class="p">,</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb">-start`</span><span class="p">,</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb">-end`</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">duration</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">performance</span><span class="p">.</span><span class="nx">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">marks</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">label</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">label</span><span class="si">}</span><span class="sb"> took </span><span class="si">${</span><span class="nx">duration</span><span class="p">.</span><span class="nx">toFixed</span><span class="p">(</span><span class="mf">2</span><span class="p">)</span><span class="si">}</span><span class="sb">ms`</span><span class="p">);</span>
+<span class="w">    </span><span class="k">this</span><span class="p">.</span><span class="nx">marks</span><span class="p">.</span><span class="ow">delete</span><span class="p">(</span><span class="nx">label</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">duration</span><span class="p">;</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="c1">// 모든 측정 결과 출력</span>
+<span class="w">  </span><span class="nx">getResults</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">entries</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">performance</span><span class="p">.</span><span class="nx">getEntriesByType</span><span class="p">(</span><span class="s2">&quot;measure&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">entries</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">entry</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">({</span>
+<span class="w">      </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="nx">entry</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span>
+<span class="w">      </span><span class="nx">duration</span><span class="o">:</span><span class="w"> </span><span class="nx">entry</span><span class="p">.</span><span class="nx">duration</span><span class="p">.</span><span class="nx">toFixed</span><span class="p">(</span><span class="mf">2</span><span class="p">),</span>
+<span class="w">    </span><span class="p">}));</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">};</span>
+</code></pre></div>
+
+<hr />
+<p>이러한 성능 최적화 기법들을 적용하면 AFM 데이터 뷰어가 더 빠르고 효율적으로 동작하게 됩니다. 특히 대용량 데이터를 다루는 반도체 장비 애플리케이션에서는 이러한 최적화가 사용자 경험을 크게 향상시킬 수 있습니다.</p>
+<p>더 자세한 정보는 다음 문서들을 참고하시기 바랍니다:</p>
+<ul>
+<li><a href="https://kr.vuejs.org/v2/guide/optimizations.html">Vue.js 성능 최적화 가이드</a></li>
+<li><a href="https://vitejs.dev/guide/build.html">Vite 성능 최적화</a></li>
+<li><a href="https://developer.chrome.com/docs/devtools/evaluate-performance/">Chrome DevTools 성능 프로파일링</a></li>
+</ul>
+</body>
+</html>

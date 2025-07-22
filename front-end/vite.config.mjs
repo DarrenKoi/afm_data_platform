@@ -42,6 +42,9 @@ export default defineConfig({
             styles: "wght@100;300;400;500;700;900",
           },
         ],
+        preconnect: true,
+        display: 'swap',
+        injectTo: 'head',
       },
     }),
     AutoImport({
@@ -105,6 +108,14 @@ export default defineConfig({
               return "vendor";
             }
           }
+        },
+        assetFileNames: (assetInfo) => {
+          // Don't preload font files
+          const fileName = assetInfo.names?.[0] || assetInfo.fileName || "";
+          if (/\.(woff|woff2|ttf|eot)$/.test(fileName)) {
+            return "assets/fonts/[name]-[hash][extname]";
+          }
+          return "assets/[name]-[hash][extname]";
         },
       },
     },

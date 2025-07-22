@@ -1,5 +1,35 @@
 <template>
-  <div ref="chartContainer" :style="{ width: '100%', height: `${chartHeight}px` }"></div>
+  <div class="histogram-chart-wrapper">
+    <!-- Statistics Box Outside Chart -->
+    <div v-if="statistics" class="statistics-box mb-3">
+      <v-card variant="outlined" class="pa-4">
+        <div class="d-flex align-center justify-space-around">
+          <div class="text-center px-3">
+            <div class="text-caption text-medium-emphasis mb-1">Mean</div>
+            <div class="text-subtitle-1 font-weight-medium">{{ statistics.mean }} nm</div>
+          </div>
+          <v-divider vertical class="mx-2" />
+          <div class="text-center px-3">
+            <div class="text-caption text-medium-emphasis mb-1">Std Dev</div>
+            <div class="text-subtitle-1 font-weight-medium">{{ statistics.std }} nm</div>
+          </div>
+          <v-divider vertical class="mx-2" />
+          <div class="text-center px-3">
+            <div class="text-caption text-medium-emphasis mb-1">Min</div>
+            <div class="text-subtitle-1 font-weight-medium">{{ statistics.min }} nm</div>
+          </div>
+          <v-divider vertical class="mx-2" />
+          <div class="text-center px-3">
+            <div class="text-caption text-medium-emphasis mb-1">Max</div>
+            <div class="text-subtitle-1 font-weight-medium">{{ statistics.max }} nm</div>
+          </div>
+        </div>
+      </v-card>
+    </div>
+    
+    <!-- Chart Container -->
+    <div ref="chartContainer" :style="{ width: '100%', height: `${adjustedChartHeight}px` }"></div>
+  </div>
 </template>
 
 <script setup>
@@ -17,7 +47,7 @@ const props = defineProps({
   },
   chartHeight: {
     type: Number,
-    default: 400
+    default: 500
   },
   compact: {
     type: Boolean,
@@ -27,6 +57,12 @@ const props = defineProps({
 
 const chartContainer = ref(null)
 let chartInstance = null
+
+const adjustedChartHeight = computed(() => {
+  // Subtract space for statistics box (approximately 70px)
+  const statsBoxHeight = statistics.value ? 70 : 0
+  return props.chartHeight - statsBoxHeight
+})
 
 const histogramData = computed(() => {
   if (props.profileData.length === 0) return { bins: [], values: [] }
@@ -90,10 +126,10 @@ function initChart() {
       }
     },
     grid: {
-      left: props.compact ? '8%' : '10%',
-      right: props.compact ? '2%' : '5%',
-      bottom: props.compact ? '15%' : '18%',
-      top: props.compact ? '10%' : '12%',
+      left: props.compact ? '10%' : '15%',
+      right: props.compact ? '5%' : '10%',
+      bottom: props.compact ? '18%' : '20%',
+      top: props.compact ? '15%' : '20%',
       containLabel: true
     },
     xAxis: {
@@ -126,16 +162,7 @@ function initChart() {
         }
       }
     }],
-    graphic: statistics.value ? [{
-      type: 'text',
-      left: props.compact ? '8%' : '10%',
-      top: props.compact ? '2%' : '3%',
-      style: {
-        text: `Mean: ${statistics.value.mean} nm\nStd: ${statistics.value.std} nm`,
-        fontSize: props.compact ? 11 : 12,
-        fill: '#666'
-      }
-    }] : []
+    graphic: []
   }
 
   chartInstance.setOption(option)
@@ -171,4 +198,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.histogram-chart-wrapper {
+  width: 100%;
+}
+
+.statistics-box {
+  background: transparent;
+}
+
+.statistics-box .v-card {
+  background: rgba(248, 250, 252, 0.8);
+  border: 1px solid #e2e8f0;
+}
 </style>

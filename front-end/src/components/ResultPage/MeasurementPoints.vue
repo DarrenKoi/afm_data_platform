@@ -341,23 +341,19 @@ const allAvailableHeaders = computed(() => {
   const sampleItem = props.detailedData[0]
   const headers = []
   
-  // Define important columns first with their order priority
-  const importantColumns = [
-    { key: 'measurement_point', title: 'Point', priority: 0 },
+  // Define preferred columns in the exact order requested
+  const preferredColumns = [
+    { key: 'Site', title: 'Site', priority: 0, altKeys: ['Site'] },
     { key: 'Site_ID', title: 'Site ID', priority: 1, altKeys: ['Site ID'] },
     { key: 'Site_X', title: 'Site X', priority: 2, altKeys: ['Site X'] },
     { key: 'Site_Y', title: 'Site Y', priority: 3, altKeys: ['Site Y'] },
-    { key: 'X_um', title: 'X (um)', priority: 4, altKeys: ['X (um)'] },
-    { key: 'Y_um', title: 'Y (um)', priority: 5, altKeys: ['Y (um)'] },
-    { key: 'Point_No', title: 'Point ID', priority: 6, altKeys: ['Point No'] },
-    { key: 'Methods_ID', title: 'Method ID', priority: 7, altKeys: ['Methods ID'] },
-    { key: 'Left_H_nm', title: 'Left H (nm)', priority: 8, altKeys: ['Left H (nm)', 'Left_H'] },
-    { key: 'Right_H_nm', title: 'Right H (nm)', priority: 9, altKeys: ['Right H (nm)', 'Right_H'] },
-    { key: 'Ref_H_nm', title: 'Ref H (nm)', priority: 10, altKeys: ['Ref H (nm)', 'Ref_H'] }
+    { key: 'X_um', title: 'X', priority: 4, altKeys: ['X (um)', 'X'] },
+    { key: 'Y_um', title: 'Y', priority: 5, altKeys: ['Y (um)', 'Y'] },
+    { key: 'Point_No', title: 'Point', priority: 6, altKeys: ['Point No', 'Point', 'measurement_point'] }
   ]
   
-  // Add important columns that exist in data
-  importantColumns.forEach(col => {
+  // Add preferred columns that exist in data
+  preferredColumns.forEach(col => {
     let actualKey = col.key
     let found = false
     
@@ -379,31 +375,57 @@ const allAvailableHeaders = computed(() => {
       headers.push({
         title: col.title,
         key: actualKey,
-        align: col.key === 'measurement_point' || col.key.includes('ID') ? 'center' : 
+        align: col.key.includes('ID') || col.key.includes('Point') ? 'center' : 
                (typeof sampleItem[actualKey] === 'number' ? 'end' : 'start'),
         sortable: true,
-        width: col.key === 'measurement_point' ? '100px' : '120px',
+        width: col.key.includes('Point') ? '100px' : '120px',
         priority: col.priority
       })
     }
   })
   
-  // Add remaining columns
+  // Get remaining columns and categorize them
+  const remainingColumns = []
+  const nmColumns = []
+  
   Object.keys(sampleItem).forEach(key => {
     if (!headers.some(h => h.key === key) && key !== 'index') {
-      headers.push({
-        title: key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim(),
+      const title = key.replace(/_/g, ' ').replace(/([A-Z])/g, ' $1').trim()
+      const header = {
+        title: title,
         key: key,
         align: typeof sampleItem[key] === 'number' ? 'end' : 'start',
         sortable: true,
-        width: '120px',
-        priority: 100 // Lower priority
-      })
+        width: '120px'
+      }
+      
+      // Check if column contains "(nm)" string
+      if (title.includes('(nm)') || key.includes('nm') || key.toLowerCase().includes('height')) {
+        nmColumns.push(header)
+      } else {
+        remainingColumns.push(header)
+      }
     }
   })
   
-  // Sort by priority
-  return headers.sort((a, b) => (a.priority || 100) - (b.priority || 100))
+  // Sort nm columns alphabetically
+  nmColumns.sort((a, b) => a.title.localeCompare(b.title))
+  
+  // Sort remaining columns alphabetically
+  remainingColumns.sort((a, b) => a.title.localeCompare(b.title))
+  
+  // Assign priorities: preferred (0-6), nm columns (10+), other columns (100+)
+  nmColumns.forEach((col, index) => {
+    col.priority = 10 + index
+  })
+  
+  remainingColumns.forEach((col, index) => {
+    col.priority = 100 + index
+  })
+  
+  // Combine all headers and sort by priority
+  const allHeaders = [...headers, ...nmColumns, ...remainingColumns]
+  return allHeaders.sort((a, b) => (a.priority || 100) - (b.priority || 100))
 })
 
 // Get visible headers based on user selection

@@ -15,7 +15,23 @@
         <v-list-item-title class="text-body-2">{{ group.name }}</v-list-item-title>
         <v-list-item-subtitle class="text-caption">
           <div v-if="group.description" class="mb-1 text-medium-emphasis">{{ group.description }}</div>
-          {{ group.itemCount }} items • {{ new Date(group.createdAt).toLocaleDateString() }}
+          <div class="d-flex align-center gap-1">
+            <span>{{ group.itemCount }} items</span>
+            <span>•</span>
+            <span>{{ new Date(group.createdAt).toLocaleDateString() }}</span>
+            <span v-if="group.tools && group.tools.length > 0">•</span>
+            <v-chip 
+              v-for="tool in (group.tools || [])" 
+              :key="tool" 
+              size="x-small" 
+              variant="tonal" 
+              color="primary"
+              class="ml-1"
+            >
+              <v-icon start size="x-small">mdi-tools</v-icon>
+              {{ tool }}
+            </v-chip>
+          </div>
         </v-list-item-subtitle>
         
         <template v-slot:append>

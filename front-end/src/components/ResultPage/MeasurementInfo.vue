@@ -274,12 +274,15 @@ function getValueClass(key, index) {
     'text-purple'
   ]
   
-  // Special colors for common keys
+  // Special colors for important keys - orange for Recipe ID, Lot ID, and Start Time
   const lowerKey = key.toLowerCase()
+  if (lowerKey.includes('recipe')) return 'text-orange'
+  if (lowerKey.includes('lot')) return 'text-orange'
+  if (lowerKey.includes('start') && lowerKey.includes('time')) return 'text-orange'
+  
+  // Other special colors
   if (lowerKey.includes('id')) return 'text-primary'
   if (lowerKey.includes('time') || lowerKey.includes('date')) return 'text-info'
-  if (lowerKey.includes('recipe')) return 'text-warning'
-  if (lowerKey.includes('lot')) return 'text-success'
   
   // Default cycling through colors
   return colorClasses[index % colorClasses.length]

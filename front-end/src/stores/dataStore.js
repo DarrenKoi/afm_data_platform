@@ -68,9 +68,10 @@ export const useDataStore = defineStore('data', () => {
     // Remove if already exists
     viewHistory.value = viewHistory.value.filter(item => item.filename !== measurement.filename)
     
-    // Add to beginning
+    // Add to beginning with explicit tool tracking
     viewHistory.value.unshift({
       ...measurement,
+      tool_name: measurement.tool_name || measurement.tool || selectedTool.value,
       viewedAt: new Date().toISOString()
     })
     
@@ -94,6 +95,7 @@ export const useDataStore = defineStore('data', () => {
     if (!isInGroup.value(measurement.filename)) {
       groupedData.value.push({
         ...measurement,
+        tool_name: measurement.tool_name || measurement.tool || selectedTool.value,
         addedAt: new Date().toISOString()
       })
       
@@ -120,6 +122,7 @@ export const useDataStore = defineStore('data', () => {
       name: name || `Group ${new Date().toLocaleDateString()}`,
       description: description.trim(),
       items: [...groupedData.value],
+      tools: [...new Set(groupedData.value.map(item => item.tool_name || item.tool || selectedTool.value))],
       createdAt: new Date().toISOString(),
       itemCount: groupedData.value.length
     }
@@ -180,6 +183,21 @@ export const useDataStore = defineStore('data', () => {
     }
   }
 
+  // Helper function to organize data by tool
+  function organizeDataByTool(measurements) {
+    const toolGroups = {}
+    
+    measurements.forEach(measurement => {
+      const toolName = measurement.tool_name || measurement.tool || selectedTool.value || 'MAP608'
+      if (!toolGroups[toolName]) {
+        toolGroups[toolName] = []
+      }
+      toolGroups[toolName].push(measurement)
+    })
+    
+    return toolGroups
+  }
+
   // Helper function to validate measurement for navigation
   function validateMeasurementForNavigation(measurement) {
     if (!measurement) return false
@@ -235,6 +253,7 @@ export const useDataStore = defineStore('data', () => {
     // Helper functions
     getDateRange,
     validateMeasurementForNavigation,
-    prepareMeasurementForNavigation
+    prepareMeasurementForNavigation,
+    organizeDataByTool
   }
 })

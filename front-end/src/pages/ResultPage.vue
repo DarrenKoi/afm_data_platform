@@ -1,11 +1,67 @@
 <template>
   <v-container fluid class="pa-6 px-md-8 px-lg-12">
-    <!-- Distinctive Back Button -->
-    <div class="mb-3">
+    <!-- Distinctive Back Button and Download Options -->
+    <div class="mb-3 d-flex justify-space-between align-center flex-wrap ga-3">
       <v-btn color="primary" variant="elevated" size="large" @click="goBack" class="back-button">
         <v-icon start>mdi-arrow-left</v-icon>
         {{ referrer === 'data-trend' ? 'Back to Data Trend' : 'Back to Search' }}
       </v-btn>
+      
+      <!-- Download Menu -->
+      <div class="d-flex ga-2">
+        <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn
+              color="success"
+              variant="elevated"
+              v-bind="props"
+              :disabled="!hasData"
+            >
+              <v-icon start>mdi-download</v-icon>
+              Download Data
+              <v-icon end>mdi-menu-down</v-icon>
+            </v-btn>
+          </template>
+          <v-list>
+            <v-list-item @click="downloadMeasurementInfo" :disabled="!measurementInfo || Object.keys(measurementInfo).length === 0">
+              <template v-slot:prepend>
+                <v-icon>mdi-information</v-icon>
+              </template>
+              <v-list-item-title>Measurement Info</v-list-item-title>
+            </v-list-item>
+            
+            <v-list-item @click="downloadSummaryStatistics" :disabled="!summaryData || summaryData.length === 0">
+              <template v-slot:prepend>
+                <v-icon>mdi-chart-line</v-icon>
+              </template>
+              <v-list-item-title>Summary Statistics</v-list-item-title>
+            </v-list-item>
+            
+            <v-list-item @click="downloadDetailedData" :disabled="!detailedData || detailedData.length === 0">
+              <template v-slot:prepend>
+                <v-icon>mdi-table-large</v-icon>
+              </template>
+              <v-list-item-title>Detailed Data</v-list-item-title>
+            </v-list-item>
+            
+            <v-list-item @click="downloadProfileData" :disabled="!profileData || profileData.length === 0">
+              <template v-slot:prepend>
+                <v-icon>mdi-axis</v-icon>
+              </template>
+              <v-list-item-title>Profile Data (X,Y,Z)</v-list-item-title>
+            </v-list-item>
+            
+            <v-divider></v-divider>
+            
+            <v-list-item @click="downloadAllData" :disabled="!hasData">
+              <template v-slot:prepend>
+                <v-icon>mdi-package-down</v-icon>
+              </template>
+              <v-list-item-title>Download All (CSV)</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </div>
     </div>
 
     <!-- First row: Information and Scatter Chart -->
@@ -56,7 +112,7 @@
             <v-row dense>
               <!-- Profile Image -->
               <v-col cols="12" md="6">
-                <v-card class="profile-card" height="250">
+                <v-card class="profile-card" height="350">
                   <v-card-title class="py-2">
                     <v-icon start size="small">mdi-image</v-icon>
                     <span class="text-subtitle-1">Profile Image</span>
@@ -65,13 +121,13 @@
                       Point {{ selectedPoint }}
                     </v-chip>
                   </v-card-title>
-                  <v-card-text class="pa-2">
+                  <v-card-text class="pa-3">
                     <div v-if="isLoadingProfileImage" class="text-center pa-4">
                       <v-progress-circular indeterminate color="primary" size="small" />
                       <p class="mt-2 text-caption">Loading profile image...</p>
                     </div>
                     <div v-else-if="profileImageUrl" class="profile-image-container"
-                      style="height: 180px; display: flex; align-items: center; justify-content: center;">
+                      style="height: 280px; display: flex; align-items: center; justify-content: center;">
                       <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
                         style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
                         @load="handleImageLoad" />
@@ -86,7 +142,7 @@
 
               <!-- Z-Value Distribution -->
               <v-col cols="12" md="6">
-                <v-card class="distribution-card" height="250">
+                <v-card class="distribution-card" height="350">
                   <v-card-title class="py-2">
                     <v-icon start size="small">mdi-chart-bar</v-icon>
                     <span class="text-subtitle-1">Z-Value Distribution</span>
@@ -95,9 +151,9 @@
                       {{ profileData.length.toLocaleString() }} points
                     </v-chip>
                   </v-card-title>
-                  <v-card-text class="pa-2">
+                  <v-card-text class="pa-3">
                     <ChartVisualization :selected-point="selectedPoint" :profile-data="profileData"
-                      :is-loading="isLoadingProfile" :chart-height="190" :compact="true" :chart-type="'histogram'" />
+                      :is-loading="isLoadingProfile" :chart-height="280" :compact="false" :chart-type="'histogram'" />
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -113,6 +169,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { fetchProfileData, fetchSummaryData, fetchMeasurementData, apiService } from '@/services/api.js'
+import { downloadCSV, formatMeasurementInfo, formatSummaryStatistics, formatProfileData, generateFilename } from '@/utils/exportUtils.js'
 
 // Import components
 import MeasurementInfo from '@/components/ResultPage/MeasurementInfo.vue'
@@ -476,6 +533,70 @@ function goBack() {
   } else {
     // Default: go back to search page
     router.push('/')
+  }
+}
+
+// Computed property for checking if we have any data
+const hasData = computed(() => {
+  return (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) ||
+         (summaryData.value && summaryData.value.length > 0) ||
+         (detailedData.value && detailedData.value.length > 0)
+})
+
+// Download functions
+function downloadMeasurementInfo() {
+  const data = formatMeasurementInfo(measurementInfo.value)
+  const filename = generateFilename('measurement_info', measurementInfo.value)
+  downloadCSV(data, filename)
+}
+
+function downloadSummaryStatistics() {
+  const data = formatSummaryStatistics(summaryData.value)
+  const filename = generateFilename('summary_statistics', measurementInfo.value)
+  downloadCSV(data, filename)
+}
+
+function downloadDetailedData() {
+  const filename = generateFilename('detailed_data', measurementInfo.value)
+  downloadCSV(detailedData.value, filename)
+}
+
+function downloadProfileData() {
+  const data = formatProfileData(profileData.value)
+  const filename = generateFilename(`profile_data_point_${selectedPoint.value || 'all'}`, measurementInfo.value)
+  downloadCSV(data, filename)
+}
+
+function downloadAllData() {
+  // Create a combined dataset
+  const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
+  const lotId = measurementInfo.value.lot_id || 'unknown'
+  const recipe = measurementInfo.value.recipe_name || 'data'
+  
+  // Download each dataset separately with related names
+  const baseFilename = `AFM_${recipe}_${lotId}_${timestamp}`
+  
+  // Download measurement info
+  if (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) {
+    const infoData = formatMeasurementInfo(measurementInfo.value)
+    downloadCSV(infoData, `${baseFilename}_info`)
+  }
+  
+  // Download summary statistics
+  if (summaryData.value && summaryData.value.length > 0) {
+    const summaryFormatted = formatSummaryStatistics(summaryData.value)
+    downloadCSV(summaryFormatted, `${baseFilename}_summary`)
+  }
+  
+  // Download detailed data
+  if (detailedData.value && detailedData.value.length > 0) {
+    downloadCSV(detailedData.value, `${baseFilename}_detailed`)
+  }
+  
+  // Download profile data if available
+  if (profileData.value && profileData.value.length > 0) {
+    const profileFormatted = formatProfileData(profileData.value)
+    downloadCSV(profileFormatted, `${baseFilename}_profile_point_${selectedPoint.value || 'last'}`)
   }
 }
 

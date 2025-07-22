@@ -3,49 +3,88 @@ AFM Data Platform Backend - Main Entry Point
 Run with: python index.py
 """
 
-from flask import Flask
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 import os
 from api.routes import api_bp
+from api.user_activity import log_user_activity
 
 def create_app():
-    app = Flask(__name__)
+    # Determine if we're serving static files (production mode)
+    static_folder = 'front-end/dist' if os.path.exists('front-end/dist') else None
+    app = Flask(__name__, static_folder=static_folder, static_url_path='')
     
-    # Configure CORS with flexible settings for development
-    # Get custom origins from environment variable
-    custom_origins = os.environ.get('CORS_ORIGINS', '').split(',') if os.environ.get('CORS_ORIGINS') else []
-    
-    # Default allowed origins for local development
-    default_origins = [
+    # Configure CORS with hardcoded origins for development and production
+    allowed_origins = [
         'http://localhost:3000',
         'http://localhost:3001',
-        'http://localhost:3002',
         'http://localhost:5173',  # Vite default
         'http://localhost:8080',
+        'http://localhost:5000',  # Flask default
         'http://127.0.0.1:3000',
         'http://127.0.0.1:3001',
-        'http://127.0.0.1:3002',
         'http://127.0.0.1:5173',
         'http://127.0.0.1:8080',
+        'http://127.0.0.1:5000',  # Flask default
+        # Add your production URL here
+        # 'https://your-production-domain.com',
+        # 'https://afm-platform.skhynix.com',  # Example
     ]
-    
-    # Combine and deduplicate origins
-    allowed_origins = list(set(default_origins + [origin.strip() for origin in custom_origins if origin.strip()]))
     
     # Configure CORS
     CORS(app, 
          origins=allowed_origins,
          allow_headers=['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-         methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
          supports_credentials=True
     )
+
 
     # Register API blueprint
     app.register_blueprint(api_bp, url_prefix='/api')
     
-    @app.route('/')
-    def health_check():
-        return {'status': 'AFM Data Platform Backend is running', 'version': '1.0.0'}
+    # Add middleware to log user activities
+    @app.before_request
+    def before_request():
+        # Skip logging for static files and favicon
+        if request.path.startswith('/assets') or request.path == '/favicon.ico':
+            return
+        
+        # Debug: Print all cookies (remove in production)
+        if app.debug:
+            print(f"\n=== COOKIES for {request.path} ===")
+            for cookie_name, cookie_value in request.cookies.items():
+                print(f"  {cookie_name}: {cookie_value}")
+            print("=== END COOKIES ===\n")
+        
+        # Log user activity
+        log_user_activity()
+    
+    # Example endpoint to check current user
+    @app.route('/api/current-user')
+    def get_current_user():
+        user_id = request.cookies.get('LAST_USER', 'anonymous')
+        return {'user': user_id}
+    
+    # Serve Vue app in production
+    if static_folder and os.path.exists('front-end/dist'):
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_vue_app(path):
+            # Check if path is an API route
+            if path.startswith('api/'):
+                return {'error': 'Not found'}, 404
+                
+            # Check if path is a static file
+            if path and os.path.exists(os.path.join('front-end/dist', path)):
+                return send_from_directory('front-end/dist', path)
+            
+            # For all other routes, serve index.html (Vue Router will handle routing)
+            return send_from_directory('front-end/dist', 'index.html')
+    else:
+        # Development mode - just API health check
+        @app.route('/')
+        def health_check():
+            return {'status': 'AFM Data Platform Backend is running', 'version': '1.0.0'}
     
     return app
 
@@ -54,22 +93,9 @@ app = create_app()
 
 if __name__ == '__main__':
     # This will run in development mode when called directly
-    port = int(os.environ.get('PORT', 5000))
-    host = os.environ.get('HOST', '127.0.0.1')
-    
-    print("Starting AFM Data Platform Backend...")
-    print(f"Backend will be available at: http://{host}:{port}")
-    print(f"API endpoints available at: http://{host}:{port}/api")
-    print("If port 5000 is in use, try: PORT=5001 python index.py")
-    
     try:
-        app.run(debug=True, port=port, host=host)
+        app.run(debug=True)
     except OSError as e:
-        if "Address already in use" in str(e) or "socket" in str(e).lower():
-            print(f"Error: Port {port} is already in use or access denied.")
-            print("Try running with a different port:")
-            print(f"  PORT=5001 python index.py")
-            print(f"  PORT=8000 python index.py")
-        else:
-            print(f"Error starting server: {e}")
-            raise
+
+        print(f"Error starting server: {e}")
+        raise

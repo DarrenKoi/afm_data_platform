@@ -25,14 +25,6 @@
               {{ tool.icon }}
             </v-icon>
             <span class="font-weight-medium">{{ tool.name }}</span>
-            <v-badge
-              v-if="selectedTool === tool.id"
-              color="success"
-              icon="mdi-check"
-              floating
-              offset-x="8"
-              offset-y="8"
-            />
           </v-chip>
         </div>
       </v-card>
@@ -156,7 +148,6 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore.js'
-import { searchMeasurementsAsync } from '@/services/api.js'
 
 // Import components
 import SearchSection from '@/components/MainPage/SearchSection.vue'
@@ -194,24 +185,6 @@ function handleSearchPerformed(query, results) {
   if (query && results) {
     searchResults.value = results
     console.log('Real-time search results:', results.length, 'items')
-  }
-}
-
-// Legacy search function for backward compatibility
-async function performSearch(query) {
-  if (!query) return
-  isSearching.value = true
-
-  try {
-    const response = await searchMeasurementsAsync(query)
-    if (response.success) {
-      searchResults.value = response.data
-      console.log('Search results:', searchResults.value)
-    }
-  } catch (error) {
-    console.error('Search error:', error)
-  } finally {
-    isSearching.value = false
   }
 }
 
