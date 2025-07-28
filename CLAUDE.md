@@ -130,4 +130,5 @@ Each tool has its own data directory: `itc-afm-data-platform-pjt-shared/AFM_DB/{
 - All charts should be placed in dedicated `charts/` folders
 - Data columns often contain "(nm)" suffix in their names
 - The application is designed for desktop browsers only (no mobile support needed)
+- Mobile and tablet view are not the case for this project
 - Production deployment uses `index.py` as entry point for UWSGI compatibility

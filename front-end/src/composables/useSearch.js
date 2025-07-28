@@ -4,7 +4,7 @@ import { useDataStore } from '@/stores/dataStore.js'
 
 export function useDebounceSearch(delay = 300) {
   const dataStore = useDataStore()
-  const searchQuery = ref('')
+  const searchQuery = ref(dataStore.searchQuery || '')
   const searchResults = ref([])
   const isSearching = ref(false)
   const allFileData = ref([]) // Store all loaded files for local filtering
@@ -72,7 +72,7 @@ export function useDebounceSearch(delay = 300) {
         searchCache.clear()
         
         // If there's an active search query, apply filtering
-        if (searchQuery.value && searchQuery.value.trim().length >= 2) {
+        if (searchQuery.value) {
           performLocalSearch(searchQuery.value)
         } else {
           // Show all data sorted by latest first
@@ -133,6 +133,9 @@ export function useDebounceSearch(delay = 300) {
     
     // Clear previous timeout
     if (searchTimeout) clearTimeout(searchTimeout)
+    
+    // Sync with data store
+    dataStore.setSearchQuery(newQuery)
     
     // Always perform local search (no minimum length restriction for showing all data)
     searchTimeout = setTimeout(() => {

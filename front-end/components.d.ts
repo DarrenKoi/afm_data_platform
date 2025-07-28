@@ -8,6 +8,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    AdditionalAnalysisImages: typeof import('./src/components/ResultPage/AdditionalAnalysisImages.vue')['default']
     ChartVisualization: typeof import('./src/components/ResultPage/ChartVisualization.vue')['default']
     DataGroupingCard: typeof import('./src/components/MainPage/DataGroupingCard.vue')['default']
     EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']

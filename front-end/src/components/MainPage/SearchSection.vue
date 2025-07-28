@@ -272,6 +272,12 @@ watch(() => realtimeSearch.searchQuery.value, (newQuery, oldQuery) => {
 onMounted(() => {
   console.log('🚀 SearchSection: Component mounted and ready for AFM file searches')
   loadRecentTerms()
+  
+  // If there's a saved search query, it will be automatically loaded by useRealtimeSearch
+  // and will trigger the search through the watcher
+  if (realtimeSearch.searchQuery.value) {
+    console.log(`🔄 SearchSection: Restored search query: "${realtimeSearch.searchQuery.value}"`)
+  }
 })
 
 // Functions

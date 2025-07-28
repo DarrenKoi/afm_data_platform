@@ -4,7 +4,8 @@
       <v-col cols="12" md="10" lg="8">
         <!-- Header -->
         <div class="text-center mb-8">
-          <img alt="AFM Logo" src="@/assets/afm_logo2.png" style="max-width: 300px; width: 100%; height: auto;" class="mb-4">
+          <img alt="AFM Logo" src="@/assets/afm_logo2.png" style="max-width: 300px; width: 100%; height: auto;"
+            class="mb-4">
           <h1 class="text-h3 font-weight-bold primary--text mb-4">AFM 데이터 플랫폼</h1>
           <p class="text-h6 text-medium-emphasis">원자간력현미경 데이터 통합 관리 솔루션</p>
         </div>
@@ -18,24 +19,25 @@
           <v-card-text class="pa-6">
             <div class="text-body-1 line-height-relaxed">
               <p class="mb-4">
-                AFM 데이터 플랫폼은 SK하이닉스의 원자간력현미경(AFM) 측정 데이터의 관리, 분석, 그리고 시각화를 
-                효율화하기 위해 설계된 종합적인 웹 기반 솔루션입니다. 이 플랫폼은 반도체 제조 및 연구 환경에서 
-                효율적인 데이터 처리에 대한 중요한 요구사항을 해결합니다.
+                AFM 데이터 플랫폼은 SK하이닉스의 원자간력현미경(AFM) 측정 데이터의 관리, 분석, 그리고 시각화를
+                효율화하기 위해 설계된 종합적인 웹 기반 솔루션입니다. 이 플랫폼은 반도체 제조 및 연구 환경에서
+                효율적인 데이터 처리 및 분석을 위한 기능을 제공합니다.
               </p>
-              
+
               <h3 class="text-h6 font-weight-bold mb-3">주요 목표:</h3>
               <v-list class="mb-4">
                 <v-list-item>
                   <template #prepend>
                     <v-icon color="primary">mdi-magnify</v-icon>
                   </template>
-                  <v-list-item-title><strong>실시간 데이터 검색:</strong> 지능형 필터링을 통해 수천 개의 AFM 측정 데이터에서 즉시 검색 가능</v-list-item-title>
+                  <v-list-item-title><strong>실시간 데이터 검색:</strong> 지능형 필터링을 통해 수천 개의 AFM 측정 데이터에서 즉시 검색
+                    가능</v-list-item-title>
                 </v-list-item>
                 <v-list-item>
                   <template #prepend>
                     <v-icon color="primary">mdi-chart-line</v-icon>
                   </template>
-                  <v-list-item-title><strong>고급 시각화:</strong> 대화형 3D 표면 프로파일 및 종합적인 데이터 분석 도구 제공</v-list-item-title>
+                  <v-list-item-title><strong>고급 시각화:</strong> 표면 프로파일 및 종합적인 데이터 분석 도구 제공</v-list-item-title>
                 </v-list-item>
                 <v-list-item>
                   <template #prepend>
@@ -74,7 +76,6 @@
                   <v-chip color="primary" variant="outlined">Vue.js 3</v-chip>
                   <v-chip color="primary" variant="outlined">Vuetify 3</v-chip>
                   <v-chip color="primary" variant="outlined">ECharts</v-chip>
-                  <v-chip color="primary" variant="outlined">Pinia 상태관리</v-chip>
                   <v-chip color="primary" variant="outlined">실시간 검색</v-chip>
                 </v-chip-group>
               </v-col>
@@ -84,8 +85,6 @@
                   <v-chip color="secondary" variant="outlined">Flask API</v-chip>
                   <v-chip color="secondary" variant="outlined">APScheduler</v-chip>
                   <v-chip color="secondary" variant="outlined">Pandas 데이터 처리</v-chip>
-                  <v-chip color="secondary" variant="outlined">Parquet 파일 지원</v-chip>
-                  <v-chip color="secondary" variant="outlined">CORS 통합</v-chip>
                 </v-chip-group>
               </v-col>
             </v-row>
@@ -104,7 +103,7 @@
                 <div class="text-center">
                   <v-icon size="64" color="success" class="mb-2">mdi-clock-fast</v-icon>
                   <h4 class="text-h6 font-weight-bold mb-2">시간 효율성</h4>
-                  <p class="text-body-2">지능형 실시간 검색 기능으로 데이터 검색 시간을 몇 시간에서 몇 초로 단축</p>
+                  <p class="text-body-2">실시간 검색 기능으로 데이터 검색 시간을 몇 분에서 몇 초로 단축</p>
                 </div>
               </v-col>
               <v-col cols="12" md="4">
@@ -139,10 +138,10 @@
                     <v-list-item-title><strong>현재 버전:</strong> 1.0.0</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
-                    <v-list-item-title><strong>출시일:</strong> 2024년 12월</v-list-item-title>
+                    <v-list-item-title><strong>출시일:</strong> 2025년 7월</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
-                    <v-list-item-title><strong>개발 상태:</strong> 활발한 개발 중</v-list-item-title>
+                    <v-list-item-title><strong>개발 상태:</strong> 활발히 진행 중</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-col>
@@ -155,7 +154,7 @@
                     <v-list-item-title><strong>검색 성능:</strong> 300ms 미만 응답 시간</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
-                    <v-list-item-title><strong>지원 형식:</strong> AFM, Parquet, JSON</v-list-item-title>
+                    <v-list-item-title><strong>지원 형식:</strong> Pandas, Image, Excel</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-col>

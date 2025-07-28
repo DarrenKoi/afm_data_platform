@@ -6,53 +6,49 @@
         <v-icon start>mdi-arrow-left</v-icon>
         {{ referrer === 'data-trend' ? 'Back to Data Trend' : 'Back to Search' }}
       </v-btn>
-      
+
       <!-- Download Menu -->
       <div class="d-flex ga-2">
         <v-menu>
           <template v-slot:activator="{ props }">
-            <v-btn
-              color="success"
-              variant="elevated"
-              v-bind="props"
-              :disabled="!hasData"
-            >
+            <v-btn color="success" variant="elevated" v-bind="props" :disabled="!hasData">
               <v-icon start>mdi-download</v-icon>
               Download Data
               <v-icon end>mdi-menu-down</v-icon>
             </v-btn>
           </template>
           <v-list>
-            <v-list-item @click="downloadMeasurementInfo" :disabled="!measurementInfo || Object.keys(measurementInfo).length === 0">
+            <v-list-item @click="downloadMeasurementInfo"
+              :disabled="!measurementInfo || Object.keys(measurementInfo).length === 0">
               <template v-slot:prepend>
                 <v-icon>mdi-information</v-icon>
               </template>
               <v-list-item-title>Measurement Info</v-list-item-title>
             </v-list-item>
-            
+
             <v-list-item @click="downloadSummaryStatistics" :disabled="!summaryData || summaryData.length === 0">
               <template v-slot:prepend>
                 <v-icon>mdi-chart-line</v-icon>
               </template>
               <v-list-item-title>Summary Statistics</v-list-item-title>
             </v-list-item>
-            
+
             <v-list-item @click="downloadDetailedData" :disabled="!detailedData || detailedData.length === 0">
               <template v-slot:prepend>
                 <v-icon>mdi-table-large</v-icon>
               </template>
               <v-list-item-title>Detailed Data</v-list-item-title>
             </v-list-item>
-            
+
             <v-list-item @click="downloadProfileData" :disabled="!profileData || profileData.length === 0">
               <template v-slot:prepend>
                 <v-icon>mdi-axis</v-icon>
               </template>
               <v-list-item-title>Profile Data (X,Y,Z)</v-list-item-title>
             </v-list-item>
-            
+
             <v-divider></v-divider>
-            
+
             <v-list-item @click="downloadAllData" :disabled="!hasData">
               <template v-slot:prepend>
                 <v-icon>mdi-package-down</v-icon>
@@ -64,17 +60,28 @@
       </div>
     </div>
 
-    <!-- First row: Information and Scatter Chart -->
-    <v-row dense class="mb-3">
+    <!-- First row: Information and Scatter Chart with equal heights -->
+    <v-row dense class="mb-3 equal-height-row">
       <!-- First column: Information -->
-      <v-col cols="12" md="6">
-        <MeasurementInfo :measurement-info="measurementInfo" :summary-data="summaryData" :compact="true" />
+      <v-col cols="12" md="6" class="d-flex">
+        <div class="info-container w-100">
+          <MeasurementInfo :measurement-info="measurementInfo" :summary-data="summaryData" :compact="true" />
+        </div>
       </v-col>
 
       <!-- Second column: Scatter Chart -->
-      <v-col cols="12" md="6">
-        <StatisticalInfoByPoints :summary-data="summaryData" @row-click="handleStatisticRowClick"
-          @statistic-selected="handleStatisticSelected" :compact="true" />
+      <v-col cols="12" md="6" class="d-flex">
+        <div class="chart-container w-100">
+          <StatisticalInfoByPoints :summary-data="summaryData" @row-click="handleStatisticRowClick"
+            @statistic-selected="handleStatisticSelected" :compact="true" />
+        </div>
+      </v-col>
+    </v-row>
+
+    <!-- Additional Images Row: Measure Profile Analysis, Align, and Tip Images -->
+    <v-row dense class="mb-3">
+      <v-col cols="12">
+        <AdditionalAnalysisImages :selected-point="selectedPoint" :filename="filename" />
       </v-col>
     </v-row>
 
@@ -177,6 +184,7 @@ import ChartVisualization from '@/components/ResultPage/ChartVisualization.vue'
 import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPoints.vue'
 import MeasurementPoints from '@/components/ResultPage/MeasurementPoints.vue'
 import EnhancedChartVisualization from '@/components/ResultPage/EnhancedChartVisualization.vue'
+import AdditionalAnalysisImages from '@/components/ResultPage/AdditionalAnalysisImages.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -197,6 +205,7 @@ const isLoadingProfile = ref(false)
 const selectedStatistic = ref(null)
 const profileImageUrl = ref(null)
 const isLoadingProfileImage = ref(false)
+
 
 
 // Calculate optimal chart height based on viewport
@@ -344,6 +353,7 @@ async function loadData() {
       // Initial profile data is not typically available in the summary response
       console.log(`📊 [ResultPage] Profile data will be loaded when measurement points are selected`)
 
+
       console.log('✅ Measurement data loaded successfully')
     } else {
       console.warn('⚠️ Failed to load measurement data, using fallback')
@@ -395,6 +405,9 @@ function createFallbackData() {
 
     // Generate dummy statistics
     statisticsData.value = generateDummyStatistics(filename.value)
+
+    // Set dummy images
+    setDummyImages()
 
     console.log('✅ Created fallback measurement data')
   }
@@ -516,6 +529,7 @@ function handlePointDataLoaded(data) {
   // Could be used to update UI state or trigger other actions
 }
 
+
 // Image handling functions
 function handleImageError(event) {
   console.warn('Profile image failed to load:', event)
@@ -539,8 +553,8 @@ function goBack() {
 // Computed property for checking if we have any data
 const hasData = computed(() => {
   return (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) ||
-         (summaryData.value && summaryData.value.length > 0) ||
-         (detailedData.value && detailedData.value.length > 0)
+    (summaryData.value && summaryData.value.length > 0) ||
+    (detailedData.value && detailedData.value.length > 0)
 })
 
 // Download functions
@@ -572,27 +586,27 @@ function downloadAllData() {
   const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
   const lotId = measurementInfo.value.lot_id || 'unknown'
   const recipe = measurementInfo.value.recipe_name || 'data'
-  
+
   // Download each dataset separately with related names
   const baseFilename = `AFM_${recipe}_${lotId}_${timestamp}`
-  
+
   // Download measurement info
   if (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) {
     const infoData = formatMeasurementInfo(measurementInfo.value)
     downloadCSV(infoData, `${baseFilename}_info`)
   }
-  
+
   // Download summary statistics
   if (summaryData.value && summaryData.value.length > 0) {
     const summaryFormatted = formatSummaryStatistics(summaryData.value)
     downloadCSV(summaryFormatted, `${baseFilename}_summary`)
   }
-  
+
   // Download detailed data
   if (detailedData.value && detailedData.value.length > 0) {
     downloadCSV(detailedData.value, `${baseFilename}_detailed`)
   }
-  
+
   // Download profile data if available
   if (profileData.value && profileData.value.length > 0) {
     const profileFormatted = formatProfileData(profileData.value)
@@ -692,4 +706,108 @@ onMounted(() => {
 .profile-image:hover {
   transform: scale(1.02);
 }
+
+
+/* Equal height row styling */
+.equal-height-row {
+  min-height: 780px;
+}
+
+.equal-height-row>.v-col {
+  display: flex;
+}
+
+/* Fixed height containers for first row */
+.info-container,
+.chart-container {
+  min-height: 780px;
+  height: 780px;
+  position: relative;
+}
+
+.chart-container {
+  overflow: hidden;
+}
+
+/* Info container doesn't need overflow - the card inside will handle it */
+.info-container {
+  overflow: visible;
+}
+
+/* Ensure child components fill the container */
+.info-container>*,
+.chart-container>* {
+  height: 100%;
+}
+
+/* Make the MeasurementInfo card's content scrollable */
+.info-container :deep(.v-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-container :deep(.v-card-title) {
+  flex-shrink: 0;
+}
+
+.info-container :deep(.v-card-text) {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* Make the StatisticalInfoByPoints fill the container */
+.chart-container > div {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container :deep(.v-card) {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.chart-container :deep(.v-card-title) {
+  flex-shrink: 0;
+}
+
+.chart-container :deep(.v-card-text) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Make the scatter chart fill available space */
+.chart-container :deep(.v-row) {
+  flex-shrink: 0;
+}
+
+.chart-container :deep(.v-card-text > div:last-child) {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Custom scrollbar for MeasurementInfo card content */
+.info-container :deep(.v-card-text)::-webkit-scrollbar {
+  width: 6px;
+}
+
+.info-container :deep(.v-card-text)::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.info-container :deep(.v-card-text)::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.info-container :deep(.v-card-text)::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Since mobile/tablet views are not needed, removed responsive adjustments */
 </style>

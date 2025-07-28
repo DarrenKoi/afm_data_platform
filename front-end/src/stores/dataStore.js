@@ -5,7 +5,8 @@ const STORAGE_KEYS = {
   VIEW_HISTORY: 'afm_view_history',
   GROUPED_DATA: 'afm_grouped_data',
   GROUP_HISTORY: 'afm_group_history',
-  SELECTED_TOOL: 'afm_selected_tool'
+  SELECTED_TOOL: 'afm_selected_tool',
+  SEARCH_QUERY: 'afm_search_query'
 }
 
 function loadFromStorage(key, defaultValue = []) {
@@ -32,6 +33,7 @@ export const useDataStore = defineStore('data', () => {
   const groupedData = ref(loadFromStorage(STORAGE_KEYS.GROUPED_DATA))
   const groupHistory = ref(loadFromStorage(STORAGE_KEYS.GROUP_HISTORY))
   const selectedTool = ref(loadFromStorage(STORAGE_KEYS.SELECTED_TOOL, 'MAP608'))
+  const searchQuery = ref(loadFromStorage(STORAGE_KEYS.SEARCH_QUERY, ''))
   const maxHistoryItems = ref(10)
 
   // Getters (computed properties)
@@ -165,6 +167,11 @@ export const useDataStore = defineStore('data', () => {
     saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
   }
 
+  function setSearchQuery(query) {
+    searchQuery.value = query
+    saveToStorage(STORAGE_KEYS.SEARCH_QUERY, query)
+  }
+
   // Helper function to get date range from measurements
   function getDateRange(measurements) {
     if (!measurements || measurements.length === 0) return null
@@ -228,6 +235,7 @@ export const useDataStore = defineStore('data', () => {
     groupedData,
     groupHistory,
     selectedTool,
+    searchQuery,
     maxHistoryItems,
     
     // Getters
@@ -249,6 +257,7 @@ export const useDataStore = defineStore('data', () => {
     removeFromGroupHistory,
     clearGroupHistory,
     setSelectedTool,
+    setSearchQuery,
     
     // Helper functions
     getDateRange,
