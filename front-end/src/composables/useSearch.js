@@ -1,5 +1,5 @@
 import { ref, watch, nextTick } from 'vue'
-import { apiService, filterMeasurementsLocally } from '@/services/api.js'
+import { apiService, filterMeasurementsLocally } from '@/services/index.js'
 import { useDataStore } from '@/stores/dataStore.js'
 
 export function useDebounceSearch(delay = 300) {
@@ -52,14 +52,30 @@ export function useDebounceSearch(delay = 300) {
         // Simplified transformation - keep only essential fields from file list
         const transformedData = response.data.map(measurement => ({
           // Core identification fields
+          unique_key: measurement.unique_key,
           filename: measurement.filename,
           date: measurement.date,
           formatted_date: measurement.formatted_date,
           recipe_name: measurement.recipe_name,
           lot_id: measurement.lot_id,
           slot_number: measurement.slot_number,
+          time: measurement.time,
           measured_info: measurement.measured_info,
-          tool_name: measurement.tool_name || toolName
+          tool_name: measurement.tool_name || toolName,
+          
+          // File availability indicators (with defaults for undefined)
+          profile_dir_list: measurement.profile_dir_list || null,
+          data_dir_list: measurement.data_dir_list || null,
+          tiff_dir_list: measurement.tiff_dir_list || null,
+          align_dir_list: measurement.align_dir_list || null,
+          tip_dir_list: measurement.tip_dir_list || null,
+          
+          // Computed availability flags for easier UI usage (handle undefined gracefully)
+          has_profile: measurement.profile_dir_list && measurement.profile_dir_list.length > 0,
+          has_data: measurement.data_dir_list && measurement.data_dir_list.length > 0,
+          has_image: measurement.tiff_dir_list && measurement.tiff_dir_list.length > 0,
+          has_align: measurement.align_dir_list && measurement.align_dir_list.length > 0,
+          has_tip: measurement.tip_dir_list && measurement.tip_dir_list.length > 0
           
           // Note: Detailed measurement data (info, data_status, data_detail) is loaded separately
           // via the detail endpoint when a specific measurement is selected

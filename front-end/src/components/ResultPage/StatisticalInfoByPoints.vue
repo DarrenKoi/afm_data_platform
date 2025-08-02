@@ -24,11 +24,13 @@
           </v-row>
 
           <!-- Chart Container -->
-          <StatisticalScatterChart 
-            :summary-data="summaryData"
-            :selected-statistic="selectedStatistic"
-            :selected-measurements="selectedMeasurements"
-          />
+          <div class="chart-wrapper">
+            <StatisticalScatterChart 
+              :summary-data="summaryData"
+              :selected-statistic="selectedStatistic"
+              :selected-measurements="selectedMeasurements"
+            />
+          </div>
         </v-card-text>
       </v-card>
     </div>
@@ -142,11 +144,37 @@ watch(availableMeasurements, (newMeasurements) => {
 <style scoped>
 /* Chart container styling */
 .v-card {
+  height: 100%;
+  min-height: 750px;
+  display: flex;
+  flex-direction: column;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .v-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.v-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Chart wrapper to ensure proper height management */
+.chart-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 550px;
+  height: calc(100% - 80px); /* Subtract the height of controls */
+  position: relative;
+}
+
+.chart-wrapper > div {
+  flex: 1;
+  width: 100%;
+  height: 100%;
 }
 </style>

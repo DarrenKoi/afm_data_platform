@@ -1,10 +1,13 @@
 <template>
-  <div ref="chartContainer" :style="{ width: '100%', height: '100%', minHeight: '600px' }"></div>
+  <div class="scatter-chart-container">
+    <div ref="chartContainer" class="echarts-instance"></div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
+import shineThemeData from '@/plugins/shine.json'
 
 const props = defineProps({
   summaryData: {
@@ -26,38 +29,38 @@ let chartInstance = null
 
 const chartData = computed(() => {
   if (!props.summaryData || props.summaryData.length === 0) return { series: [], xAxisData: [] }
-  
+
   console.log('🔍 [StatisticalScatterChart] Processing summary data:', props.summaryData)
-  
+
   // Get unique sites (measurement points) for X-axis
   const uniqueSites = [...new Set(props.summaryData.map(row => row.Site).filter(site => site !== null && site !== undefined))]
   console.log('🔍 [StatisticalScatterChart] Unique sites:', uniqueSites)
-  
+
   // Find all columns containing "(nm)" for Y-axis data
   const firstRecord = props.summaryData[0]
-  const nmColumns = Object.keys(firstRecord).filter(key => 
+  const nmColumns = Object.keys(firstRecord).filter(key =>
     key.includes('(nm)') && key !== 'ITEM' && key !== 'Site'
   )
   console.log('🔍 [StatisticalScatterChart] Columns with (nm):', nmColumns)
-  
+
   // Create series for each selected measurement type and statistic combination
-  const series = props.selectedMeasurements.map(measurement => {
+  const series = props.selectedMeasurements.map((measurement, index) => {
     const data = uniqueSites.map((site, siteIndex) => {
       // Find the record for this site and the selected statistic
-      const record = props.summaryData.find(r => 
+      const record = props.summaryData.find(r =>
         r.Site === site && r.ITEM === props.selectedStatistic
       )
-      
+
       if (record) {
         // Look for the measurement value in the record
         let value = null
-        
+
         // Try to find the exact column name that matches the measurement
-        const matchingColumn = nmColumns.find(col => 
+        const matchingColumn = nmColumns.find(col =>
           col.toLowerCase().includes(measurement.toLowerCase()) ||
           measurement.toLowerCase().includes(col.toLowerCase().replace('(nm)', '').trim())
         )
-        
+
         if (matchingColumn) {
           value = record[matchingColumn]
         } else {
@@ -69,28 +72,28 @@ const chartData = computed(() => {
             }
           }
         }
-        
+
         return [siteIndex, value || 0]
       }
-      
+
       return [siteIndex, 0]
     })
-    
+
     return {
       name: measurement,
-      type: 'scatter',
-      symbolSize: 8,
+      type: 'line',
+      symbol: 'circle',
+      symbolSize: 14,
       data: data,
+      lineStyle: {
+        width: 1
+      },
       emphasis: {
-        focus: 'series',
-        itemStyle: {
-          shadowBlur: 10,
-          shadowColor: 'rgba(0, 0, 0, 0.5)'
-        }
+        focus: 'series'
       }
     }
   })
-  
+
   console.log('🔍 [StatisticalScatterChart] Generated series:', series)
   return { series, xAxisData: uniqueSites }
 })
@@ -102,27 +105,33 @@ function initChart() {
     chartInstance.dispose()
   }
 
-  chartInstance = echarts.init(chartContainer.value)
+  // Register the shine theme
+  echarts.registerTheme('shine', shineThemeData)
+
+  // Initialize chart with shine theme
+  chartInstance = echarts.init(chartContainer.value, 'shine')
 
   const { series, xAxisData } = chartData.value
 
   const option = {
     tooltip: {
       trigger: 'item',
-      formatter: function(params) {
+      formatter: function (params) {
         const xIndex = params.data[0]
         const pointName = xAxisData[xIndex]
         return `${params.seriesName}<br/>${pointName}: ${params.data[1].toFixed(3)}`
       },
       textStyle: {
-        fontSize: 13
+        fontSize: 18,
+        fontWeight: 'bold'
       }
     },
     legend: {
       data: props.selectedMeasurements,
       bottom: 0,
       textStyle: {
-        fontSize: 14
+        fontSize: 14,
+        fontWeight: 'bold'
       },
       selectedMode: false
     },
@@ -199,4 +208,18 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.scatter-chart-container {
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.echarts-instance {
+  width: 100%;
+  height: 100%;
+  min-height: 550px;
+}
 </style>

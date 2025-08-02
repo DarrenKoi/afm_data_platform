@@ -1,99 +1,102 @@
 <template>
-  <v-card elevation="3">
+  <v-card elevation="3" min-height="600">
     <v-card-title class="py-2">
       <v-icon start size="small">mdi-image-multiple</v-icon>
-      <span class="text-subtitle-1">Additional Analysis Images</span>
+      <span class="text-subtitle-1">Additional Images</span>
       <v-spacer />
-      <v-chip v-if="selectedPoint" size="x-small" color="primary" variant="outlined">
-        Point {{ selectedPoint }}
-      </v-chip>
     </v-card-title>
-    <v-card-text class="pa-3">
-      <v-row dense>
-        <!-- Measure Profile Analysis Image -->
-        <v-col cols="12" md="4">
-          <v-card class="analysis-image-card" height="400">
-            <v-card-title class="py-2">
-              <v-icon start size="small">mdi-chart-line-variant</v-icon>
-              <span class="text-caption">Measure Profile Analysis</span>
-            </v-card-title>
-            <v-card-text class="pa-2">
-              <div v-if="isLoadingMeasureProfileImage" class="text-center pa-4">
-                <v-progress-circular indeterminate color="primary" size="small" />
-                <p class="mt-2 text-caption">Loading analysis image...</p>
-              </div>
-              <div v-else-if="measureProfileImageUrl" class="image-container"
-                style="height: 340px; display: flex; align-items: center; justify-content: center;">
-                <img :src="measureProfileImageUrl" alt="Measure Profile Analysis" class="analysis-image"
-                  style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-              </div>
-              <div v-else class="text-center pa-4">
-                <v-icon size="48" color="grey-lighten-1">mdi-chart-bell-curve-cumulative</v-icon>
-                <p class="text-caption mt-2 text-medium-emphasis">From /Capture folder</p>
-                <p class="text-caption text-grey">No analysis image available</p>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
+    <v-card-text class="pa-0">
+      <v-tabs v-model="selectedTab" align-tabs="start" color="primary" show-arrows>
+        <v-tab v-for="tab in imageTabs" :key="tab.value" :value="tab.value">
+          <v-icon start size="small">{{ tab.icon }}</v-icon>
+          {{ tab.title }}
+          <v-chip v-if="getImagesForTab(tab.value).length > 0" size="x-small" class="ml-2" color="primary">
+            {{ getImagesForTab(tab.value).length }}
+          </v-chip>
+        </v-tab>
+      </v-tabs>
 
-        <!-- Align Image -->
-        <v-col cols="12" md="4">
-          <v-card class="analysis-image-card" height="400">
-            <v-card-title class="py-2">
-              <v-icon start size="small">mdi-align-horizontal-center</v-icon>
-              <span class="text-caption">Sample Alignment</span>
-            </v-card-title>
-            <v-card-text class="pa-2">
-              <div v-if="isLoadingAlignImage" class="text-center pa-4">
-                <v-progress-circular indeterminate color="primary" size="small" />
-                <p class="mt-2 text-caption">Loading align image...</p>
-              </div>
-              <div v-else-if="alignImageUrl" class="image-container"
-                style="height: 340px; display: flex; align-items: center; justify-content: center;">
-                <img :src="alignImageUrl" alt="Sample Alignment" class="analysis-image"
-                  style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-              </div>
-              <div v-else class="text-center pa-4">
-                <v-icon size="48" color="grey-lighten-1">mdi-crosshairs-gps</v-icon>
-                <p class="text-caption mt-2 text-medium-emphasis">From /Debug/SampleAlign</p>
-                <p class="text-caption text-grey">No alignment image available</p>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
+      <v-tabs-window v-model="selectedTab">
+        <v-tabs-window-item v-for="tab in imageTabs" :key="tab.value" :value="tab.value">
+          <v-container>
+            <div v-if="isLoading" class="text-center pa-8">
+              <v-progress-circular indeterminate color="primary" />
+              <p class="mt-4">Loading {{ tab.title }} images...</p>
+            </div>
 
-        <!-- Tip Image -->
-        <v-col cols="12" md="4">
-          <v-card class="analysis-image-card" height="400">
-            <v-card-title class="py-2">
-              <v-icon start size="small">mdi-needle</v-icon>
-              <span class="text-caption">Tip Condition</span>
-            </v-card-title>
-            <v-card-text class="pa-2">
-              <div v-if="isLoadingTipImage" class="text-center pa-4">
-                <v-progress-circular indeterminate color="primary" size="small" />
-                <p class="mt-2 text-caption">Loading tip image...</p>
-              </div>
-              <div v-else-if="tipImageUrl" class="image-container"
-                style="height: 340px; display: flex; align-items: center; justify-content: center;">
-                <img :src="tipImageUrl" alt="Tip Condition" class="analysis-image"
-                  style="max-height: 100%; max-width: 100%; object-fit: contain;" />
-              </div>
-              <div v-else class="text-center pa-4">
-                <v-icon size="48" color="grey-lighten-1">mdi-circle-slice-8</v-icon>
-                <p class="text-caption mt-2 text-medium-emphasis">From /Debug/Image</p>
-                <p class="text-caption text-grey">No tip image available</p>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-col>
-      </v-row>
+            <div v-else-if="loadError" class="text-center pa-8">
+              <v-icon size="64" color="error">mdi-alert-circle</v-icon>
+              <p class="mt-4 text-h6">Error loading images</p>
+              <p class="text-body-2 text-grey">{{ loadError }}</p>
+              <v-btn @click="loadImages" variant="text" color="primary" class="mt-4">
+                <v-icon start>mdi-refresh</v-icon>
+                Retry
+              </v-btn>
+            </div>
+
+            <div v-else-if="getImagesForTab(tab.value).length === 0" class="text-center pa-8">
+              <v-icon size="64" color="grey-lighten-1">{{ tab.emptyIcon }}</v-icon>
+              <p class="mt-4 text-h6 text-grey">No {{ tab.title }} images available</p>
+              <p class="text-body-2 text-grey">{{ tab.description }}</p>
+            </div>
+
+            <v-row v-else>
+              <v-col v-for="(image, index) in getImagesForTab(tab.value)" :key="index" 
+                     cols="12" :md="getImagesForTab(tab.value).length === 1 ? 12 : 6" 
+                     :lg="getImagesForTab(tab.value).length === 1 ? 12 : 4">
+                <v-card class="image-card" @click="openImageDialog(image)">
+                  <v-img 
+                    :src="image.url" 
+                    :alt="image.name"
+                    height="300"
+                    cover
+                    class="image-hover"
+                  >
+                    <template v-slot:placeholder>
+                      <v-row class="fill-height ma-0" align="center" justify="center">
+                        <v-progress-circular indeterminate color="grey-lighten-5" />
+                      </v-row>
+                    </template>
+                  </v-img>
+                  <v-card-text class="pa-2">
+                    <p class="text-caption text-center text-truncate">{{ image.name }}</p>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-tabs-window-item>
+      </v-tabs-window>
     </v-card-text>
+
+    <!-- Image Dialog for Full View -->
+    <v-dialog v-model="imageDialog" max-width="90%" max-height="90vh">
+      <v-card>
+        <v-card-title class="d-flex align-center">
+          {{ selectedImage?.name }}
+          <v-spacer />
+          <v-btn icon variant="plain" @click="imageDialog = false">
+            <v-icon>mdi-close</v-icon>
+          </v-btn>
+        </v-card-title>
+        <v-card-text class="pa-0">
+          <v-img 
+            v-if="selectedImage" 
+            :src="selectedImage.url" 
+            :alt="selectedImage.name"
+            max-height="80vh"
+            contain
+          />
+        </v-card-text>
+      </v-card>
+    </v-dialog>
   </v-card>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, computed } from 'vue'
+import { useDataStore } from '@/stores/dataStore'
+import { imageService } from '@/services/imageService'
 
 // Props
 const props = defineProps({
@@ -107,85 +110,155 @@ const props = defineProps({
   }
 })
 
-// Image states
-const measureProfileImageUrl = ref(null)
-const isLoadingMeasureProfileImage = ref(false)
-const alignImageUrl = ref(null)
-const isLoadingAlignImage = ref(false)
-const tipImageUrl = ref(null)
-const isLoadingTipImage = ref(false)
+// Store
+const dataStore = useDataStore()
 
-// Load images function
-function loadImages() {
-  // Using placeholder images for development
-  // These will be replaced with actual API calls when backend is ready
+// State
+const selectedTab = ref('profile')
+const isLoading = ref(false)
+const loadError = ref('')
+const imageDialog = ref(false)
+const selectedImage = ref(null)
+
+// Images data structure
+const imagesData = ref({
+  profile: [],
+  tiff: [],
+  align: [],
+  tip: []
+})
+
+// Tab configuration
+const imageTabs = [
+  {
+    value: 'profile',
+    title: 'Profile Analysis',
+    icon: 'mdi-chart-line-variant',
+    emptyIcon: 'mdi-chart-bell-curve-cumulative',
+    description: 'AFM profile measurement data visualization'
+  },
+  {
+    value: 'tiff',
+    title: 'TIFF Images',
+    icon: 'mdi-image',
+    emptyIcon: 'mdi-image-off',
+    description: 'Original TIFF format images from measurement'
+  },
+  {
+    value: 'align',
+    title: 'Sample Alignment',
+    icon: 'mdi-align-horizontal-center',
+    emptyIcon: 'mdi-crosshairs-gps',
+    description: 'Sample alignment and positioning images'
+  },
+  {
+    value: 'tip',
+    title: 'Tip Condition',
+    icon: 'mdi-needle',
+    emptyIcon: 'mdi-circle-slice-8',
+    description: 'AFM tip condition and quality images'
+  }
+]
+
+// Computed
+const getImagesForTab = computed(() => {
+  return (tabValue) => imagesData.value[tabValue] || []
+})
+
+// Methods
+async function loadImages() {
+  isLoading.value = true
+  loadError.value = ''
   
-  // Measure Profile Analysis - Using a scientific chart placeholder
-  measureProfileImageUrl.value = 'https://via.placeholder.com/600x450/4A90E2/FFFFFF?text=Measure+Profile+Analysis'
-  
-  // Align Image - Using an alignment grid placeholder
-  alignImageUrl.value = 'https://via.placeholder.com/600x450/50C878/FFFFFF?text=Sample+Alignment'
-  
-  // Tip Image - Using a microscopy-style placeholder
-  tipImageUrl.value = 'https://via.placeholder.com/600x450/FF6B6B/FFFFFF?text=Tip+Condition'
-  
-  console.log('🖼️ Dummy images set for development')
+  try {
+    const tool = dataStore.selectedTool
+    const pointId = props.selectedPoint || 'default'
+    
+    // Fetch images for each directory type
+    const imageTypes = ['profile', 'tiff', 'align', 'tip']
+    const promises = imageTypes.map(async (type) => {
+      try {
+        const response = await imageService.getImagesByType(type, props.filename, pointId, tool)
+        
+        // Transform response data to include full URLs
+        if (response.success && response.data && response.data.images) {
+          imagesData.value[type] = response.data.images.map(img => ({
+            name: img.name || img,
+            url: imageService.getImageUrlByType(props.filename, pointId, type, img.name || img, tool)
+          }))
+        } else {
+          imagesData.value[type] = []
+        }
+      } catch (error) {
+        console.warn(`Failed to load ${type} images:`, error)
+        imagesData.value[type] = []
+      }
+    })
+    
+    await Promise.all(promises)
+    
+  } catch (error) {
+    console.error('Error loading images:', error)
+    loadError.value = error.message || 'Failed to load images'
+  } finally {
+    isLoading.value = false
+  }
 }
 
-// Watch for point changes to potentially reload images
+function openImageDialog(image) {
+  selectedImage.value = image
+  imageDialog.value = true
+}
+
+// Watchers
 watch(() => props.selectedPoint, (newPoint) => {
-  if (newPoint) {
-    console.log('Selected point changed to:', newPoint)
-    // In the future, reload images for the new point
-    // For now, we're using static placeholders
+  if (newPoint !== undefined) {
+    loadImages()
   }
 })
 
-// Initialize images on mount
+watch(() => props.filename, (newFilename) => {
+  if (newFilename) {
+    loadImages()
+  }
+})
+
+// Lifecycle
 onMounted(() => {
   loadImages()
 })
 </script>
 
 <style scoped>
-/* Analysis image card styles */
-.analysis-image-card {
-  border: 1px solid rgba(var(--v-theme-outline), 0.12);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.analysis-image-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.analysis-image-card .v-card-title {
-  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 10px;
-}
-
-.analysis-image-card .v-card-text {
-  padding: 6px;
-  height: calc(100% - 36px);
+.image-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
   overflow: hidden;
 }
 
-.analysis-image {
-  border-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
+.image-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
 }
 
-.analysis-image:hover {
+.image-hover {
+  transition: transform 0.3s ease;
+}
+
+.image-card:hover .image-hover {
   transform: scale(1.05);
-  cursor: pointer;
 }
 
-.image-container {
-  background: #f5f5f5;
-  border-radius: 4px;
+:deep(.v-tabs) {
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
+}
+
+:deep(.v-tab) {
+  text-transform: none;
+  font-weight: 500;
+}
+
+:deep(.v-tabs-window) {
+  min-height: 500px;
 }
 </style>

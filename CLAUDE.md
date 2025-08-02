@@ -4,13 +4,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is an AFM (Atomic Force Microscopy) data platform with a Vue.js front-end built using the Vuetify framework. The project uses a modern Vue 3 + Vuetify 3 stack with automatic component imports and sophisticated data visualization capabilities.
+This is an AFM (Atomic Force Microscopy) data platform with a Vue.js front-end built using the Vuetify framework. The project uses a modern Vue 3 + Vuetify 3 stack with automatic component imports and sophisticated data visualization capabilities for semiconductor wafer measurement analysis.
 
 ## Development Commands
 
 **IMPORTANT**: The user runs these commands in their Windows development environment (not via WSL).
 
-### Frontend Commands
+### Frontend Commands (run in `front-end/` directory)
 ```bash
 npm run dev      # Start development server (http://localhost:3000)
 npm run build    # Build for production
@@ -18,7 +18,7 @@ npm run preview  # Preview production build
 npm run lint     # Run ESLint with auto-fix
 ```
 
-### Backend Commands
+### Backend Commands (run in project root)
 ```bash
 pip install -r requirements.txt  # Install Python dependencies
 python index.py                  # Run Flask server (http://localhost:5000)
@@ -60,12 +60,23 @@ The frontend implements several sophisticated patterns that require understandin
 
 ### Backend Architecture
 
-The backend uses a file-based caching system with scheduled parsing:
+The backend uses a file-based caching system for AFM measurement data:
 
-1. **Scheduled Data Processing**: APScheduler runs hourly to parse AFM files and cache results to pickle files
-2. **File Pattern Parsing**: Files follow pattern `#date#recipe_name#lot_id_time#slot_measured_info#.extension`
-3. **No In-Memory Storage**: All data persisted to disk for reliability and scalability
-4. **Tool-Specific Data Directories**: Each AFM tool has its own data directory structure
+1. **Flask Application Structure**: 
+   - `index.py` - Main Flask app with CORS configuration and static file serving
+   - `api/routes.py` - REST API endpoints for AFM data retrieval
+   - `api/utils/file_parser.py` - Utilities for parsing AFM file formats
+   - `api/user_activity.py` - User activity tracking system
+
+2. **Data Storage Pattern**: 
+   - **Pickle Files**: Parsed AFM measurements stored in `itc-afm-data-platform-pjt-shared/AFM_DB/{TOOL}/data_dir_pickle/`
+   - **Profile Data**: X,Y,Z coordinates stored in `profile_dir/` as pickle files
+   - **Image Files**: TIFF images in `tiff_dir/` for visual analysis
+   - **File Naming**: Pattern `#date#recipe_name#lot_id_time#slot_measured_info#.extension`
+
+3. **Multi-Tool Support**: Each AFM tool (MAP608, MAPC01, 5EAP1501) has dedicated data directories
+
+4. **No In-Memory Storage**: All data persisted to disk for reliability and scalability
 
 ### API Integration Pattern
 
@@ -110,25 +121,48 @@ Each tool has its own data directory: `itc-afm-data-platform-pjt-shared/AFM_DB/{
 
 ## API Endpoints
 
+### Core Data Endpoints
 - `GET /api/health` - Health check
-- `GET /api/afm-files?tool={toolname}` - Get all files for a tool (cached)
-- `GET /api/afm-files/detail/<group_key>` - Get measurement details
-- `GET /api/afm-files/profile/<group_key>/<point_number>` - Get x,y,z data
-- `GET /api/afm-files/image/<group_key>/<point_number>` - Get image metadata
-- `GET /api/afm-files/image-file/<group_key>/<point_number>` - Serve image file
+- `GET /api/afm-files?tool={toolname}` - Get all parsed AFM files for a tool (loads from pickle cache)
+- `GET /api/afm-files/detail/<filename>?tool={toolname}` - Get detailed measurement data from pickle
+- `GET /api/afm-files/profile/<filename>/<point_id>?tool={toolname}` - Get X,Y,Z coordinate data
+- `GET /api/afm-files/image/<filename>/<point_id>?tool={toolname}` - Get image metadata
+- `GET /api/afm-files/image-file/<filename>/<point_id>?tool={toolname}` - Serve TIFF image file
+
+### User Activity Tracking
+- `GET /api/user-activities` - Get all user activities
+- `GET /api/my-activities` - Get current user's activities (uses LAST_USER cookie)
+- `GET /api/current-user` - Get current user from cookie
+- `GET /api/debug/cookies` - Debug endpoint for cookie inspection
 
 ## Performance Optimizations
 
-1. **Code Splitting**: Separate chunks for Vuetify, ECharts, and fonts
-2. **Font Optimization**: Google Fonts with preconnect hints
-3. **Search Caching**: Results cached with size limits in `useSearch` composable
-4. **Lazy Component Loading**: Charts loaded on-demand
+1. **Code Splitting**: Vite configuration splits bundles by library (Vuetify, ECharts, fonts, vendor)
+2. **Font Optimization**: Google Fonts (Roboto, Noto Sans KR) with preconnect hints and swap display
+3. **Local Search Caching**: `useSearch.js` implements Map-based caching with size limits (50 entries)
+4. **Component Auto-Imports**: Vite plugins eliminate manual imports for Vue APIs, components, and Pinia stores
+5. **Lazy Loading**: Charts and heavy components loaded on-demand
+
+## File Pattern Recognition
+
+AFM files follow a specific naming convention that the backend parser recognizes:
+```
+#YYMMDD#RECIPE_NAME#LOT_ID_TIMESTAMP#SLOT_MEASURED_INFO#.extension
+Example: #250609#FSOXCMP_DISHING_9PT#T7HQR42TA_250709#21_1#.pkl
+```
+
+This pattern is parsed into:
+- `date`: 250609 (YYMMDD format)
+- `recipe_name`: FSOXCMP_DISHING_9PT
+- `lot_id`: T7HQR42TA_250709
+- `slot_number`: 21
+- `measured_info`: 1
 
 ## Development Notes
 
-- Components are automatically imported - no manual imports needed
-- All charts should be placed in dedicated `charts/` folders
-- Data columns often contain "(nm)" suffix in their names
-- The application is designed for desktop browsers only (no mobile support needed)
-- Mobile and tablet view are not the case for this project
-- Production deployment uses `index.py` as entry point for UWSGI compatibility
+- **Auto-Imports**: Components, Vue APIs, and Pinia stores automatically imported - no manual imports needed
+- **Charts Organization**: All visualization components should be placed in dedicated `charts/` folders
+- **Data Units**: AFM measurement columns often contain "(nm)" suffix for nanometer units
+- **Desktop Only**: Application designed for desktop browsers only (no mobile/tablet responsive design)
+- **Production Entry**: Uses `index.py` as UWSGI-compatible entry point
+- **CORS Configuration**: Hardcoded allowed origins in `index.py` for development and production URLs

@@ -8,24 +8,23 @@
 
     <!-- Tool Selection Interface -->
     <div class="text-center mb-6">
-      <v-card class="pa-3 mx-auto" style="max-width: 300px;" elevation="2">
-        <div class="d-flex justify-center align-center gap-3">
+      <v-card class="pa-4 mx-auto" style="max-width: 500px;" elevation="2">
+        <div class="d-flex justify-center align-center gap-4">
           <v-icon color="primary">mdi-tools</v-icon>
-          <span class="text-h6 font-weight-medium mr-3">Tool:</span>
-          <v-chip
-            v-for="tool in availableTools"
-            :key="tool.id"
-            :color="selectedTool === tool.id ? 'primary' : 'default'"
-            :variant="selectedTool === tool.id ? 'elevated' : 'outlined'"
-            size="large"
-            class="px-4"
-            @click="selectTool(tool.id)"
-          >
-            <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
-              {{ tool.icon }}
-            </v-icon>
-            <span class="font-weight-medium">{{ tool.name }}</span>
-          </v-chip>
+          <span class="text-h6 font-weight-medium mr-4">Tool:</span>
+          <v-tooltip v-for="tool in availableTools" :key="tool.id" :text="tool.description" location="bottom">
+            <template v-slot:activator="{ props }">
+              <v-chip v-bind="props"
+                :color="selectedTool === tool.id ? 'primary' : 'default'"
+                :variant="selectedTool === tool.id ? 'elevated' : 'outlined'" size="large" class="px-4 mx-2"
+                @click="selectTool(tool.id)">
+                <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
+                  {{ tool.icon }}
+                </v-icon>
+                <span class="font-weight-medium">{{ tool.name }}</span>
+              </v-chip>
+            </template>
+          </v-tooltip>
         </div>
       </v-card>
     </div>
@@ -42,7 +41,7 @@
         <div class="px-2">
           <!-- View History -->
           <ViewHistoryCard :view-history="dataStore.viewHistory" :history-count="dataStore.historyCount"
-            @view-details="viewDetails" @clear-history="dataStore.clearHistory" />
+            @view-details="viewDetails" @clear-history="dataStore.clearHistory" @remove-from-history="dataStore.removeFromHistory" />
 
           <!-- Data Grouping -->
           <DataGroupingCard :grouped-data="dataStore.groupedData" :grouped-count="dataStore.groupedCount"
@@ -61,12 +60,7 @@
     <v-dialog v-model="showLoadingDialog" max-width="400px" persistent>
       <v-card>
         <v-card-text class="text-center pa-6">
-          <v-progress-circular
-            indeterminate
-            color="primary"
-            size="64"
-            class="mb-4"
-          />
+          <v-progress-circular indeterminate color="primary" size="64" class="mb-4" />
           <h3 class="text-h6 mb-2">Loading Measurement Data</h3>
           <p class="text-body-2 text-medium-emphasis">
             {{ loadingMessage }}
@@ -82,32 +76,19 @@
           <v-icon color="primary" class="mr-2">mdi-content-save</v-icon>
           Save Data Group
         </v-card-title>
-        
+
         <v-card-text>
           <v-container>
             <v-row>
               <v-col cols="12">
-                <v-text-field
-                  v-model="groupName"
-                  label="Group Name *"
-                  placeholder="Enter a name for this group"
-                  variant="outlined"
-                  :rules="[v => !!v || 'Group name is required']"
-                  counter="50"
-                  maxlength="50"
-                  autofocus
-                />
+                <v-text-field v-model="groupName" label="Group Name *" placeholder="Enter a name for this group"
+                  variant="outlined" :rules="[v => !!v || 'Group name is required']" counter="50" maxlength="50"
+                  autofocus />
               </v-col>
               <v-col cols="12">
-                <v-textarea
-                  v-model="groupDescription"
-                  label="Description (Optional)"
-                  placeholder="Add a description for this group"
-                  variant="outlined"
-                  rows="3"
-                  counter="200"
-                  maxlength="200"
-                />
+                <v-textarea v-model="groupDescription" label="Description (Optional)"
+                  placeholder="Add a description for this group" variant="outlined" rows="3" counter="200"
+                  maxlength="200" />
               </v-col>
               <v-col cols="12">
                 <v-alert type="info" variant="tonal" class="mb-0">
@@ -122,19 +103,10 @@
 
         <v-card-actions>
           <v-spacer />
-          <v-btn
-            color="grey"
-            variant="text"
-            @click="cancelSaveGroup"
-          >
+          <v-btn color="grey" variant="text" @click="cancelSaveGroup">
             Cancel
           </v-btn>
-          <v-btn
-            color="primary"
-            variant="elevated"
-            :disabled="!groupName.trim()"
-            @click="confirmSaveGroup"
-          >
+          <v-btn color="primary" variant="elevated" :disabled="!groupName.trim()" @click="confirmSaveGroup">
             <v-icon start>mdi-content-save</v-icon>
             Save Group
           </v-btn>
@@ -167,17 +139,16 @@ const availableTools = ref([
     id: 'MAP608',
     name: 'MAP608',
     icon: 'mdi-microscope',
-    description: 'Atomic Force Microscopy Analysis Tool',
+    description: 'PKG',
+    status: 'active'
+  },
+  {
+    id: 'MAPC01',
+    name: 'MAPC01',
+    icon: 'mdi-microscope',
+    description: 'R3',
     status: 'active'
   }
-  // Future tools can be added here:
-  // {
-  //   id: 'MAP609',
-  //   name: 'MAP609',
-  //   icon: 'mdi-atom',
-  //   description: 'Advanced AFM Analysis Tool',
-  //   status: 'coming_soon'
-  // }
 ])
 
 // Handle real-time search results from SearchSection component
@@ -189,35 +160,49 @@ function handleSearchPerformed(query, results) {
 }
 
 function viewDetails(measurement) {
-  // Add to history
-  dataStore.addToHistory(measurement)
+  // Ensure measurement has tool information
+  const measurementWithTool = {
+    ...measurement,
+    tool: measurement.tool || selectedTool.value
+  }
+  
+  // Add to history with tool information
+  dataStore.addToHistory(measurementWithTool)
 
-  // Navigate to details with recipe ID in URL
+  // Navigate to details with recipe ID and tool in URL
   const recipeId = measurement.rcp_id || measurement.recipe_name || 'unknown'
-  router.push(`/result/${encodeURIComponent(recipeId)}/${encodeURIComponent(measurement.filename)}`)
+  router.push({
+    path: `/result/${encodeURIComponent(recipeId)}/${encodeURIComponent(measurement.filename)}`,
+    query: { tool: selectedTool.value }
+  })
 }
 
 function addToGroup(measurement) {
-  dataStore.addToGroup(measurement)
+  // Ensure measurement has tool information and preserve all fields
+  const measurementWithTool = {
+    ...measurement,
+    tool: measurement.tool || selectedTool.value
+  }
+  dataStore.addToGroup(measurementWithTool)
 }
 
 async function viewTrendAnalysis() {
   console.log('🚀 [MainPage] Starting trend analysis with grouped data...')
-  
+
   if (dataStore.groupedCount === 0) {
     console.warn('⚠️ No measurements in group to analyze')
     return
   }
-  
+
   // Show loading dialog
   loadingMessage.value = `Loading data for ${dataStore.groupedCount} measurements...`
   showLoadingDialog.value = true
-  
+
   try {
     // Track loading progress
     let loadedCount = 0
     const totalCount = dataStore.groupedData.length
-    
+
     // Load detailed data for all measurements in the group
     const loadPromises = dataStore.groupedData.map(async (measurement) => {
       if (!measurement.filename) {
@@ -225,19 +210,19 @@ async function viewTrendAnalysis() {
         loadedCount++
         return null
       }
-      
+
       try {
         console.log(`📊 Loading data for: ${measurement.filename}`)
-        const toolName = measurement.tool || dataStore.selectedTool || 'MAP608'
-        
+        const toolName = measurement.tool || measurement.tool_name || selectedTool.value || 'MAP608'
+
         // Use the apiService to fetch detailed measurement data
-        const { apiService } = await import('@/services/api.js')
+        const { apiService } = await import('@/services/index.js')
         const response = await apiService.getAfmFileDetail(measurement.filename, toolName)
-        
+
         // Update progress
         loadedCount++
         loadingMessage.value = `Loading measurement ${loadedCount} of ${totalCount}...`
-        
+
         if (response.success && response.data) {
           return {
             filename: measurement.filename,
@@ -257,20 +242,20 @@ async function viewTrendAnalysis() {
         return null
       }
     })
-    
+
     // Wait for all measurements to load
     const results = await Promise.all(loadPromises)
     const validResults = results.filter(r => r !== null)
-    
+
     console.log(`✅ Loaded ${validResults.length} out of ${dataStore.groupedData.length} measurements`)
-    
+
     // Store the loaded data in sessionStorage to pass to DataTrendPage
     if (validResults.length > 0) {
       sessionStorage.setItem('groupDetailedData', JSON.stringify(validResults))
-      
+
       // Hide loading dialog before navigation
       showLoadingDialog.value = false
-      
+
       // Navigate to data trend page
       router.push('/result/data_trend')
     } else {
@@ -278,7 +263,7 @@ async function viewTrendAnalysis() {
       showLoadingDialog.value = false
       // Could show an error dialog here
     }
-    
+
   } catch (error) {
     console.error('❌ Error during trend analysis data loading:', error)
     showLoadingDialog.value = false
@@ -330,13 +315,13 @@ function loadSavedGroup(groupId) {
 function selectTool(toolId) {
   console.log(`🔧 Tool selected: ${toolId}`)
   selectedTool.value = toolId
-  
+
   // Clear current search results when switching tools
   searchResults.value = []
-  
+
   // Store selected tool in data store for use by other components
   dataStore.setSelectedTool(toolId)
-  
+
   // Trigger initial data load for the selected tool
   loadToolData(toolId)
 }
@@ -355,7 +340,7 @@ async function loadToolData(toolId) {
 // Initialize component
 onMounted(() => {
   console.log('🚀 MainPage: Component mounted and ready for AFM file searches')
-  
+
   // Initialize with stored tool selection
   const storedTool = dataStore.selectedTool
   if (storedTool && availableTools.value.find(t => t.id === storedTool)) {

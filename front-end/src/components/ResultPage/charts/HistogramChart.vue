@@ -35,6 +35,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
+import shineThemeData from '@/plugins/shine.json'
 
 const props = defineProps({
   profileData: {
@@ -110,7 +111,11 @@ function initChart() {
     chartInstance.dispose()
   }
 
-  chartInstance = echarts.init(chartContainer.value)
+  // Register the shine theme
+  echarts.registerTheme('shine', shineThemeData)
+  
+  // Initialize chart with shine theme
+  chartInstance = echarts.init(chartContainer.value, 'shine')
 
   const { bins, values } = histogramData.value
 
@@ -152,15 +157,7 @@ function initChart() {
     },
     series: [{
       type: 'bar',
-      data: values,
-      itemStyle: {
-        color: '#2196f3'
-      },
-      emphasis: {
-        itemStyle: {
-          color: '#1976d2'
-        }
-      }
+      data: values
     }],
     graphic: []
   }

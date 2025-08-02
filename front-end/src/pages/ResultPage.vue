@@ -63,15 +63,15 @@
     <!-- First row: Information and Scatter Chart with equal heights -->
     <v-row dense class="mb-3 equal-height-row">
       <!-- First column: Information -->
-      <v-col cols="12" md="6" class="d-flex">
-        <div class="info-container w-100">
+      <v-col cols="12" lg="6" class="d-flex">
+        <div class="info-scatter-container w-100">
           <MeasurementInfo :measurement-info="measurementInfo" :summary-data="summaryData" :compact="true" />
         </div>
       </v-col>
 
       <!-- Second column: Scatter Chart -->
-      <v-col cols="12" md="6" class="d-flex">
-        <div class="chart-container w-100">
+      <v-col cols="12" lg="6" class="d-flex">
+        <div class="info-scatter-container w-100">
           <StatisticalInfoByPoints :summary-data="summaryData" @row-click="handleStatisticRowClick"
             @statistic-selected="handleStatisticSelected" :compact="true" />
         </div>
@@ -175,7 +175,7 @@
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchProfileData, fetchSummaryData, fetchMeasurementData, apiService } from '@/services/api.js'
+import { fetchProfileData, fetchSummaryData, fetchMeasurementData, apiService } from '@/services/index.js'
 import { downloadCSV, formatMeasurementInfo, formatSummaryStatistics, formatProfileData, generateFilename } from '@/utils/exportUtils.js'
 
 // Import components
@@ -710,102 +710,74 @@ onMounted(() => {
 
 /* Equal height row styling */
 .equal-height-row {
-  min-height: 780px;
+  min-height: 750px;
 }
 
-.equal-height-row>.v-col {
+.equal-height-row > .v-col {
   display: flex;
 }
 
-/* Fixed height containers for first row */
-.info-container,
-.chart-container {
-  min-height: 780px;
-  height: 780px;
+/* Fixed height containers for first row - both use same class now */
+.info-scatter-container {
+  min-height: 750px;
+  height: 750px;
   position: relative;
-}
-
-.chart-container {
-  overflow: hidden;
-}
-
-/* Info container doesn't need overflow - the card inside will handle it */
-.info-container {
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Ensure child components fill the container */
-.info-container>*,
-.chart-container>* {
+.info-scatter-container > * {
   height: 100%;
+  flex: 1;
 }
 
-/* Make the MeasurementInfo card's content scrollable */
-.info-container :deep(.v-card) {
+/* Make both cards consistent */
+.info-scatter-container :deep(.v-card) {
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
-.info-container :deep(.v-card-title) {
+.info-scatter-container :deep(.v-card-title) {
   flex-shrink: 0;
 }
 
-.info-container :deep(.v-card-text) {
+.info-scatter-container :deep(.v-card-text) {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
-/* Make the StatisticalInfoByPoints fill the container */
-.chart-container > div {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-container :deep(.v-card) {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-
-.chart-container :deep(.v-card-title) {
+/* Special handling for scatter chart to ensure it fills space */
+.info-scatter-container :deep(.v-row) {
   flex-shrink: 0;
 }
 
-.chart-container :deep(.v-card-text) {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Make the scatter chart fill available space */
-.chart-container :deep(.v-row) {
-  flex-shrink: 0;
-}
-
-.chart-container :deep(.v-card-text > div:last-child) {
+/* Ensure the chart itself fills remaining space */
+.info-scatter-container :deep(.v-card-text > div:last-child) {
   flex: 1;
   min-height: 0;
 }
 
-/* Custom scrollbar for MeasurementInfo card content */
-.info-container :deep(.v-card-text)::-webkit-scrollbar {
+/* Custom scrollbar styling */
+.info-scatter-container :deep(.v-card-text)::-webkit-scrollbar {
   width: 6px;
 }
 
-.info-container :deep(.v-card-text)::-webkit-scrollbar-track {
+.info-scatter-container :deep(.v-card-text)::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
 
-.info-container :deep(.v-card-text)::-webkit-scrollbar-thumb {
+.info-scatter-container :deep(.v-card-text)::-webkit-scrollbar-thumb {
   background: #c1c1c1;
   border-radius: 3px;
 }
 
-.info-container :deep(.v-card-text)::-webkit-scrollbar-thumb:hover {
+.info-scatter-container :deep(.v-card-text)::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
 

@@ -24,7 +24,8 @@
 <script setup>
 import { ref, watch, onMounted, onUnmounted, nextTick, computed } from 'vue'
 import * as echarts from 'echarts'
-import { apiService } from '@/services/api.js'
+import { apiService } from '@/services/index.js'
+import shineThemeData from '@/plugins/shine.json'
 
 const props = defineProps({
   filename: {
@@ -145,7 +146,11 @@ function initWaferHeatmap() {
   
   console.log('Initializing ECharts...')
   try {
-    waferHeatmapChart = echarts.init(waferHeatmapContainer.value)
+    // Register the shine theme
+    echarts.registerTheme('shine', shineThemeData)
+    
+    // Initialize chart with shine theme
+    waferHeatmapChart = echarts.init(waferHeatmapContainer.value, 'shine')
     console.log('ECharts initialized successfully:', waferHeatmapChart)
   } catch (error) {
     console.error('Error initializing ECharts:', error)

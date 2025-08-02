@@ -9,6 +9,11 @@ const STORAGE_KEYS = {
   SEARCH_QUERY: 'afm_search_query'
 }
 
+// Generate tool-specific storage keys
+function getToolSpecificKey(baseKey, toolName) {
+  return `${baseKey}_${toolName}`
+}
+
 function loadFromStorage(key, defaultValue = []) {
   try {
     const stored = localStorage.getItem(key)
@@ -29,10 +34,10 @@ function saveToStorage(key, data) {
 
 export const useDataStore = defineStore('data', () => {
   // State (reactive references)
-  const viewHistory = ref(loadFromStorage(STORAGE_KEYS.VIEW_HISTORY))
-  const groupedData = ref(loadFromStorage(STORAGE_KEYS.GROUPED_DATA))
-  const groupHistory = ref(loadFromStorage(STORAGE_KEYS.GROUP_HISTORY))
   const selectedTool = ref(loadFromStorage(STORAGE_KEYS.SELECTED_TOOL, 'MAP608'))
+  const viewHistory = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value)))
+  const groupedData = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value)))
+  const groupHistory = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value)))
   const searchQuery = ref(loadFromStorage(STORAGE_KEYS.SEARCH_QUERY, ''))
   const maxHistoryItems = ref(10)
 
@@ -82,13 +87,28 @@ export const useDataStore = defineStore('data', () => {
       viewHistory.value = viewHistory.value.slice(0, maxHistoryItems.value)
     }
     
-    // Save to localStorage
-    saveToStorage(STORAGE_KEYS.VIEW_HISTORY, viewHistory.value)
+    // Save to localStorage with tool-specific key
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value)
   }
 
   function clearHistory() {
     viewHistory.value = []
-    saveToStorage(STORAGE_KEYS.VIEW_HISTORY, viewHistory.value)
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value)
+  }
+
+  function removeFromHistory(filename) {
+    console.log(`🗑️ Removing from history: ${filename}`)
+    console.log(`📊 Before removal: ${viewHistory.value.length} items`)
+    const beforeCount = viewHistory.value.length
+    viewHistory.value = viewHistory.value.filter(item => item.filename !== filename)
+    console.log(`📊 After removal: ${viewHistory.value.length} items`)
+    
+    if (viewHistory.value.length === beforeCount) {
+      console.warn(`⚠️ No item was removed. Filename "${filename}" not found in history.`)
+      console.log('🔍 Available filenames in history:', viewHistory.value.map(item => item.filename))
+    }
+    
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value)
   }
 
 
@@ -101,19 +121,19 @@ export const useDataStore = defineStore('data', () => {
         addedAt: new Date().toISOString()
       })
       
-      // Save to localStorage
-      saveToStorage(STORAGE_KEYS.GROUPED_DATA, groupedData.value)
+      // Save to localStorage with tool-specific key
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
     }
   }
 
   function removeFromGroup(filename) {
     groupedData.value = groupedData.value.filter(item => item.filename !== filename)
-    saveToStorage(STORAGE_KEYS.GROUPED_DATA, groupedData.value)
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
   }
 
   function clearGroup() {
     groupedData.value = []
-    saveToStorage(STORAGE_KEYS.GROUPED_DATA, groupedData.value)
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
   }
 
   function saveCurrentGroupAsHistory(name, description = '') {
@@ -140,31 +160,47 @@ export const useDataStore = defineStore('data', () => {
       groupHistory.value = groupHistory.value.slice(0, maxHistoryItems.value)
     }
     
-    // Save to localStorage
-    saveToStorage(STORAGE_KEYS.GROUP_HISTORY, groupHistory.value)
+    // Save to localStorage with tool-specific key
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value)
   }
 
   function loadGroupFromHistory(groupId) {
     const savedGroup = groupHistory.value.find(item => item.id === groupId)
     if (savedGroup) {
       groupedData.value = [...savedGroup.items]
-      saveToStorage(STORAGE_KEYS.GROUPED_DATA, groupedData.value)
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
     }
   }
 
   function removeFromGroupHistory(groupId) {
     groupHistory.value = groupHistory.value.filter(item => item.id !== groupId)
-    saveToStorage(STORAGE_KEYS.GROUP_HISTORY, groupHistory.value)
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value)
   }
 
   function clearGroupHistory() {
     groupHistory.value = []
-    saveToStorage(STORAGE_KEYS.GROUP_HISTORY, groupHistory.value)
+    saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value)
   }
 
   function setSelectedTool(toolId) {
-    selectedTool.value = toolId
-    saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
+    // Save current tool's data before switching
+    if (selectedTool.value !== toolId) {
+      // Save current tool data
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value)
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value)
+      
+      // Update selected tool
+      selectedTool.value = toolId
+      saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
+      
+      // Load new tool's data
+      viewHistory.value = loadFromStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, toolId))
+      groupedData.value = loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, toolId))
+      groupHistory.value = loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, toolId))
+      
+      console.log(`🔧 Switched to tool ${toolId}, loaded ${viewHistory.value.length} history items and ${groupedData.value.length} grouped items`)
+    }
   }
 
   function setSearchQuery(query) {
@@ -249,6 +285,7 @@ export const useDataStore = defineStore('data', () => {
     // Actions
     addToHistory,
     clearHistory,
+    removeFromHistory,
     addToGroup,
     removeFromGroup,
     clearGroup,

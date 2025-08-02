@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
+import shineThemeData from '@/plugins/shine.json'
 
 const props = defineProps({
   timeSeriesData: {
@@ -106,12 +107,13 @@ function initChart() {
     chartInstance.dispose()
   }
 
-  chartInstance = echarts.init(chartContainer.value)
+  // Register the shine theme
+  echarts.registerTheme('shine', shineThemeData)
+  
+  // Initialize chart with shine theme
+  chartInstance = echarts.init(chartContainer.value, 'shine')
 
   const { allTimestamps, series } = chartData.value
-  
-  // Define colors for different sites
-  const colors = ['#1976D2', '#388E3C', '#F57C00', '#D32F2F', '#7B1FA2', '#00796B', '#455A64', '#E64A19']
 
   const option = {
     tooltip: {

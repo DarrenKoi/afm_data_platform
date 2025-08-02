@@ -14,6 +14,7 @@ declare module 'vue' {
     EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']
     HeatmapChart: typeof import('./src/components/ResultPage/charts/HeatmapChart.vue')['default']
     HistogramChart: typeof import('./src/components/ResultPage/charts/HistogramChart.vue')['default']
+    InformationDetails: typeof import('./src/components/ResultPage/InformationDetails.vue')['default']
     KeyOrderingSettings: typeof import('./src/components/Settings/KeyOrderingSettings.vue')['default']
     MeasurementInfo: typeof import('./src/components/ResultPage/MeasurementInfo.vue')['default']
     MeasurementPoints: typeof import('./src/components/ResultPage/MeasurementPoints.vue')['default']
@@ -25,6 +26,7 @@ declare module 'vue' {
     SimplifiedMeasurementCard: typeof import('./src/components/DataTrend/SimplifiedMeasurementCard.vue')['default']
     StatisticalInfoByPoints: typeof import('./src/components/ResultPage/StatisticalInfoByPoints.vue')['default']
     StatisticalScatterChart: typeof import('./src/components/ResultPage/charts/StatisticalScatterChart.vue')['default']
+    SummaryStatisticsBySites: typeof import('./src/components/ResultPage/SummaryStatisticsBySites.vue')['default']
     TimeSeriesChart: typeof import('./src/components/DataTrend/charts/TimeSeriesChart.vue')['default']
     ViewHistoryCard: typeof import('./src/components/MainPage/ViewHistoryCard.vue')['default']
   }

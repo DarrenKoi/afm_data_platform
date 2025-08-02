@@ -27,13 +27,20 @@ def parse_filename(filename):
         lot_time_part = parts[2]  # e.g., "T7HQR42TA_250709" or "T3HQR47TF[250814]"
         slot_info = parts[3]  # e.g., "21_1" or "07_repeat2"
         
-        # Extract lot_id (remove time info)
+        # Extract lot_id and time (remove time info for lot_id)
+        time = None
         if '[' in lot_time_part:
             # Format: T3HQR47TF[250814]
             lot_id = lot_time_part.split('[')[0]
+            time_part = lot_time_part.split('[')[1].rstrip(']')
+            if len(time_part) >= 6:
+                time = time_part[-6:]  # Last 6 digits as time
         elif '_' in lot_time_part:
             # Format: T7HQR42TA_250709
-            lot_id = lot_time_part.split('_')[0]
+            parts_split = lot_time_part.split('_')
+            lot_id = parts_split[0]
+            if len(parts_split) > 1 and len(parts_split[1]) >= 6:
+                time = parts_split[1][-6:]  # Last 6 digits as time
         else:
             lot_id = lot_time_part
         
@@ -51,14 +58,25 @@ def parse_filename(filename):
         except:
             formatted_date = date
         
+        # Create unique key
+        unique_key = f"{date}_{recipe_name}_{lot_id}_{slot_number}"
+        
         parsed_data = {
+            'unique_key': unique_key,
             'filename': filename,
             'date': date,
             'formatted_date': formatted_date,
             'recipe_name': recipe_name,
             'lot_id': lot_id,
             'slot_number': slot_number,
-            'measured_info': measured_info
+            'time': time,
+            'measured_info': measured_info,
+            # Initialize dir lists as None - will be populated later
+            'profile_dir_list': None,
+            'data_dir_list': None,
+            'tiff_dir_list': None,
+            'align_dir_list': None,
+            'tip_dir_list': None
         }
 
         return parsed_data
@@ -66,6 +84,43 @@ def parse_filename(filename):
     except Exception as e:
         print(f"  -> Error parsing {filename}: {e}")
         return None
+
+
+def check_available_files_for_measurement(parsed_file, tool_name='MAP608'):
+    """Check which files are available for a measurement in different directories"""
+    try:
+        base_pattern = parsed_file['filename'].replace('.csv', '').replace('.pkl', '')
+        
+        # Define directory mappings
+        dir_mappings = {
+            'profile_dir_list': ('profile_dir', '*.pkl'),
+            'data_dir_list': ('data_dir_pickle', '*.pkl'),
+            'tiff_dir_list': ('tiff_dir', '*.webp'),
+            'align_dir_list': ('align_dir', '*.png'),
+            'tip_dir_list': ('tip_dir', '*.tiff')
+        }
+        
+        # Check each directory for matching files
+        for list_key, (dir_name, pattern) in dir_mappings.items():
+            dir_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / dir_name
+            
+            if dir_path.exists():
+                # Find files that match the base pattern
+                matching_files = []
+                for file_path in dir_path.glob(pattern):
+                    if base_pattern in file_path.stem:
+                        matching_files.append(file_path.name)
+                
+                # Set the list or None if empty
+                parsed_file[list_key] = matching_files if matching_files else None
+            else:
+                parsed_file[list_key] = None
+    
+    except Exception as e:
+        print(f"Error checking available files: {e}")
+        # Set all to None on error
+        for list_key in ['profile_dir_list', 'data_dir_list', 'tiff_dir_list', 'align_dir_list', 'tip_dir_list']:
+            parsed_file[list_key] = None
 
 
 def check_pickle_file_exists(parsed_file, tool_name='MAP608'):
@@ -107,29 +162,29 @@ def check_pickle_file_exists(parsed_file, tool_name='MAP608'):
 def load_afm_file_list(tool_name='MAP608'):
     """Load AFM file list from pre-parsed pickle file, generate cache if not exists"""
     try:
-        print(f"🔍 Loading AFM file list for tool: {tool_name}")
+        print(f"Loading AFM file list for tool: {tool_name}")
         
         # Use pathlib for cross-platform file paths
         parsed_pickle_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'data_dir_list_parsed.pkl'
         
-        print(f"📂 Loading parsed file list from: {parsed_pickle_path}")
+        print(f"Loading parsed file list from: {parsed_pickle_path}")
         
         if not parsed_pickle_path.exists():
-            print(f"❌ Parsed pickle file not found: {parsed_pickle_path}")
-            print("🔄 Generating cache file for future use...")
+            print(f"Parsed pickle file not found: {parsed_pickle_path}")
+            print("Generating cache file for future use...")
             # Parse and cache the data
             success = parse_and_cache_afm_data(tool_name)
             if success and parsed_pickle_path.exists():
-                print("✅ Cache file generated successfully")
+                print("Cache file generated successfully")
                 # Now load from the newly created cache
                 with open(parsed_pickle_path, 'rb') as f:
                     data = pickle.load(f)
                 measurements = data.get('measurements', [])
                 metadata = data.get('metadata', {})
-                print(f"✅ Successfully loaded {len(measurements)} measurements from new cache")
+                print(f"Successfully loaded {len(measurements)} measurements from new cache")
                 return measurements
             else:
-                print("⚠️ Cache generation failed, using live parsing")
+                print("Cache generation failed, using live parsing")
                 return load_afm_file_list_live(tool_name)
         
         # Load the pre-parsed data from pickle file
@@ -140,15 +195,15 @@ def load_afm_file_list(tool_name='MAP608'):
         measurements = data.get('measurements', [])
         metadata = data.get('metadata', {})
         
-        print(f"✅ Successfully loaded {len(measurements)} measurements from cache")
-        print(f"📊 Cache generated at: {metadata.get('generated_at', 'Unknown')}")
-        print(f"🔧 Total processed: {metadata.get('total_files_processed', 'Unknown')}")
+        print(f"Successfully loaded {len(measurements)} measurements from cache")
+        print(f"Cache generated at: {metadata.get('generated_at', 'Unknown')}")
+        print(f"Total processed: {metadata.get('total_files_processed', 'Unknown')}")
         
         return measurements
         
     except Exception as e:
-        print(f"❌ Error loading cached file list: {e}")
-        print("📝 Falling back to live parsing...")
+        print(f"Error loading cached file list: {e}")
+        print("Falling back to live parsing...")
         import traceback
         traceback.print_exc()
         return load_afm_file_list_live(tool_name)
@@ -157,21 +212,21 @@ def load_afm_file_list(tool_name='MAP608'):
 def load_afm_file_list_live(tool_name='MAP608'):
     """Load AFM file list by parsing data_dir_list.txt (fallback method)"""
     try:
-        print(f"🔍 Live parsing AFM file list for tool: {tool_name}")
+        print(f"Live parsing AFM file list for tool: {tool_name}")
         
         # Use pathlib for cross-platform file paths
         data_list_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'data_dir_list.txt'
         pickle_dir = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'data_dir_pickle'
         
-        print(f"📂 Loading file list from: {data_list_path}")
-        print(f"🗂️ Checking pickle files in: {pickle_dir}")
+        print(f"Loading file list from: {data_list_path}")
+        print(f"Checking pickle files in: {pickle_dir}")
         
         if not data_list_path.exists():
-            print(f"❌ File not found: {data_list_path}")
+            print(f"File not found: {data_list_path}")
             return []
             
         if not pickle_dir.exists():
-            print(f"❌ Pickle directory not found: {pickle_dir}")
+            print(f"Pickle directory not found: {pickle_dir}")
             return []
         
         parsed_data = []
@@ -187,21 +242,22 @@ def load_afm_file_list_live(tool_name='MAP608'):
                 if parsed_file:
                     # Only include files that have corresponding pickle files
                     if check_pickle_file_exists(parsed_file, tool_name):
-
+                        # Check for available files in all directories
+                        check_available_files_for_measurement(parsed_file, tool_name)
                         parsed_file['tool_name'] = tool_name
                         parsed_data.append(parsed_file)
                     else:
                         skipped_files.append(line)
         
-        print(f"✅ Successfully loaded {len(parsed_data)} measurements (with pickle files)")
-        print(f"📊 Skipped {len(skipped_files)} measurements (no pickle files)")
+        print(f"Successfully loaded {len(parsed_data)} measurements (with pickle files)")
+        print(f"Skipped {len(skipped_files)} measurements (no pickle files)")
         if skipped_files:
-            print(f"📄 Sample skipped files: {skipped_files[:5]}")
+            print(f"Sample skipped files: {skipped_files[:5]}")
         
         return parsed_data
         
     except Exception as e:
-        print(f"❌ Error loading file list: {e}")
+        print(f"Error loading file list: {e}")
         import traceback
         traceback.print_exc()
         return []
@@ -212,13 +268,14 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
     try:
         from datetime import datetime
 
-        print(f"🔄 Starting parsing and caching for tool: {tool_name}")
+        print(f"Starting parsing and caching for tool: {tool_name}")
 
         # Parse the data using the live parsing function
+        # This already includes check_available_files_for_measurement
         measurements = load_afm_file_list_live(tool_name)
 
         if not measurements:
-            print(f"❌ No measurements found for {tool_name}")
+            print(f"No measurements found for {tool_name}")
             return False
 
         # Prepare cache data structure
@@ -227,7 +284,8 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
             'metadata': {
                 'tool_name': tool_name,
                 'total_files_processed': len(measurements),
-                'generated_at': datetime.now().isoformat()
+                'generated_at': datetime.now().isoformat(),
+                'includes_file_availability': True  # Flag to indicate new format
             }
         }
 
@@ -240,13 +298,25 @@ def parse_and_cache_afm_data(tool_name='MAP608'):
         with open(cache_path, 'wb') as f:
             pickle.dump(cache_data, f)
 
-        print(f"✅ Successfully cached {len(measurements)} measurements to {cache_path}")
-        print(f"📊 Cache file size: {cache_path.stat().st_size / 1024:.2f} KB")
+        print(f"Successfully cached {len(measurements)} measurements to {cache_path}")
+        print(f"Cache file size: {cache_path.stat().st_size / 1024:.2f} KB")
+        
+        # Print summary of file availability
+        profile_count = sum(1 for m in measurements if m.get('profile_dir_list'))
+        image_count = sum(1 for m in measurements if m.get('tiff_dir_list'))
+        align_count = sum(1 for m in measurements if m.get('align_dir_list'))
+        tip_count = sum(1 for m in measurements if m.get('tip_dir_list'))
+        
+        print(f"\nFile availability summary:")
+        print(f"  - Profile data: {profile_count}/{len(measurements)} measurements")
+        print(f"  - Image files: {image_count}/{len(measurements)} measurements")
+        print(f"  - Alignment data: {align_count}/{len(measurements)} measurements")
+        print(f"  - Tip data: {tip_count}/{len(measurements)} measurements")
 
         return True
 
     except Exception as e:
-        print(f"❌ Error parsing and caching AFM data: {e}")
+        print(f"Error parsing and caching AFM data: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -262,13 +332,13 @@ def get_pickle_file_path_by_filename(base_filename, tool_name='MAP608'):
         pickle_filename = filename_no_ext + '.pkl'
         pickle_path = Path('itc-afm-data-platform-pjt-shared') / 'AFM_DB' / tool_name / 'data_dir_pickle' / pickle_filename
         
-        print(f"🔍 Looking for pickle file: {pickle_path}")
+        print(f"Looking for pickle file: {pickle_path}")
         
         if pickle_path.exists():
-            print(f"✅ Found pickle file: {pickle_path}")
+            print(f"Found pickle file: {pickle_path}")
             return pickle_path
         else:
-            print(f"❌ Pickle file not found: {pickle_path}")
+            print(f"Pickle file not found: {pickle_path}")
             return None
             
     except Exception as e:
@@ -321,7 +391,7 @@ def get_site_mapping_from_pickle(base_filename, tool_name='MAP608'):
                     except ValueError:
                         continue
         
-        print(f"🗺️ Site mapping extracted: {site_mapping}")
+        print(f"Site mapping extracted: {site_mapping}")
         return site_mapping
         
     except Exception as e:
@@ -333,14 +403,14 @@ def get_profile_file_path_by_filename(base_filename, site_id_param, tool_name='M
     """Get the profile file path using comprehensive filename pattern matching"""
     try:
         print(f"\n=== PROFILE FILE REQUEST ===")
-        print(f"📂 Base filename (before encoding): {base_filename}")
-        print(f"🎯 Site ID parameter: {site_id_param}")
-        print(f"🔧 Tool name: {tool_name}")
-        print(f"📍 Complete site info: {site_info}")
+        print(f"Base filename (before encoding): {base_filename}")
+        print(f"Site ID parameter: {site_id_param}")
+        print(f"Tool name: {tool_name}")
+        print(f"Complete site info: {site_info}")
         
         # Remove extension from base filename if present
         filename_no_ext = base_filename.replace('.csv', '').replace('.pkl', '')
-        print(f"🧹 Cleaned filename: {filename_no_ext}")
+        print(f"Cleaned filename: {filename_no_ext}")
         
         # Extract information from site_info or fallback to site_id_param
         if site_info and site_info.get('point_no') is not None:
@@ -366,9 +436,9 @@ def get_profile_file_path_by_filename(base_filename, site_id_param, tool_name='M
         
         point_no_4digit = f"{point_no:04d}"
         
-        print(f"🎯 Site ID: '{actual_site_id}' (type: {type(actual_site_id)})")
-        print(f"🔢 Point No: {point_no} -> 4-digit: {point_no_4digit}")
-        print(f"📍 Site X: '{site_x}' (type: {type(site_x)}), Site Y: '{site_y}' (type: {type(site_y)})")
+        print(f"Site ID: '{actual_site_id}' (type: {type(actual_site_id)})")
+        print(f"Point No: {point_no} -> 4-digit: {point_no_4digit}")
+        print(f"Site X: '{site_x}' (type: {type(site_x)}), Site Y: '{site_y}' (type: {type(site_y)})")
         
         # Build filename patterns based on site information
         patterns_to_try = []
@@ -403,7 +473,7 @@ def get_profile_file_path_by_filename(base_filename, site_id_param, tool_name='M
                 pattern = f"_{actual_site_id}_{position}_{point_no_4digit}_Height.pkl"
                 patterns_to_try.append((pattern, f"Site_ID + {position} + Point_No"))
         
-        print(f"\n🔍 TRYING {len(patterns_to_try)} FILENAME PATTERNS:")
+        print(f"\nTRYING {len(patterns_to_try)} FILENAME PATTERNS:")
         
         # Try each pattern
         for i, (pattern, description) in enumerate(patterns_to_try, 1):
@@ -420,15 +490,15 @@ def get_profile_file_path_by_filename(base_filename, site_id_param, tool_name='M
             print(f"     Path: {test_path}")
             
             if test_path.exists():
-                print(f"     ✅ FOUND!")
+                print(f"     FOUND!")
                 print(f"\n=== PROFILE FILE MATCHED ===")
-                print(f"📄 Final filename: {test_filename}")
-                print(f"📂 Full path: {test_path}")
+                print(f"Final filename: {test_filename}")
+                print(f"Full path: {test_path}")
                 return test_path
             else:
-                print(f"     ❌ Not found")
+                print(f"     Not found")
         
-        print(f"\n❌ NO PROFILE FILE FOUND after trying {len(patterns_to_try)} patterns")
+        print(f"\nNO PROFILE FILE FOUND after trying {len(patterns_to_try)} patterns")
         print(f"Summary:")
         print(f"  Site ID: {actual_site_id}")
         print(f"  Point No: {point_no} (4-digit: {point_no_4digit})")
@@ -436,7 +506,7 @@ def get_profile_file_path_by_filename(base_filename, site_id_param, tool_name='M
         return None
             
     except Exception as e:
-        print(f"❌ Error getting profile file path: {e}")
+        print(f"Error getting profile file path: {e}")
         import traceback
         traceback.print_exc()
         return None
@@ -446,14 +516,14 @@ def get_image_file_path_by_filename(base_filename, site_id_param, tool_name='MAP
     """Get the image file path using comprehensive filename pattern matching"""
     try:
         print(f"\n=== IMAGE FILE REQUEST ===")
-        print(f"📂 Base filename (before encoding): {base_filename}")
-        print(f"🎯 Site ID parameter: {site_id_param}")
-        print(f"🔧 Tool name: {tool_name}")
-        print(f"📍 Complete site info: {site_info}")
+        print(f"Base filename (before encoding): {base_filename}")
+        print(f"Site ID parameter: {site_id_param}")
+        print(f"Tool name: {tool_name}")
+        print(f"Complete site info: {site_info}")
         
         # Remove extension from base filename if present
         filename_no_ext = base_filename.replace('.csv', '').replace('.pkl', '')
-        print(f"🧹 Cleaned filename: {filename_no_ext}")
+        print(f"Cleaned filename: {filename_no_ext}")
         
         # Extract information from site_info or fallback to site_id_param
         if site_info and site_info.get('point_no') is not None:
@@ -479,9 +549,9 @@ def get_image_file_path_by_filename(base_filename, site_id_param, tool_name='MAP
         
         point_no_4digit = f"{point_no:04d}"
         
-        print(f"🎯 Site ID: '{actual_site_id}' (type: {type(actual_site_id)})")
-        print(f"🔢 Point No: {point_no} -> 4-digit: {point_no_4digit}")
-        print(f"📍 Site X: '{site_x}' (type: {type(site_x)}), Site Y: '{site_y}' (type: {type(site_y)})")
+        print(f"Site ID: '{actual_site_id}' (type: {type(actual_site_id)})")
+        print(f"Point No: {point_no} -> 4-digit: {point_no_4digit}")
+        print(f"Site X: '{site_x}' (type: {type(site_x)}), Site Y: '{site_y}' (type: {type(site_y)})")
         
         # Build filename patterns based on site information
         patterns_to_try = []
@@ -516,7 +586,7 @@ def get_image_file_path_by_filename(base_filename, site_id_param, tool_name='MAP
                 pattern = f"_{actual_site_id}_{position}_{point_no_4digit}_Height.webp"
                 patterns_to_try.append((pattern, f"Site_ID + {position} + Point_No"))
         
-        print(f"\n🔍 TRYING {len(patterns_to_try)} FILENAME PATTERNS:")
+        print(f"\nTRYING {len(patterns_to_try)} FILENAME PATTERNS:")
         
         # Try each pattern
         for i, (pattern, description) in enumerate(patterns_to_try, 1):
@@ -533,15 +603,15 @@ def get_image_file_path_by_filename(base_filename, site_id_param, tool_name='MAP
             print(f"     Path: {test_path}")
             
             if test_path.exists():
-                print(f"     ✅ FOUND!")
+                print(f"     FOUND!")
                 print(f"\n=== IMAGE FILE MATCHED ===")
-                print(f"📄 Final filename: {test_filename}")
-                print(f"📂 Full path: {test_path}")
+                print(f"Final filename: {test_filename}")
+                print(f"Full path: {test_path}")
                 return test_path
             else:
-                print(f"     ❌ Not found")
+                print(f"     Not found")
         
-        print(f"\n❌ NO IMAGE FILE FOUND after trying {len(patterns_to_try)} patterns")
+        print(f"\nNO IMAGE FILE FOUND after trying {len(patterns_to_try)} patterns")
         print(f"Summary:")
         print(f"  Site ID: {actual_site_id}")
         print(f"  Point No: {point_no} (4-digit: {point_no_4digit})")
@@ -549,7 +619,7 @@ def get_image_file_path_by_filename(base_filename, site_id_param, tool_name='MAP
         return None
             
     except Exception as e:
-        print(f"❌ Error getting image file path: {e}")
+        print(f"Error getting image file path: {e}")
         import traceback
         traceback.print_exc()
         return None

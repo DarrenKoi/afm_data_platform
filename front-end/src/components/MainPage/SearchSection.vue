@@ -3,47 +3,29 @@
     <!-- Search Card -->
     <v-card class="pa-6 mb-4" elevation="3">
       <v-card-text>
-        <v-text-field 
-          v-model="realtimeSearch.searchQuery.value" 
-          clearable 
-          label="Search AFM files..."
-          placeholder="Search by Lot ID, Recipe, Date... (e.g., CMP, T7HQR42TA, ETCH, 250609)" 
-          prepend-inner-icon="mdi-magnify"
-          variant="outlined" 
-          :loading="realtimeSearch.isSearching.value"
-          @keyup.enter="triggerInstantSearch"
-        >
+        <v-text-field v-model="realtimeSearch.searchQuery.value" clearable label="Search AFM files..."
+          placeholder="Search by Lot ID, Recipe, Date... (e.g., CMP, T7HQR42TA, ETCH, 250609)"
+          prepend-inner-icon="mdi-magnify" variant="outlined"
+          @keyup.enter="triggerInstantSearch">
           <!-- Recent search terms dropdown (instead of suggestions) -->
           <template v-if="recentSearchTerms.length > 0 && !realtimeSearch.searchQuery.value" #append>
             <v-menu v-model="showRecent" offset-y>
               <template #activator="{ props }">
-                <v-btn 
-                  v-bind="props"
-                  icon="mdi-history" 
-                  variant="text"
-                  size="small"
-                  @click="showRecent = !showRecent"
-                />
+                <v-btn v-bind="props" icon="mdi-history" variant="text" size="small"
+                  @click="showRecent = !showRecent" />
               </template>
               <v-list max-height="250">
                 <v-list-subheader>Recent Searches</v-list-subheader>
-                <v-list-item 
-                  v-for="term in recentSearchTerms" 
-                  :key="term"
-                  @click="selectRecentTerm(term)"
-                >
+                <v-list-item v-for="term in recentSearchTerms" :key="term" @click="selectRecentTerm(term)">
                   <template v-slot:prepend>
                     <v-icon size="small">mdi-history</v-icon>
                   </template>
                   <v-list-item-title>{{ term }}</v-list-item-title>
                 </v-list-item>
-                
+
                 <v-divider v-if="recentSearchTerms.length > 0" />
-                
-                <v-list-item 
-                  @click="clearRecentTerms"
-                  class="text-caption"
-                >
+
+                <v-list-item @click="clearRecentTerms" class="text-caption">
                   <template v-slot:prepend>
                     <v-icon size="small" color="error">mdi-delete</v-icon>
                   </template>
@@ -61,14 +43,17 @@
         </div>
 
         <!-- Search helper text -->
-        <div v-if="realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length === 1" class="text-center mt-2">
+        <div v-if="realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length === 1"
+          class="text-center mt-2">
           <p class="text-caption text-medium-emphasis">
             Type one more character to start searching...
           </p>
         </div>
 
         <!-- Search stats -->
-        <div v-if="realtimeSearch.searchResults.value.length > 0 && realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length >= 2" class="text-center mt-2">
+        <div
+          v-if="realtimeSearch.searchResults.value.length > 0 && realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length >= 2"
+          class="text-center mt-2">
           <p class="text-caption text-medium-emphasis">
             Found {{ realtimeSearch.searchResults.value.length }} results
             <v-icon size="x-small" color="success">mdi-check-circle</v-icon>
@@ -76,7 +61,9 @@
         </div>
 
         <!-- No results message -->
-        <div v-if="realtimeSearch.searchResults.value.length === 0 && realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length >= 2 && !realtimeSearch.isSearching.value" class="text-center mt-2">
+        <div
+          v-if="realtimeSearch.searchResults.value.length === 0 && realtimeSearch.searchQuery.value && realtimeSearch.searchQuery.value.length >= 2 && !realtimeSearch.isSearching.value"
+          class="text-center mt-2">
           <p class="text-caption text-medium-emphasis">
             No results found for "{{ realtimeSearch.searchQuery.value }}"
             <v-icon size="x-small" color="warning">mdi-alert-circle</v-icon>
@@ -89,34 +76,22 @@
     <v-card v-if="realtimeSearch.searchResults.value.length > 0" elevation="3">
       <v-card-title class="d-flex align-center">
         <v-icon start>mdi-database-search</v-icon>
-        {{ realtimeSearch.searchQuery.value ? 'Search Results' : 'Recent Measurements' }} 
-        ({{ filteredResults.length }}{{ filteredResults.length !== realtimeSearch.searchResults.value.length ? `/${realtimeSearch.searchResults.value.length}` : '' }})
-        
+        {{ realtimeSearch.searchQuery.value ? 'Search Results' : 'Recent Measurements' }}
+        ({{ filteredResults.length }}{{ filteredResults.length !== realtimeSearch.searchResults.value.length ?
+          `/${realtimeSearch.searchResults.value.length}` : '' }})
+
         <v-spacer />
-        
+
         <!-- Inner filter input -->
-        <v-text-field
-          v-model="innerFilter"
-          density="compact"
-          variant="outlined"
-          placeholder="Filter results..."
-          prepend-inner-icon="mdi-filter"
-          clearable
-          hide-details
-          style="max-width: 300px;"
-          class="ml-4"
-        />
+        <v-text-field v-model="innerFilter" density="compact" variant="outlined" placeholder="Filter results..."
+          prepend-inner-icon="mdi-filter" clearable hide-details style="max-width: 300px;" class="ml-4" />
       </v-card-title>
       <v-divider />
 
       <!-- Results list with scrollable container -->
       <div class="results-container" :class="{ 'scrollable': filteredResults.length > maxVisibleItems }">
         <v-list>
-          <v-list-item 
-            v-for="(result, index) in displayedResults" 
-            :key="index" 
-            class="border-b"
-          >
+          <v-list-item v-for="(result, index) in displayedResults" :key="index" class="border-b">
             <div class="w-100">
               <div class="d-flex flex-column">
                 <div class="font-weight-bold text-body-1 mb-1">
@@ -133,9 +108,50 @@
                 </div>
               </div>
               <v-list-item-subtitle class="mt-2">
-                <v-chip size="small" color="primary" variant="outlined" class="mr-2 font-weight-medium">Slot: {{ result.slot_number }}</v-chip>
-                <v-chip size="small" color="secondary" variant="outlined" class="mr-2 font-weight-medium">{{ result.measured_info }}</v-chip>
+                <v-chip size="small" color="primary" variant="outlined" class="mr-2 font-weight-medium">Slot: {{
+                  result.slot_number }}</v-chip>
+                <v-chip size="small" color="secondary" variant="outlined" class="mr-2 font-weight-medium">{{
+                  result.measured_info }}</v-chip>
               </v-list-item-subtitle>
+              
+              <!-- Data availability indicators -->
+              <v-list-item-subtitle class="mt-2 d-flex align-center gap-2">
+                <v-tooltip text="Profile Data Available" location="bottom" v-if="result.has_profile">
+                  <template v-slot:activator="{ props }">
+                    <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
+                  </template>
+                </v-tooltip>
+                
+                <v-tooltip text="Measurement Data Available" location="bottom" v-if="result.has_data">
+                  <template v-slot:activator="{ props }">
+                    <v-icon v-bind="props" size="small" color="info">mdi-database</v-icon>
+                  </template>
+                </v-tooltip>
+                
+                <v-tooltip text="Image Available" location="bottom" v-if="result.has_image">
+                  <template v-slot:activator="{ props }">
+                    <v-icon v-bind="props" size="small" color="primary">mdi-image</v-icon>
+                  </template>
+                </v-tooltip>
+                
+                <v-tooltip text="Alignment Data Available" location="bottom" v-if="result.has_align">
+                  <template v-slot:activator="{ props }">
+                    <v-icon v-bind="props" size="small" color="warning">mdi-align-vertical-center</v-icon>
+                  </template>
+                </v-tooltip>
+                
+                <v-tooltip text="Tip Data Available" location="bottom" v-if="result.has_tip">
+                  <template v-slot:activator="{ props }">
+                    <v-icon v-bind="props" size="small" color="deep-purple">mdi-pin</v-icon>
+                  </template>
+                </v-tooltip>
+                
+                <span v-if="!result.has_profile && !result.has_data && !result.has_image && !result.has_align && !result.has_tip" 
+                      class="text-caption text-medium-emphasis">
+                  No additional data files
+                </span>
+              </v-list-item-subtitle>
+              
               <v-list-item-subtitle class="text-caption mt-1 text-grey">
                 📁 {{ result.filename }}
               </v-list-item-subtitle>
@@ -143,13 +159,8 @@
 
             <template v-slot:append>
               <div class="d-flex gap-2">
-                <v-btn 
-                  variant="outlined" 
-                  size="small" 
-                  color="success"
-                  :disabled="isInGroup(result.filename)"
-                  @click="addToGroup(result)"
-                >
+                <v-btn variant="outlined" size="small" color="success" :disabled="isInGroup(result.filename)"
+                  @click="addToGroup(result)">
                   <v-icon start>mdi-plus</v-icon>
                   Add to Group
                 </v-btn>
@@ -214,9 +225,9 @@ const filteredResults = computed(() => {
   if (!innerFilter.value || innerFilter.value.trim() === '') {
     return realtimeSearch.searchResults.value
   }
-  
+
   const filterQuery = innerFilter.value.toLowerCase().trim()
-  
+
   return realtimeSearch.searchResults.value.filter(result => {
     // Search across multiple fields
     const searchFields = [
@@ -228,8 +239,8 @@ const filteredResults = computed(() => {
       result.measured_info?.toString(),
       result.filename
     ]
-    
-    return searchFields.some(field => 
+
+    return searchFields.some(field =>
       field && field.toString().toLowerCase().includes(filterQuery)
     )
   })
@@ -244,7 +255,7 @@ const displayedResults = computed(() => {
 watch(realtimeSearch.searchResults, (newResults) => {
   // Clear inner filter when main search changes
   innerFilter.value = ''
-  
+
   console.log(`🔍 SearchSection: Search results changed, emitting ${newResults.length} results`)
   console.log('📊 SearchSection: Sample result:', newResults[0])
   emit('search-performed', realtimeSearch.searchQuery.value, newResults)
@@ -272,7 +283,7 @@ watch(() => realtimeSearch.searchQuery.value, (newQuery, oldQuery) => {
 onMounted(() => {
   console.log('🚀 SearchSection: Component mounted and ready for AFM file searches')
   loadRecentTerms()
-  
+
   // If there's a saved search query, it will be automatically loaded by useRealtimeSearch
   // and will trigger the search through the watcher
   if (realtimeSearch.searchQuery.value) {
@@ -284,10 +295,10 @@ onMounted(() => {
 function triggerInstantSearch() {
   console.log(`⚡ SearchSection: Triggering instant search for "${realtimeSearch.searchQuery.value}"`)
   if (!realtimeSearch.searchQuery.value) return
-  
+
   // Add to recent terms when user performs a search
   addToRecentTerms(realtimeSearch.searchQuery.value)
-  
+
   realtimeSearch.triggerSearch(realtimeSearch.searchQuery.value)
 }
 
@@ -300,30 +311,30 @@ function selectRecentTerm(term) {
 
 function addToRecentTerms(term) {
   if (!term || term.trim().length < 2) return
-  
+
   const trimmedTerm = term.trim()
-  
+
   // Remove if already exists
   const existingIndex = recentSearchTerms.value.indexOf(trimmedTerm)
   if (existingIndex > -1) {
     recentSearchTerms.value.splice(existingIndex, 1)
   }
-  
+
   // Add to beginning
   recentSearchTerms.value.unshift(trimmedTerm)
-  
+
   // Keep only max recent terms
   if (recentSearchTerms.value.length > maxRecentTerms) {
     recentSearchTerms.value = recentSearchTerms.value.slice(0, maxRecentTerms)
   }
-  
+
   // Save to localStorage
   try {
     localStorage.setItem('afm_recent_searches', JSON.stringify(recentSearchTerms.value))
   } catch (error) {
     console.warn('Could not save recent searches to localStorage:', error)
   }
-  
+
   console.log(`🕒 SearchSection: Added "${trimmedTerm}" to recent searches`)
 }
 
@@ -343,7 +354,7 @@ function loadRecentTerms() {
 function clearRecentTerms() {
   recentSearchTerms.value = []
   showRecent.value = false
-  
+
   try {
     localStorage.removeItem('afm_recent_searches')
     console.log('🗑️ SearchSection: Cleared all recent search terms')

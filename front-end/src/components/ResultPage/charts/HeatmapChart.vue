@@ -5,6 +5,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as echarts from 'echarts'
+import shineThemeData from '@/plugins/shine.json'
 
 const props = defineProps({
   profileData: {
@@ -66,7 +67,11 @@ function initChart() {
     chartInstance.dispose()
   }
 
-  chartInstance = echarts.init(chartContainer.value)
+  // Register the shine theme
+  echarts.registerTheme('shine', shineThemeData)
+  
+  // Initialize chart with shine theme
+  chartInstance = echarts.init(chartContainer.value, 'shine')
 
   const { data, xAxis, yAxis } = processedData.value
 

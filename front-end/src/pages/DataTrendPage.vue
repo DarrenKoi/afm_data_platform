@@ -276,7 +276,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore.js'
-import { apiService } from '@/services/api.js'
+import { apiService } from '@/services/index.js'
 import SimplifiedMeasurementCard from '@/components/DataTrend/SimplifiedMeasurementCard.vue'
 import TimeSeriesChart from '@/components/DataTrend/charts/TimeSeriesChart.vue'
 

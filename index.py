@@ -6,7 +6,7 @@ Run with: python index.py
 from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 import os
-from api.routes import api_bp
+from api.routes import register_blueprints
 from api.user_activity import log_user_activity
 
 def create_app():
@@ -39,8 +39,8 @@ def create_app():
     )
 
 
-    # Register API blueprint
-    app.register_blueprint(api_bp, url_prefix='/api')
+    # Register all API blueprints
+    register_blueprints(app)
     
     # Add middleware to log user activities
     @app.before_request
@@ -58,12 +58,6 @@ def create_app():
         
         # Log user activity
         log_user_activity()
-    
-    # Example endpoint to check current user
-    @app.route('/api/current-user')
-    def get_current_user():
-        user_id = request.cookies.get('LAST_USER', 'anonymous')
-        return {'user': user_id}
     
     # Serve Vue app in production
     if static_folder and os.path.exists('front-end/dist'):
