@@ -18,7 +18,7 @@ const props = defineProps({
   },
   chartHeight: {
     type: Number,
-    default: 400
+    default: 600
   },
   loading: {
     type: Boolean,
@@ -46,11 +46,11 @@ const chartData = computed(() => {
       })
     }
   })
-  
+
   const allTimestamps = Array.from(allTimestampsSet).sort((a, b) => {
     return new Date(a) - new Date(b)
   })
-  
+
   // Format timestamps for display (Korean-friendly format: yy/mm/dd hh:mm:ss)
   const formattedTimestamps = allTimestamps.map(timestamp => {
     const date = new Date(timestamp)
@@ -60,21 +60,21 @@ const chartData = computed(() => {
     const hours = String(date.getHours()).padStart(2, '0')
     const minutes = String(date.getMinutes()).padStart(2, '0')
     const seconds = String(date.getSeconds()).padStart(2, '0')
-    
+
     return `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
   })
-  
+
   // Process each series
   const processedSeries = props.timeSeriesData.map((series, seriesIndex) => {
     if (!series || !series.data || !Array.isArray(series.data)) {
       return { name: series?.name || `Series ${seriesIndex}`, data: [], rawData: [] }
     }
-    
+
     // Sort series data by timestamp
     const sortedData = [...series.data].sort((a, b) => {
       return new Date(a.timestamp) - new Date(b.timestamp)
     })
-    
+
     // Convert to scatter plot format
     const scatterData = sortedData.map(item => {
       const timestampIndex = allTimestamps.indexOf(item.timestamp)
@@ -86,7 +86,7 @@ const chartData = computed(() => {
         site: item.site
       }
     })
-    
+
     return {
       name: series.name,
       data: scatterData,
@@ -94,9 +94,9 @@ const chartData = computed(() => {
     }
   })
 
-  return { 
-    allTimestamps: formattedTimestamps, 
-    series: processedSeries 
+  return {
+    allTimestamps: formattedTimestamps,
+    series: processedSeries
   }
 })
 
@@ -109,7 +109,7 @@ function initChart() {
 
   // Register the shine theme
   echarts.registerTheme('shine', shineThemeData)
-  
+
   // Initialize chart with shine theme
   chartInstance = echarts.init(chartContainer.value, 'shine')
 
@@ -118,7 +118,7 @@ function initChart() {
   const option = {
     tooltip: {
       trigger: 'item',
-      formatter: function(params) {
+      formatter: function (params) {
         const dataItem = params.data
         // Format timestamp to Korean-friendly format
         const date = new Date(dataItem.timestamp)
@@ -129,7 +129,7 @@ function initChart() {
         const minutes = String(date.getMinutes()).padStart(2, '0')
         const seconds = String(date.getSeconds()).padStart(2, '0')
         const formattedTime = `${year}/${month}/${day} ${hours}:${minutes}:${seconds}`
-        
+
         return `
           <div style="padding: 8px;">
             <div style="font-weight: bold; margin-bottom: 4px;">${params.seriesName}</div>
@@ -150,21 +150,22 @@ function initChart() {
         fontSize: 14,
         fontWeight: 'bold'
       },
-      selectedMode: 'multiple'
+      selectedMode: false,
+      orient: 'horizontal'
     },
     grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '15%',
-      top: '15%',
+      left: '8%',
+      right: '8%',
+      bottom: '10%',
+      top: '10%',
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: allTimestamps,
       name: 'Time',
-      nameLocation: 'middle',
-      nameGap: 40,
+      nameLocation: 'end',
+      nameGap: 20,
       nameTextStyle: {
         fontSize: 16,
         fontWeight: 'bold'
@@ -184,8 +185,8 @@ function initChart() {
     yAxis: {
       type: 'value',
       name: `${props.selectedColumn}`,
-      nameLocation: 'middle',
-      nameGap: 60,
+      nameLocation: 'end',
+      nameGap: 20,
       nameTextStyle: {
         fontSize: 16,
         fontWeight: 'bold'
@@ -197,8 +198,10 @@ function initChart() {
       }
     },
     series: series.flatMap((seriesData, index) => {
-      const color = colors[index % colors.length]
-      
+      // Get theme colors
+      const themeColors = shineThemeData.color
+      const seriesColor = themeColors[index % themeColors.length]
+
       return [
         // Line series for connections
         {
@@ -207,7 +210,10 @@ function initChart() {
           data: seriesData.data.map(item => item.value),
           lineStyle: {
             width: 2,
-            color: color
+            color: seriesColor
+          },
+          itemStyle: {
+            color: seriesColor
           },
           symbol: 'none', // Hide symbols on line
           showSymbol: false,
@@ -215,18 +221,37 @@ function initChart() {
           silent: true, // Make line non-interactive
           legendHoverLink: false
         },
-        // Scatter series for points
+        // Scatter series for points with lot ID labels
         {
           name: seriesData.name,
           type: 'scatter',
           data: seriesData.data,
-          symbolSize: 10,
-          color: color,
+          symbolSize: 14,
+          itemStyle: {
+            color: seriesColor
+          },
+          label: {
+            show: true,
+            position: 'top',
+            formatter: function (params) {
+              return params.data.lotId || ''
+            },
+            fontSize: 10,
+            fontWeight: 'bold',
+            color: '#333',
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            padding: [2, 4],
+            borderRadius: 3
+          },
           emphasis: {
             focus: 'series',
             itemStyle: {
               shadowBlur: 10,
-              shadowColor: 'rgba(0, 0, 0, 0.5)'
+              shadowColor: 'rgba(0, 0, 0, 0.5)',
+              color: seriesColor
+            },
+            label: {
+              show: true
             }
           }
         }
@@ -242,8 +267,8 @@ function initChart() {
         type: 'slider',
         start: 0,
         end: 100,
-        height: 20,
-        bottom: 5
+        height: 30,
+        bottom: 20
       }
     ]
   }

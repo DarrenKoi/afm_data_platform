@@ -1,5 +1,5 @@
 <template>
-  <v-card elevation="3" min-height="600">
+  <v-card elevation="3" min-height="450">
     <v-card-title class="py-2">
       <v-icon start size="small">mdi-image-multiple</v-icon>
       <span class="text-subtitle-1">Additional Images</span>
@@ -40,30 +40,60 @@
               <p class="text-body-2 text-grey">{{ tab.description }}</p>
             </div>
 
-            <v-row v-else>
-              <v-col v-for="(image, index) in getImagesForTab(tab.value)" :key="index" 
-                     cols="12" :md="getImagesForTab(tab.value).length === 1 ? 12 : 6" 
-                     :lg="getImagesForTab(tab.value).length === 1 ? 12 : 4">
-                <v-card class="image-card" @click="openImageDialog(image)">
-                  <v-img 
-                    :src="image.url" 
-                    :alt="image.name"
-                    height="300"
-                    cover
-                    class="image-hover"
+            <div v-else class="image-gallery">
+              <div class="image-container" v-for="(image, index) in getImagesForTab(tab.value)" :key="index">
+                <div class="image-wrapper">
+                  <v-card 
+                    class="image-card"
+                    @mouseenter="hoveredImage[index] = true"
+                    @mouseleave="hoveredImage[index] = false"
                   >
-                    <template v-slot:placeholder>
-                      <v-row class="fill-height ma-0" align="center" justify="center">
-                        <v-progress-circular indeterminate color="grey-lighten-5" />
-                      </v-row>
-                    </template>
-                  </v-img>
-                  <v-card-text class="pa-2">
-                    <p class="text-caption text-center text-truncate">{{ image.name }}</p>
-                  </v-card-text>
-                </v-card>
-              </v-col>
-            </v-row>
+                    <v-img 
+                      :src="image.url" 
+                      :alt="image.name"
+                      height="220"
+                      width="320"
+                      cover
+                      class="image-hover"
+                    >
+                      <template v-slot:placeholder>
+                        <v-row class="fill-height ma-0" align="center" justify="center">
+                          <v-progress-circular indeterminate color="grey-lighten-5" />
+                        </v-row>
+                      </template>
+                    </v-img>
+                    <v-overlay 
+                      v-model="hoveredImage[index]"
+                      :scrim="false"
+                      contained
+                      class="align-center justify-center"
+                      @click="openImageDialog(image)"
+                    >
+                      <v-btn 
+                        icon="mdi-magnify-plus-outline" 
+                        color="white"
+                        size="large"
+                        variant="flat"
+                        class="expand-button"
+                      />
+                    </v-overlay>
+                  </v-card>
+                  <div class="image-info">
+                    <p class="text-caption text-truncate mb-0">{{ image.name }}</p>
+                    <v-btn 
+                      size="x-small" 
+                      variant="text" 
+                      color="primary"
+                      @click="openImageDialog(image)"
+                      class="mt-1"
+                    >
+                      <v-icon start size="x-small">mdi-arrow-expand</v-icon>
+                      View Original
+                    </v-btn>
+                  </div>
+                </div>
+              </div>
+            </div>
           </v-container>
         </v-tabs-window-item>
       </v-tabs-window>
@@ -119,13 +149,32 @@ const isLoading = ref(false)
 const loadError = ref('')
 const imageDialog = ref(false)
 const selectedImage = ref(null)
+const hoveredImage = ref({})
 
-// Images data structure
+// Images data structure with placeholder data
 const imagesData = ref({
-  profile: [],
-  tiff: [],
-  align: [],
-  tip: []
+  profile: [
+    { name: 'profile_scan_001.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+001' },
+    { name: 'profile_scan_002.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+002' },
+    { name: 'profile_scan_003.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+003' },
+    { name: 'profile_scan_004.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+004' },
+    { name: 'profile_scan_005.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+005' }
+  ],
+  tiff: [
+    { name: 'raw_image_001.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+001' },
+    { name: 'raw_image_002.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+002' },
+    { name: 'raw_image_003.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+003' }
+  ],
+  align: [
+    { name: 'alignment_ref_001.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+001' },
+    { name: 'alignment_ref_002.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+002' },
+    { name: 'alignment_ref_003.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+003' },
+    { name: 'alignment_ref_004.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+004' }
+  ],
+  tip: [
+    { name: 'tip_condition_before.png', url: 'https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Tip+Before' },
+    { name: 'tip_condition_after.png', url: 'https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Tip+After' }
+  ]
 })
 
 // Tab configuration
@@ -211,34 +260,74 @@ function openImageDialog(image) {
 }
 
 // Watchers
-watch(() => props.selectedPoint, (newPoint) => {
-  if (newPoint !== undefined) {
-    loadImages()
-  }
-})
+// Commented out to show placeholder images
+// watch(() => props.selectedPoint, (newPoint) => {
+//   if (newPoint !== undefined) {
+//     loadImages()
+//   }
+// })
 
-watch(() => props.filename, (newFilename) => {
-  if (newFilename) {
-    loadImages()
-  }
-})
+// watch(() => props.filename, (newFilename) => {
+//   if (newFilename) {
+//     loadImages()
+//   }
+// })
 
 // Lifecycle
 onMounted(() => {
-  loadImages()
+  // Commented out to show placeholder images
+  // loadImages()
 })
 </script>
 
 <style scoped>
+.image-gallery {
+  display: flex;
+  overflow-x: auto;
+  gap: 16px;
+  padding: 16px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.image-gallery::-webkit-scrollbar {
+  height: 8px;
+}
+
+.image-gallery::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}
+
+.image-gallery::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+.image-gallery::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.image-container {
+  flex: 0 0 auto;
+}
+
+.image-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .image-card {
+  position: relative;
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
 }
 
 .image-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .image-hover {
@@ -247,6 +336,25 @@ onMounted(() => {
 
 .image-card:hover .image-hover {
   transform: scale(1.05);
+}
+
+.image-info {
+  text-align: center;
+  padding: 0 8px;
+}
+
+.expand-button {
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.expand-button:hover {
+  background: rgba(0, 0, 0, 0.85);
+  transform: scale(1.1);
+}
+
+:deep(.v-overlay__content) {
+  pointer-events: all;
 }
 
 :deep(.v-tabs) {
@@ -259,6 +367,6 @@ onMounted(() => {
 }
 
 :deep(.v-tabs-window) {
-  min-height: 500px;
+  min-height: 380px;
 }
 </style>

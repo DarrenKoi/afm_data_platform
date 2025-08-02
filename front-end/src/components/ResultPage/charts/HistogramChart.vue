@@ -26,7 +26,7 @@
         </div>
       </v-card>
     </div>
-    
+
     <!-- Chart Container -->
     <div ref="chartContainer" :style="{ width: '100%', height: `${adjustedChartHeight}px` }"></div>
   </div>
@@ -67,35 +67,35 @@ const adjustedChartHeight = computed(() => {
 
 const histogramData = computed(() => {
   if (props.profileData.length === 0) return { bins: [], values: [] }
-  
+
   const zValues = props.profileData.map(p => p.z)
   const min = Math.min(...zValues)
   const max = Math.max(...zValues)
   const binCount = 50
   const binSize = (max - min) / binCount
-  
+
   const bins = []
   const values = []
-  
+
   for (let i = 0; i < binCount; i++) {
     const binStart = min + i * binSize
     const binEnd = binStart + binSize
     bins.push(`${binStart.toFixed(2)}-${binEnd.toFixed(2)}`)
-    
+
     const count = zValues.filter(z => z >= binStart && z < binEnd).length
     values.push(count)
   }
-  
+
   return { bins, values }
 })
 
 const statistics = computed(() => {
   if (props.profileData.length === 0) return null
-  
+
   const zValues = props.profileData.map(p => p.z)
   const mean = zValues.reduce((a, b) => a + b, 0) / zValues.length
   const std = Math.sqrt(zValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / zValues.length)
-  
+
   return {
     mean: mean.toFixed(3),
     std: std.toFixed(3),
@@ -113,7 +113,7 @@ function initChart() {
 
   // Register the shine theme
   echarts.registerTheme('shine', shineThemeData)
-  
+
   // Initialize chart with shine theme
   chartInstance = echarts.init(chartContainer.value, 'shine')
 
@@ -125,7 +125,7 @@ function initChart() {
       axisPointer: {
         type: 'shadow'
       },
-      formatter: function(params) {
+      formatter: function (params) {
         const param = params[0]
         return `Range: ${param.name} nm<br/>Count: ${param.value}`
       }

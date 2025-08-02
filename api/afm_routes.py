@@ -31,8 +31,8 @@ def get_afm_files():
         
         # Print sample data for debugging
         if parsed_data:
-            print("Sample measurement data:")
-            print(f"  First item: {parsed_data[0]}")
+            print(f"Sample measurement data: {len(parsed_data[0])}")
+            # print(f"  First item: {parsed_data[0]}")
 
         return jsonify({
             'success': True,

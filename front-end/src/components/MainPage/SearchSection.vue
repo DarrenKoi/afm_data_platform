@@ -5,8 +5,7 @@
       <v-card-text>
         <v-text-field v-model="realtimeSearch.searchQuery.value" clearable label="Search AFM files..."
           placeholder="Search by Lot ID, Recipe, Date... (e.g., CMP, T7HQR42TA, ETCH, 250609)"
-          prepend-inner-icon="mdi-magnify" variant="outlined"
-          @keyup.enter="triggerInstantSearch">
+          prepend-inner-icon="mdi-magnify" variant="outlined" @keyup.enter="triggerInstantSearch">
           <!-- Recent search terms dropdown (instead of suggestions) -->
           <template v-if="recentSearchTerms.length > 0 && !realtimeSearch.searchQuery.value" #append>
             <v-menu v-model="showRecent" offset-y>
@@ -91,84 +90,95 @@
       <!-- Results list with scrollable container -->
       <div class="results-container" :class="{ 'scrollable': filteredResults.length > maxVisibleItems }">
         <v-list>
-          <v-list-item v-for="(result, index) in displayedResults" :key="index" class="border-b">
-            <div class="w-100">
-              <div class="d-flex flex-column">
-                <div class="font-weight-bold text-body-1 mb-1">
-                  📅 {{ result.formatted_date }}
+          <v-list-item v-for="(result, index) in displayedResults" :key="index" class="border-b py-3">
+            <v-row class="align-center" no-gutters>
+              <!-- Left Column: Main Information -->
+              <v-col cols="5" class="pr-2">
+                <div class="d-flex flex-column">
+                  <div class="font-weight-bold text-body-1 mb-1">
+                    📅 {{ result.formatted_date }}
+                  </div>
+                  <div class="font-weight-bold text-body-1 mb-1">
+                    🔬 {{ result.recipe_name }}
+                  </div>
+                  <div class="font-weight-bold text-body-1 mb-2">
+                    📦 {{ result.lot_id }}
+                    <v-chip v-if="isInGroup(result.filename)" size="x-small" color="success" class="ml-2">
+                      GROUPED
+                    </v-chip>
+                  </div>
                 </div>
-                <div class="font-weight-bold text-body-1 mb-1">
-                  🔬 {{ result.recipe_name }}
-                </div>
-                <div class="font-weight-bold text-body-1 mb-2">
-                  📦 {{ result.lot_id }}
-                  <v-chip v-if="isInGroup(result.filename)" size="x-small" color="success" class="ml-2">
-                    GROUPED
-                  </v-chip>
-                </div>
-              </div>
-              <v-list-item-subtitle class="mt-2">
-                <v-chip size="small" color="primary" variant="outlined" class="mr-2 font-weight-medium">Slot: {{
-                  result.slot_number }}</v-chip>
-                <v-chip size="small" color="secondary" variant="outlined" class="mr-2 font-weight-medium">{{
-                  result.measured_info }}</v-chip>
-              </v-list-item-subtitle>
-              
-              <!-- Data availability indicators -->
-              <v-list-item-subtitle class="mt-2 d-flex align-center gap-2">
-                <v-tooltip text="Profile Data Available" location="bottom" v-if="result.has_profile">
-                  <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
-                  </template>
-                </v-tooltip>
-                
-                <v-tooltip text="Measurement Data Available" location="bottom" v-if="result.has_data">
-                  <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props" size="small" color="info">mdi-database</v-icon>
-                  </template>
-                </v-tooltip>
-                
-                <v-tooltip text="Image Available" location="bottom" v-if="result.has_image">
-                  <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props" size="small" color="primary">mdi-image</v-icon>
-                  </template>
-                </v-tooltip>
-                
-                <v-tooltip text="Alignment Data Available" location="bottom" v-if="result.has_align">
-                  <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props" size="small" color="warning">mdi-align-vertical-center</v-icon>
-                  </template>
-                </v-tooltip>
-                
-                <v-tooltip text="Tip Data Available" location="bottom" v-if="result.has_tip">
-                  <template v-slot:activator="{ props }">
-                    <v-icon v-bind="props" size="small" color="deep-purple">mdi-pin</v-icon>
-                  </template>
-                </v-tooltip>
-                
-                <span v-if="!result.has_profile && !result.has_data && !result.has_image && !result.has_align && !result.has_tip" 
-                      class="text-caption text-medium-emphasis">
-                  No additional data files
-                </span>
-              </v-list-item-subtitle>
-              
-              <v-list-item-subtitle class="text-caption mt-1 text-grey">
-                📁 {{ result.filename }}
-              </v-list-item-subtitle>
-            </div>
+                <v-list-item-subtitle class="mt-2">
+                  <v-chip size="small" color="primary" variant="outlined" class="mr-2 font-weight-medium">Slot: {{
+                    result.slot_number }}</v-chip>
+                  <v-chip size="small" color="secondary" variant="outlined" class="mr-2 font-weight-medium">{{
+                    result.measured_info }}</v-chip>
+                </v-list-item-subtitle>
+              </v-col>
 
-            <template v-slot:append>
-              <div class="d-flex gap-2">
-                <v-btn variant="outlined" size="small" color="success" :disabled="isInGroup(result.filename)"
-                  @click="addToGroup(result)">
-                  <v-icon start>mdi-plus</v-icon>
-                  Add to Group
-                </v-btn>
-                <v-btn variant="outlined" size="small" @click="viewDetails(result)">
-                  View Details
-                </v-btn>
-              </div>
-            </template>
+              <!-- Middle Column: Data Availability and File Info -->
+              <v-col cols="2" class="text-center">
+                <div class="d-flex flex-column align-center justify-start gap-1 h-100">
+                  <!-- Data availability icons at the top -->
+                  <div class="d-flex flex-column align-center gap-1 mb-2">
+                    <v-tooltip text="Profile Data Available" location="bottom" v-if="result.has_profile">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Measurement Data Available" location="bottom" v-if="result.has_data">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="info">mdi-database</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Image Available" location="bottom" v-if="result.has_image">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="primary">mdi-image</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Alignment Data Available" location="bottom" v-if="result.has_align">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="warning">mdi-align-vertical-center</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Tip Data Available" location="bottom" v-if="result.has_tip">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="deep-purple">mdi-pin</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <span
+                      v-if="!result.has_profile && !result.has_data && !result.has_image && !result.has_align && !result.has_tip"
+                      class="text-caption text-medium-emphasis">
+                      No data
+                    </span>
+                  </div>
+
+                  <!-- File info at the bottom -->
+                  <div class="text-caption text-grey mt-auto">
+                    📁 {{ result.filename }}
+                  </div>
+                </div>
+              </v-col>
+
+              <!-- Right Column: Action Buttons -->
+              <v-col cols="5" class="text-right">
+                <div class="d-flex flex-column align-end gap-1">
+                  <v-btn class='my-2' variant="outlined" size="small" color="success"
+                    :disabled="isInGroup(result.filename)" @click="addToGroup(result)" style="width: 140px;" dense>
+                    <v-icon size="small">mdi-plus</v-icon>
+                    <span class="ml-1">Add to Group</span>
+                  </v-btn>
+                  <v-btn variant="outlined" size="small" @click="viewDetails(result)" style="width: 140px;" dense>
+                    View Details
+                  </v-btn>
+                </div>
+              </v-col>
+            </v-row>
           </v-list-item>
         </v-list>
       </div>

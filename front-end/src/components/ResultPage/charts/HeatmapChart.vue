@@ -23,8 +23,14 @@ const props = defineProps({
   compact: {
     type: Boolean,
     default: false
+  },
+  clickable: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['point-selected'])
 
 const chartContainer = ref(null)
 let chartInstance = null
@@ -69,36 +75,21 @@ function initChart() {
 
   // Register the shine theme
   echarts.registerTheme('shine', shineThemeData)
-  
+
   // Initialize chart with shine theme
   chartInstance = echarts.init(chartContainer.value, 'shine')
 
   const { data, xAxis, yAxis } = processedData.value
 
-  // Calculate grid dimensions to maintain square aspect ratio
+  // Use responsive margins that adapt to container size
   const containerWidth = chartContainer.value.offsetWidth
   const containerHeight = chartContainer.value.offsetHeight
 
-  // Calculate available space for the heatmap (considering margins and visual map)
-  const leftMargin = containerWidth * 0.35  // 35%
-  const rightMargin = containerWidth * 0.15  // 15%
-  const topMargin = containerHeight * 0.08  // 8%
-  const bottomMargin = containerHeight * 0.12  // 12%
-
-  const availableWidth = containerWidth - leftMargin - rightMargin
-  const availableHeight = containerHeight - topMargin - bottomMargin
-
-  // Use the smaller dimension to maintain square aspect ratio
-  const squareSize = Math.min(availableWidth, availableHeight)
-
-  // Calculate centered margins
-  const totalHorizontalMargin = containerWidth - squareSize
-  const totalVerticalMargin = containerHeight - squareSize
-
-  const finalLeftMargin = totalHorizontalMargin * 0.8  // More on the left
-  const finalRightMargin = totalHorizontalMargin * 0.3  // Less on the right
-  const finalTopMargin = totalVerticalMargin * 0.5
-  const finalBottomMargin = totalVerticalMargin * 0.5
+  // Simple percentage-based margins for better data visualization
+  const leftMargin = '10%'
+  const rightMargin = '15%'  // Space for visual map
+  const topMargin = '10%'
+  const bottomMargin = '15%'
 
   const option = {
     tooltip: {
@@ -109,16 +100,16 @@ function initChart() {
       }
     },
     grid: {
-      left: finalLeftMargin,
-      right: finalRightMargin,
-      top: finalTopMargin,
-      bottom: finalBottomMargin,
+      left: leftMargin,
+      right: rightMargin,
+      top: topMargin,
+      bottom: bottomMargin,
       containLabel: true
     },
     xAxis: {
       type: 'category',
       data: xAxis,
-      name: 'X (µm)',
+      name: 'X',
       nameLocation: 'middle',
       nameGap: 25,
       splitArea: {
@@ -132,7 +123,7 @@ function initChart() {
     yAxis: {
       type: 'category',
       data: yAxis,
-      name: 'Y (µm)',
+      name: 'Y',
       nameLocation: 'middle',
       nameGap: 45,
       splitArea: {
@@ -173,6 +164,37 @@ function initChart() {
   }
 
   chartInstance.setOption(option)
+
+  // Add click event listener if clickable
+  if (props.clickable) {
+    chartInstance.on('click', function (params) {
+      if (params.componentType === 'series') {
+        const [xIndex, yIndex, value] = params.data
+        const xValue = xAxis[xIndex]
+        const yValue = yAxis[yIndex]
+
+        // Find the original data point
+        const originalPoint = props.profileData.find(p =>
+          Math.abs(p.x - parseFloat(xValue)) < 0.001 &&
+          Math.abs(p.y - parseFloat(yValue)) < 0.001
+        )
+
+        if (originalPoint) {
+          // Create a point object similar to what EnhancedChartVisualization emitted
+          const pointNumber = (yIndex * xAxis.length + xIndex) + 1
+          const emitPoint = {
+            ...originalPoint,
+            point: pointNumber,
+            x: parseFloat(xValue),
+            y: parseFloat(yValue),
+            value: value
+          }
+
+          emit('point-selected', emitPoint)
+        }
+      }
+    })
+  }
 }
 
 function handleResize() {

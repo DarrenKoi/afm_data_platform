@@ -8,7 +8,7 @@
             <v-icon left>mdi-arrow-left</v-icon>
             Back to Search
           </v-btn>
-          
+
           <div>
             <h1 class="text-h4">AFM Data Trend Analysis</h1>
             <p class="text-subtitle-1 text-medium-emphasis">
@@ -22,25 +22,15 @@
           <v-card-title class="bg-primary text-white py-3">
             <v-icon start>mdi-group</v-icon>
             Selected Measurements
-            <v-spacer />
-            <v-chip 
-              color="white" 
-              variant="outlined"
-              size="small"
-              class="text-primary"
-            >
-              <v-icon start size="small">mdi-counter</v-icon>
-              {{ dataStore.groupedCount }} items
-            </v-chip>
           </v-card-title>
-          
+
           <v-card-text class="pa-4">
             <!-- Loading State -->
             <div v-if="isLoading" class="text-center pa-8">
               <v-progress-circular indeterminate color="primary" size="64" />
               <p class="mt-4 text-body-1">Loading measurement details...</p>
             </div>
-            
+
             <!-- Empty State -->
             <div v-else-if="dataStore.groupedCount === 0" class="text-center pa-8">
               <v-icon size="64" color="grey">mdi-group-off</v-icon>
@@ -48,29 +38,16 @@
               <p class="text-body-2 text-medium-emphasis mt-2">
                 Go back to the search page and select measurements to compare
               </p>
-              <v-btn 
-                color="primary" 
-                variant="elevated" 
-                @click="goBack" 
-                class="mt-4"
-              >
+              <v-btn color="primary" variant="elevated" @click="goBack" class="mt-4">
                 <v-icon start>mdi-arrow-left</v-icon>
                 Back to Search
               </v-btn>
             </div>
-            
+
             <!-- Measurement Cards Grid -->
             <v-row v-else dense>
-              <v-col 
-                v-for="(measurement, index) in enrichedMeasurements" 
-                :key="index"
-                cols="12" sm="6" md="4" lg="3"
-              >
-                <SimplifiedMeasurementCard 
-                  :measurement="measurement"
-                  :order-number="index + 1"
-                  :loading="isLoading"
-                />
+              <v-col v-for="(measurement, index) in enrichedMeasurements" :key="index" cols="12" sm="6" md="4" lg="3">
+                <SimplifiedMeasurementCard :measurement="measurement" :order-number="index + 1" :loading="isLoading" />
               </v-col>
             </v-row>
           </v-card-text>
@@ -102,9 +79,10 @@
                   <v-progress-circular indeterminate color="primary" size="64" />
                   <p class="mt-4 text-body-1">Loading measurement data from server...</p>
                 </div>
-                
+
                 <!-- No Data State -->
-                <div v-else-if="!groupSummaryData || Object.keys(groupSummaryData).length === 0" class="text-center pa-8">
+                <div v-else-if="!groupSummaryData || Object.keys(groupSummaryData).length === 0"
+                  class="text-center pa-8">
                   <v-icon size="64" color="grey">mdi-chart-timeline</v-icon>
                   <h3 class="text-h6 mt-4">Loading Measurement Data</h3>
                   <p class="text-body-2 text-medium-emphasis mt-2">
@@ -112,24 +90,20 @@
                   </p>
                   <v-progress-circular indeterminate color="primary" class="mt-4" />
                 </div>
-                
+
                 <!-- Data Display -->
                 <div v-else>
                   <!-- Data Summary -->
                   <div class="mb-4">
-                    <v-alert 
-                      density="compact" 
-                      variant="tonal" 
-                      color="info"
-                    >
+                    <v-alert density="compact" variant="tonal" color="info">
                       <v-icon start size="small">mdi-information</v-icon>
                       <span class="text-body-2">
-                        Loaded {{ groupDetailedData?.length || 0 }} measurements with 
+                        Loaded {{ groupDetailedData?.length || 0 }} measurements with
                         {{ uniqueSites?.length || 0 }} unique sites
                       </span>
                     </v-alert>
                   </div>
-                  
+
                   <!-- Time Series Controls -->
                   <v-card variant="outlined" class="mt-4">
                     <v-card-title class="text-subtitle-1">
@@ -143,75 +117,48 @@
                           <v-icon start size="small" class="mr-1">mdi-target</v-icon>
                           Select Site
                         </div>
-                        <v-chip-group 
-                          v-model="selectedSite"
-                          selected-class="text-primary"
-                        >
-                          <v-chip
-                            v-for="site in uniqueSites"
-                            :key="site"
-                            :value="site"
-                            variant="outlined"
-                            filter
-                            size="small"
-                          >
+                        <v-chip-group v-model="selectedSites" selected-class="text-primary" multiple>
+                          <v-chip v-for="site in uniqueSites" :key="site" :value="site" variant="outlined" filter
+                            size="small">
                             {{ site }}
                           </v-chip>
                         </v-chip-group>
-                        <div v-if="selectedSite" class="text-caption text-medium-emphasis mt-1">
-                          Selected: {{ selectedSite }}
+                        <div v-if="selectedSites && selectedSites.length > 0" class="text-caption text-medium-emphasis mt-1">
+                          Selected ({{ selectedSites.length }}): {{ selectedSites.join(', ') }}
                         </div>
                       </div>
-                      
+
                       <!-- Other Controls -->
                       <v-row dense>
                         <v-col cols="12" md="6">
-                          <v-select
-                            v-model="selectedItem"
-                            :items="availableItems"
-                            label="Select Item (Statistic)"
-                            variant="outlined"
-                            density="compact"
-                            prepend-inner-icon="mdi-sigma"
-                            clearable
-                          />
+                          <v-select v-model="selectedItem" :items="availableItems" label="Select Item (Statistic)"
+                            variant="outlined" density="compact" prepend-inner-icon="mdi-sigma" clearable />
                         </v-col>
                         <v-col cols="12" md="6">
-                          <v-select
-                            v-model="selectedColumn"
-                            :items="nmColumns"
-                            label="Select Measurement (nm)"
-                            variant="outlined"
-                            density="compact"
-                            prepend-inner-icon="mdi-ruler"
-                            clearable
-                          />
+                          <v-select v-model="selectedColumn" :items="nmColumns" label="Select Measurement (nm)"
+                            variant="outlined" density="compact" prepend-inner-icon="mdi-ruler" clearable />
                         </v-col>
                       </v-row>
                     </v-card-text>
                   </v-card>
-                  
+
                   <!-- Time Series Chart -->
-                  <v-card variant="outlined" class="mt-4" v-if="selectedSite && selectedItem && selectedColumn">
+                  <v-card variant="outlined" class="mt-4" v-if="selectedSites.length > 0 && selectedItem && selectedColumn">
                     <v-card-title class="text-subtitle-1">
                       <v-icon start size="small">mdi-chart-line</v-icon>
-                      Time Series: {{ selectedColumn }} - {{ selectedItem }} for Site {{ selectedSite }}
+                      Time Series: {{ selectedColumn }} - {{ selectedItem }} for {{ selectedSites.length === 1 ? 'Site ' + selectedSites[0] : selectedSites.length + ' Sites' }}
                     </v-card-title>
                     <v-card-text class="pa-4">
-                      <TimeSeriesChart
-                        :time-series-data="timeSeriesData"
-                        :selected-column="selectedColumn"
-                        :chart-height="500"
-                        :loading="isProcessingTimeSeries"
-                      />
+                      <TimeSeriesChart :time-series-data="timeSeriesData" :selected-column="selectedColumn"
+                        :chart-height="700" :loading="isProcessingTimeSeries" />
                     </v-card-text>
                   </v-card>
-                  
+
                   <!-- No Selection Message -->
                   <v-card variant="outlined" class="mt-4" v-else>
                     <v-card-text class="text-center pa-8 text-medium-emphasis">
                       <v-icon size="48">mdi-chart-timeline-variant</v-icon>
-                      <p class="mt-3">Select Site, Item, and Measurement to view time series</p>
+                      <p class="mt-3">Select Sites, Item, and Measurement to view time series</p>
                       <p class="text-caption">Data is loaded and ready for visualization</p>
                     </v-card-text>
                   </v-card>
@@ -289,8 +236,8 @@ const groupDetailedData = ref([])
 const groupSummaryData = ref({})
 
 // Time series controls
-const selectedSite = ref('')  // Single site selection
-const selectedItem = ref('')
+const selectedSites = ref([])  // Multiple site selection
+const selectedItem = ref('MEAN')
 const selectedColumn = ref('')
 const isProcessingTimeSeries = ref(false)
 
@@ -327,9 +274,9 @@ const enrichedMeasurements = computed(() => {
 // Computed properties for unique sites and points
 const uniqueSites = computed(() => {
   if (!groupSummaryData.value || Object.keys(groupSummaryData.value).length === 0) return []
-  
+
   const sites = new Set()
-  
+
   // Look through summary data from all files to find unique sites
   Object.values(groupSummaryData.value).forEach(fileData => {
     if (fileData.summary && Array.isArray(fileData.summary)) {
@@ -342,32 +289,32 @@ const uniqueSites = computed(() => {
       })
     }
   })
-  
+
   const sitesArray = Array.from(sites)
-  
+
   // Natural sort to handle numeric parts correctly (1_UL, 2_UL, 10_UL)
   sitesArray.sort((a, b) => {
     // Extract numeric and text parts
     const aMatch = a.match(/^(\d+)(.*)$/)
     const bMatch = b.match(/^(\d+)(.*)$/)
-    
+
     if (aMatch && bMatch) {
       const aNum = parseInt(aMatch[1])
       const bNum = parseInt(bMatch[1])
-      
+
       // First compare numbers
       if (aNum !== bNum) {
         return aNum - bNum
       }
-      
+
       // If numbers are equal, compare the rest
       return aMatch[2].localeCompare(bMatch[2])
     }
-    
+
     // Fallback to regular string comparison
     return a.localeCompare(b)
   })
-  
+
   console.log('🔍 [DataTrendPage] Unique sites found (sorted):', sitesArray)
   return sitesArray
 })
@@ -381,110 +328,111 @@ const availableItems = computed(() => {
 
 const nmColumns = computed(() => {
   if (!groupSummaryData.value || Object.keys(groupSummaryData.value).length === 0) return []
-  
+
   // Get the first file's summary data to extract column names
   const firstFile = Object.keys(groupSummaryData.value)[0]
   const summaryData = groupSummaryData.value[firstFile]?.summary || []
-  
+
   if (summaryData.length === 0) return []
-  
+
   // Extract columns that contain "(nm)"
   const firstRecord = summaryData[0]
   const allKeys = Object.keys(firstRecord)
-  
-  return allKeys.filter(key => 
+
+  return allKeys.filter(key =>
     key.includes('(nm)') || key.toLowerCase().includes('nm')
   ).sort()
 })
 
 // Computed property for time series data
 const timeSeriesData = computed(() => {
-  if (!selectedSite.value || !selectedItem.value || !selectedColumn.value) return []
+  if (!selectedSites.value || selectedSites.value.length === 0 || !selectedItem.value || !selectedColumn.value) return []
   if (!groupSummaryData.value || Object.keys(groupSummaryData.value).length === 0) return []
-  
+
   console.log('🔍 [Time Series] Computing time series data...')
-  console.log('Selected Site:', selectedSite.value)
+  console.log('Selected Sites:', selectedSites.value)
   console.log('Selected Item:', selectedItem.value)
   console.log('Selected Column:', selectedColumn.value)
   console.log('Available files:', Object.keys(groupSummaryData.value))
-  
-  // Collect data points for the selected site
-  const dataPoints = []
-  
-  // Process each measurement file
-  Object.entries(groupSummaryData.value).forEach(([filename, fileData]) => {
-    const { info, summary } = fileData
-    
-    if (!summary || !Array.isArray(summary)) {
-      console.warn(`⚠️ No summary data for file: ${filename}`)
-      return
-    }
-    
-    // Find the corresponding original measurement from dataStore to get the correct timestamp
-    const originalMeasurement = dataStore.groupedData.find(m => m.filename === filename)
-    const timestamp = originalMeasurement?.event_time || 
-                     originalMeasurement?.formatted_date || 
-                     originalMeasurement?.measurement_date ||
-                     info?.event_time || 
-                     info?.formatted_date || 
-                     info?.measurement_date || 
-                     new Date().toISOString()
-    
-    // Find record for the selected site
-    const record = summary.find(r => {
-      // Check various possible field names for Site
-      const siteValue = r.Site || r.Site_ID || r['Site ID'] || r.site_id
-      const siteMatch = siteValue === selectedSite.value
-      const itemMatch = r.ITEM === selectedItem.value
-      
-      return siteMatch && itemMatch
-    })
-    
-    if (record && record[selectedColumn.value] !== undefined) {
-      const dataPoint = {
-        timestamp: timestamp,
-        value: parseFloat(record[selectedColumn.value]),
-        lotId: originalMeasurement?.lot_id || info?.lot_id || extractLotIdFromFilename(filename),
-        recipe: originalMeasurement?.rcp_id || originalMeasurement?.recipe_name || info?.rcp_id || info?.recipe_name || 'Unknown',
-        filename: filename,
-        site: selectedSite.value
+
+  // Create a series for each selected site
+  const seriesData = selectedSites.value.map(site => {
+    const dataPoints = []
+
+    // Process each measurement file for this site
+    Object.entries(groupSummaryData.value).forEach(([filename, fileData]) => {
+      const { info, summary } = fileData
+
+      if (!summary || !Array.isArray(summary)) {
+        console.warn(`⚠️ No summary data for file: ${filename}`)
+        return
       }
-      
-      dataPoints.push(dataPoint)
+
+      // Find the corresponding original measurement from dataStore to get the correct timestamp
+      const originalMeasurement = dataStore.groupedData.find(m => m.filename === filename)
+      const timestamp = originalMeasurement?.event_time ||
+        originalMeasurement?.formatted_date ||
+        originalMeasurement?.measurement_date ||
+        info?.event_time ||
+        info?.formatted_date ||
+        info?.measurement_date ||
+        new Date().toISOString()
+
+      // Find record for the current site
+      const record = summary.find(r => {
+        // Check various possible field names for Site
+        const siteValue = r.Site || r.Site_ID || r['Site ID'] || r.site_id
+        const siteMatch = siteValue === site
+        const itemMatch = r.ITEM === selectedItem.value
+
+        return siteMatch && itemMatch
+      })
+
+      if (record && record[selectedColumn.value] !== undefined) {
+        const dataPoint = {
+          timestamp: timestamp,
+          value: parseFloat(record[selectedColumn.value]),
+          lotId: originalMeasurement?.lot_id || info?.lot_id || extractLotIdFromFilename(filename),
+          recipe: originalMeasurement?.rcp_id || originalMeasurement?.recipe_name || info?.rcp_id || info?.recipe_name || 'Unknown',
+          filename: filename,
+          site: site
+        }
+
+        dataPoints.push(dataPoint)
+      }
+    })
+
+    // Sort by timestamp
+    dataPoints.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
+
+    return {
+      name: site,
+      data: dataPoints
     }
   })
-  
-  // Sort by timestamp
-  dataPoints.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp))
-  
-  // Return as single series
-  const series = [{
-    name: selectedSite.value,
-    data: dataPoints
-  }]
-  
-  console.log(`📊 Time series data for site ${selectedSite.value}:`, series)
-  return series
+
+  console.log(`📊 Time series data for ${selectedSites.value.length} sites:`, seriesData)
+  return seriesData
 })
 
 // Lifecycle
 onMounted(() => {
   console.log('🚀 [DataTrendPage] Mounted with grouped data:', dataStore.groupedData)
   console.log('🚀 [DataTrendPage] Selected tool:', dataStore.selectedTool)
-  
+
   // Check if we have pre-loaded data from sessionStorage
   const storedData = sessionStorage.getItem('groupDetailedData')
   if (storedData) {
     try {
       const loadedResults = JSON.parse(storedData)
       console.log(`📊 [DataTrendPage] Found pre-loaded data in sessionStorage: ${loadedResults.length} measurements`)
-      
+
       // Process the loaded data
       processLoadedGroupData(loadedResults)
-      
+
       // Clear the sessionStorage to prevent stale data on refresh
       sessionStorage.removeItem('groupDetailedData')
-      
+
       // Auto-switch to time series tab to show the data
       activeTab.value = 'time-series'
     } catch (error) {
@@ -492,7 +440,7 @@ onMounted(() => {
     }
   } else {
     console.log('📊 [DataTrendPage] No pre-loaded data found, auto-loading measurement data...')
-    
+
     // Auto-load measurement data if we have grouped data
     if (dataStore.groupedData && dataStore.groupedData.length > 0) {
       console.log('✅ [DataTrendPage] Found', dataStore.groupedData.length, 'measurements, auto-loading data...')
@@ -506,7 +454,7 @@ onMounted(() => {
 // Helper functions
 function extractLotIdFromFilename(filename) {
   if (!filename) return 'Unknown'
-  
+
   // Extract lot ID from filename pattern #date#recipe#lot_id_time#slot_measured#
   const parts = filename.split('#')
   if (parts.length >= 4) {
@@ -521,10 +469,10 @@ function generateCarrierId(measurement) {
   // Generate carrier ID from available data
   if (measurement.carrier_id) return measurement.carrier_id
   if (measurement.lot_wf) return measurement.lot_wf
-  
+
   const lotId = measurement.lot_id || extractLotIdFromFilename(measurement.filename)
   const wfId = measurement.wf_id || 'W01'
-  
+
   return `${lotId}_${wfId}`
 }
 
@@ -532,7 +480,7 @@ function validateMeasurementData(measurement) {
   // Check if measurement has minimum required data for navigation
   const hasFilename = !!(measurement.filename)
   const hasRecipe = !!(measurement.rcp_id || measurement.recipe_name)
-  
+
   return hasFilename && hasRecipe
 }
 
@@ -543,11 +491,11 @@ function goBack() {
 // Process pre-loaded group data
 function processLoadedGroupData(loadedResults) {
   console.log('📊 [DataTrendPage] Processing loaded group data...')
-  
+
   // Process and combine the detailed data
   const allDetailedData = []
   const summaryByFile = {}
-  
+
   loadedResults.forEach(result => {
     // Add filename to each detailed record for tracking
     if (result.detailedData && Array.isArray(result.detailedData)) {
@@ -558,7 +506,7 @@ function processLoadedGroupData(loadedResults) {
       }))
       allDetailedData.push(...enrichedData)
     }
-    
+
     // Store summary data by filename
     summaryByFile[result.filename] = {
       info: result.info,
@@ -566,13 +514,13 @@ function processLoadedGroupData(loadedResults) {
       availablePoints: result.availablePoints
     }
   })
-  
+
   groupDetailedData.value = allDetailedData
   groupSummaryData.value = summaryByFile
-  
+
   console.log(`📊 Total detailed records loaded: ${allDetailedData.length}`)
   console.log(`📊 Unique sites found: ${uniqueSites.value.length}`)
-  
+
   // Debug: Log sample data structure
   if (Object.keys(summaryByFile).length > 0) {
     const firstFile = Object.keys(summaryByFile)[0]
@@ -590,16 +538,16 @@ function processLoadedGroupData(loadedResults) {
 // Load detailed data for all measurements in the group
 async function loadGroupDataFromFlask() {
   console.log('🚀 [DataTrendPage] Loading group data from Flask...')
-  
+
   if (dataStore.groupedData.length === 0) {
     console.warn('⚠️ No measurements in group to load')
     return
   }
-  
+
   isLoadingGroupData.value = true
   groupDetailedData.value = []
   groupSummaryData.value = {}
-  
+
   try {
     // Load data for each measurement in the group
     const loadPromises = dataStore.groupedData.map(async (measurement) => {
@@ -607,14 +555,14 @@ async function loadGroupDataFromFlask() {
         console.warn(`⚠️ Skipping measurement without filename:`, measurement)
         return null
       }
-      
+
       try {
         console.log(`📊 Loading data for: ${measurement.filename}`)
         const toolName = measurement.tool || dataStore.selectedTool || 'MAP608'
-        
+
         // Fetch detailed measurement data
         const response = await apiService.getAfmFileDetail(measurement.filename, toolName)
-        
+
         if (response.success && response.data) {
           return {
             filename: measurement.filename,
@@ -633,17 +581,17 @@ async function loadGroupDataFromFlask() {
         return null
       }
     })
-    
+
     // Wait for all measurements to load
     const results = await Promise.all(loadPromises)
     const validResults = results.filter(r => r !== null)
-    
+
     console.log(`✅ Loaded ${validResults.length} out of ${dataStore.groupedData.length} measurements`)
-    
+
     // Process and combine the detailed data
     const allDetailedData = []
     const summaryByFile = {}
-    
+
     validResults.forEach(result => {
       // Add filename to each detailed record for tracking
       if (result.detailedData && Array.isArray(result.detailedData)) {
@@ -654,7 +602,7 @@ async function loadGroupDataFromFlask() {
         }))
         allDetailedData.push(...enrichedData)
       }
-      
+
       // Store summary data by filename
       summaryByFile[result.filename] = {
         info: result.info,
@@ -662,16 +610,16 @@ async function loadGroupDataFromFlask() {
         availablePoints: result.availablePoints
       }
     })
-    
+
     groupDetailedData.value = allDetailedData
     groupSummaryData.value = summaryByFile
-    
+
     console.log(`📊 Total detailed records loaded: ${allDetailedData.length}`)
     console.log(`📊 Unique sites found: ${uniqueSites.value.length}`)
-    
+
     // Auto-switch to time series tab to show the data
     activeTab.value = 'time-series'
-    
+
   } catch (error) {
     console.error('❌ Error loading group data:', error)
   } finally {
