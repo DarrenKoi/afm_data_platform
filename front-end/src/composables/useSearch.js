@@ -1,5 +1,5 @@
 import { ref, watch, nextTick } from 'vue'
-import { apiService, filterMeasurementsLocally } from '@/services/index.js'
+import { apiService, filterMeasurementsLocally } from '@/services/api'
 import { useDataStore } from '@/stores/dataStore.js'
 
 export function useDebounceSearch(delay = 300) {

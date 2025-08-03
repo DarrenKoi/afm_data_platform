@@ -81,7 +81,7 @@
     <!-- Additional Images Row: Measure Profile Analysis, Align, and Tip Images -->
     <v-row dense class="mb-3">
       <v-col cols="12">
-        <AdditionalAnalysisImages :selected-point="selectedPoint" :filename="filename" />
+        <AdditionalAnalysisImages :selected-point="selectedPoint?.value || selectedPoint" :filename="filename" />
       </v-col>
     </v-row>
 
@@ -91,7 +91,7 @@
       <v-col cols="12" lg="6">
         <div style="max-height: 1200px; overflow-y: auto;">
           <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
-            :measurement-points="measurementPoints" :selected-point="selectedPoint"
+            :measurement-points="measurementPoints" :selected-point="String(selectedPoint?.value || selectedPoint || '')"
             @point-selected="handlePointSelected" @point-data-loaded="handlePointDataLoaded"
             @simple-point-selected="selectPoint" />
         </div>
@@ -107,68 +107,65 @@
                 <v-card-title class="py-2">
                   <v-icon start size="small">mdi-grid</v-icon>
                   <span class="text-subtitle-1">Wafer Heat Map</span>
+                  <v-spacer />
+                  <v-progress-circular v-if="isLoadingWafer" indeterminate size="16" width="2" />
                 </v-card-title>
                 <v-card-text class="pa-3">
-                  <HeatmapChart :profile-data="profileData" :chart-height="420" :clickable="true"
-                    :selected-point="selectedPoint" @point-selected="handleWaferPointSelected" />
+                  <HeatmapChart :profile-data="waferData" :chart-height="420" :clickable="true"
+                    :selected-point="selectedPoint?.value || selectedPoint" @point-selected="handleWaferPointSelected" />
                 </v-card-text>
               </v-card>
             </v-col>
 
-            <!-- Profile Image and Z-Distribution Row -->
+            <!-- Profile Image Row -->
             <v-col cols="12">
-              <v-row dense>
-                <!-- Profile Image -->
-                <v-col cols="12" md="6">
-                  <v-card class="profile-card" height="450">
-                    <v-card-title class="py-2">
-                      <v-icon start size="small">mdi-image</v-icon>
-                      <span class="text-subtitle-1">Profile Image</span>
-                      <v-spacer />
-                      <v-chip v-if="selectedPoint" size="x-small" color="primary" variant="outlined">
-                        Point {{ selectedPoint }}
-                      </v-chip>
-                    </v-card-title>
-                    <v-card-text class="pa-3">
-                      <div v-if="isLoadingProfileImage" class="text-center pa-4">
-                        <v-progress-circular indeterminate color="primary" size="small" />
-                        <p class="mt-2 text-caption">Loading profile image...</p>
-                      </div>
-                      <div v-else-if="profileImageUrl" class="profile-image-container"
-                        style="height: 380px; display: flex; align-items: center; justify-content: center;">
-                        <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
-                          style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
-                          @load="handleImageLoad" />
-                      </div>
-                      <div v-else class="text-center pa-4">
-                        <v-icon size="32" color="grey">mdi-image-off</v-icon>
-                        <p class="text-body-2 mt-2 text-medium-emphasis">No profile image available</p>
-                      </div>
-                    </v-card-text>
-                  </v-card>
-                </v-col>
+              <v-card class="profile-card" height="500">
+                <v-card-title class="py-2">
+                  <v-icon start size="small">mdi-image</v-icon>
+                  <span class="text-subtitle-1">Profile Image</span>
+                  <v-spacer />
+                  <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="primary" variant="outlined">
+                    Point {{ selectedPoint?.value || selectedPoint }}
+                  </v-chip>
+                </v-card-title>
+                <v-card-text class="pa-3">
+                  <div v-if="isLoadingProfileImage" class="text-center pa-4">
+                    <v-progress-circular indeterminate color="primary" size="small" />
+                    <p class="mt-2 text-caption">Loading profile image...</p>
+                  </div>
+                  <div v-else-if="profileImageUrl" class="profile-image-container"
+                    style="height: 430px; display: flex; align-items: center; justify-content: center;">
+                    <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
+                      style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
+                      @load="handleImageLoad" />
+                  </div>
+                  <div v-else class="text-center pa-4">
+                    <v-icon size="32" color="grey">mdi-image-off</v-icon>
+                    <p class="text-body-2 mt-2 text-medium-emphasis">No profile image available</p>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </v-col>
 
-                <!-- Z-Value Distribution -->
-                <v-col cols="12" md="6">
-                  <v-card class="distribution-card" height="450">
-                    <v-card-title class="py-2">
-                      <v-icon start size="small">mdi-chart-bar</v-icon>
-                      <span class="text-subtitle-1">Z-Value Distribution</span>
-                      <v-spacer />
-                      <v-chip v-if="profileData.length > 0" size="x-small" color="success" variant="outlined">
-                        {{ profileData.length.toLocaleString() }} points
-                      </v-chip>
-                    </v-card-title>
-                    <v-card-text class="pa-3">
-                      <div v-if="isLoadingProfile" class="text-center pa-4">
-                        <v-progress-circular indeterminate color="primary" size="small" />
-                        <p class="mt-2 text-caption">Loading...</p>
-                      </div>
-                      <HistogramChart v-else :profile-data="profileData" :chart-height="380" :compact="false" />
-                    </v-card-text>
-                  </v-card>
-                </v-col>
-              </v-row>
+            <!-- Z-Value Distribution Row -->
+            <v-col cols="12">
+              <v-card class="distribution-card" height="500">
+                <v-card-title class="py-2">
+                  <v-icon start size="small">mdi-chart-bar</v-icon>
+                  <span class="text-subtitle-1">Z-Value Distribution</span>
+                  <v-spacer />
+                  <v-chip v-if="profileData.length > 0" size="x-small" color="success" variant="outlined">
+                    {{ profileData.length.toLocaleString() }} points
+                  </v-chip>
+                </v-card-title>
+                <v-card-text class="pa-3">
+                  <div v-if="isLoadingProfile" class="text-center pa-4">
+                    <v-progress-circular indeterminate color="primary" size="small" />
+                    <p class="mt-2 text-caption">Loading...</p>
+                  </div>
+                  <HistogramChart v-else :profile-data="profileData" :chart-height="430" :compact="false" />
+                </v-card-text>
+                </v-card>
             </v-col>
           </v-row>
         </div>
@@ -178,10 +175,11 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { fetchProfileData, fetchMeasurementData, apiService } from '@/services/index.js'
-import { downloadCSV, formatMeasurementInfo, formatSummaryStatistics, formatProfileData, generateFilename } from '@/utils/exportUtils.js'
+import { useResultPageData } from '@/composables/useResultPageQueries.js'
+import { usePointSelection } from '@/composables/usePointSelection.js'
+import { useDataDownload } from '@/composables/useDataDownload.js'
 
 // Import components
 import MeasurementInfo from '@/components/ResultPage/MeasurementInfo.vue'
@@ -197,199 +195,47 @@ const router = useRouter()
 // Navigation tracking
 const referrer = ref('')
 
-// Reactive data
+// Basic route data
 const filename = ref(decodeURIComponent(route.params.filename || ''))
-const recipeId = ref(route.params.recipeId)
-const measurementInfo = ref({})
-const summaryData = ref([])
-const detailedData = ref([])
-const measurementPoints = ref([])
-const selectedPoint = ref(null)
-const profileData = ref([])
-const isLoadingProfile = ref(false)
+const toolName = ref(route.query.tool || 'MAP608')
 const selectedStatistic = ref(null)
-const profileImageUrl = ref(null)
-const isLoadingProfileImage = ref(false)
 
+// Point selection logic
+const pointSelection = usePointSelection()
+const { selectedPoint, selectPoint, handlePointSelected, handleWaferPointSelected, handlePointDataLoaded } = pointSelection
 
+// Vue Query data fetching
+const {
+  measurementInfo,
+  summaryData,
+  detailedData,
+  measurementPoints,
+  profileData,
+  profileImageUrl,
+  waferData,
+  isLoadingProfile,
+  isLoadingProfileImage,
+  isLoadingWafer,
+  hasData
+} = useResultPageData(filename.value, selectedPoint, toolName.value)
 
-// Calculate optimal chart height based on viewport
-const chartHeight = computed(() => {
-  // Use 70% of viewport height, minimum 600px for professional layout
-  const viewportHeight = window.innerHeight || 800
-  const headerHeight = 200 // approximate header + compact info height
-  const availableHeight = viewportHeight - headerHeight
-  return Math.max(Math.floor(availableHeight * 0.8), 600)
-})
+// Download functionality
+const downloadFunctions = useDataDownload(
+  measurementInfo,
+  summaryData,
+  detailedData,
+  profileData,
+  computed(() => selectedPoint.value?.value || selectedPoint.value)
+)
 
-// Functions
-async function selectPoint(pointNumber) {
-  selectedPoint.value = pointNumber
-  isLoadingProfile.value = true
+const {
+  downloadMeasurementInfo,
+  downloadSummaryStatistics,
+  downloadDetailedData,
+  downloadProfileData,
+  downloadAllData
+} = downloadFunctions
 
-  try {
-    const response = await fetchProfileData(filename.value, pointNumber)
-    profileData.value = response || []
-    await nextTick()
-  } catch (error) {
-    console.error('Error fetching profile data:', error)
-    profileData.value = []
-  } finally {
-    isLoadingProfile.value = false
-  }
-}
-
-
-function handleWaferPointSelected(point) {
-  if (point && point.point) {
-    selectPoint(point.point)
-  } else if (point && measurementPoints.value.length > 0) {
-    const firstPoint = measurementPoints.value[0]
-    selectPoint(firstPoint.point)
-  }
-}
-
-
-async function loadData() {
-  try {
-    const measurementResponse = await fetchMeasurementData(filename.value)
-
-    if (measurementResponse.success && measurementResponse.data) {
-      const data = measurementResponse.data
-
-      // Set measurement info from info dict (transformed from information)
-      if (data.info && Object.keys(data.info).length > 0) {
-        measurementInfo.value = data.info
-      } else {
-        // Fallback measurement info
-        measurementInfo.value = {
-          'Group Key': filename.value,
-          'Recipe ID': recipeId.value || 'Unknown',
-          'Lot ID': extractLotIdFromFilename(filename.value),
-          'Fab': 'SK_Hynix_ITC',
-          'Loading Status': 'No Information Available'
-        }
-        console.warn('No measurement info available, using fallback')
-      }
-
-      // Set summary data from DataFrame - using transformed summaryData
-      if (data.summaryData && Array.isArray(data.summaryData) && data.summaryData.length > 0) {
-        summaryData.value = data.summaryData
-      } else {
-        // Fallback: check legacy summary property
-        if (data.summary && Array.isArray(data.summary) && data.summary.length > 0) {
-          summaryData.value = data.summary
-        } else {
-          // Generate dummy summary data for demonstration
-          summaryData.value = generateDummySummaryData(filename.value)
-          console.warn('No summary data available, using generated data')
-        }
-      }
-
-      // Set detailed data from DataFrame - using transformed profileData (which contains detailed measurements)
-      if (data.profileData && Array.isArray(data.profileData) && data.profileData.length > 0) {
-        detailedData.value = data.profileData
-      } else if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-        detailedData.value = data.data
-      } else {
-        detailedData.value = []
-        console.warn('No detailed data available')
-      }
-
-      // Set available measurement points
-      if (data.available_points && data.available_points.length > 0) {
-        measurementPoints.value = data.available_points.map(point => ({
-          point: point,
-          filename: filename.value
-        }))
-
-        // Auto-select first point and load its data
-        selectPoint(data.available_points[0])
-      } else {
-        // Generate default measurement points from filename
-        // Try to parse slot and measured info from filename
-        const parsed = filename.value.match(/#(\d+)_(\w+)#/)
-        if (parsed) {
-          const [, slot, measuredInfo] = parsed
-          measurementPoints.value = [{
-            point: `${slot}_${measuredInfo}`,
-            filename: filename.value
-          }]
-          selectPoint(`${slot}_${measuredInfo}`)
-        }
-      }
-
-    } else {
-      console.warn('Failed to load measurement data, using fallback')
-      createFallbackData()
-    }
-  } catch (error) {
-    console.error('Error loading measurement data:', error)
-    createFallbackData()
-  }
-}
-
-// Helper function to extract lot ID from group key
-function extractLotIdFromFilename(filename) {
-  // Extract lot ID from filename pattern #date#recipe#lot_id_time#slot_measured#
-  const parts = filename.split('#')
-  if (parts.length >= 4) {
-    const lotPart = parts[3]
-    const lotId = lotPart.split('_')[0] // Get lot ID before underscore
-    return lotId || 'Unknown'
-  }
-  return 'Unknown'
-}
-
-// Helper function to create fallback data when pickle files are not available
-function createFallbackData() {
-  // Try to parse information from filename
-  const parsed = filename.value.match(/#(\d{6})#(.+?)#([^_]+)_.*?#(\d+)_(\w+)#/)
-  if (parsed) {
-    const [, date, recipe, lotId, slot, measuredInfo] = parsed
-    // Create measurement info from filename
-    measurementInfo.value = {
-      fab: 'SK_Hynix_ITC',
-      lot_id: lotId,
-      wf_id: 'W01',
-      filename: filename.value,
-      rcp_id: recipe || recipeId.value || "UNKNOWN_RECIPE",
-      event_time: new Date().toISOString(),
-      tool: 'AFM_Tool',
-      operator: 'System',
-      sample_id: filename.value,
-      carrier_id: 'Auto'
-    }
-
-    // Create measurement points
-    measurementPoints.value = [{
-      point: `${slot}_${measuredInfo}`,
-      filename: filename.value
-    }]
-
-    // Generate dummy statistics
-    statisticsData.value = generateDummyStatistics(filename.value)
-
-    // Set dummy images
-    setDummyImages()
-
-  }
-}
-
-// Helper function to generate dummy summary data in DataFrame format
-function generateDummySummaryData(filename) {
-  const parts = filename.split('#')
-  const pointName = parts.length >= 3 ? `${parts[1]}_UL` : '1_UL'
-
-  return [
-    { ITEM: 'MEAN', [pointName]: -4.942, 'Left_H (nm)': -4.942, 'Right_H (nm)': -6.014, 'Ref_H (nm)': 0.0 },
-    { ITEM: 'STDEV', [pointName]: 0.234, 'Left_H (nm)': 0.234, 'Right_H (nm)': 0.156, 'Ref_H (nm)': 0.0 },
-    { ITEM: 'MIN', [pointName]: -5.890, 'Left_H (nm)': -5.890, 'Right_H (nm)': -6.520, 'Ref_H (nm)': 0.0 },
-    { ITEM: 'MAX', [pointName]: -4.120, 'Left_H (nm)': -4.120, 'Right_H (nm)': -5.340, 'Ref_H (nm)': 0.0 },
-    { ITEM: 'COUNT', [pointName]: 1000, 'Left_H (nm)': 1000, 'Right_H (nm)': 1000, 'Ref_H (nm)': 1000 },
-    { ITEM: 'RANGE', [pointName]: 1.770, 'Left_H (nm)': 1.770, 'Right_H (nm)': 1.180, 'Ref_H (nm)': 0.0 }
-  ]
-}
 
 // Handler for statistical row clicks
 function handleStatisticRowClick(rowItem) {
@@ -401,71 +247,10 @@ function handleStatisticSelected(statisticName) {
   selectedStatistic.value = statisticName
 }
 
-// Handler for measurement point selection from MeasurementPoints component
-async function handlePointSelected(pointData) {
-  const { measurementPoint, pointNumber, filename: pointFilename, siteInfo } = pointData
-
-  if (pointNumber && pointFilename) {
-    try {
-      isLoadingProfile.value = true
-      isLoadingProfileImage.value = true
-
-      // Clean filename by removing .csv extension if present
-      const cleanFilename = pointFilename.replace('.csv', '')
-
-      // Convert measurement point format to point number if needed
-      let cleanPointNumber = pointNumber
-      if (typeof pointNumber === 'string' && pointNumber.includes('_')) {
-        cleanPointNumber = pointNumber.split('_')[0] // Extract number part
-      }
-
-      const toolName = route.query.tool || 'MAP608'
-
-      const [profileResponse, imageResponse] = await Promise.allSettled([
-        apiService.getProfileData(cleanFilename, cleanPointNumber, toolName, siteInfo),
-        apiService.getProfileImage(cleanFilename, cleanPointNumber, toolName, siteInfo)
-      ])
-
-      // Handle profile data response
-      if (profileResponse.status === 'fulfilled' && profileResponse.value.success) {
-        profileData.value = profileResponse.value.data
-      } else {
-        console.warn('Failed to load profile data:', profileResponse.reason || profileResponse.value?.error)
-        profileData.value = []
-      }
-
-      // Handle image response
-      if (imageResponse.status === 'fulfilled' && imageResponse.value.success) {
-        profileImageUrl.value = apiService.getProfileImageUrl(cleanFilename, cleanPointNumber, toolName, siteInfo)
-      } else {
-        console.warn('Failed to load profile image:', imageResponse.reason || imageResponse.value?.error)
-        profileImageUrl.value = null
-      }
-
-      // Update selected point for other components
-      selectedPoint.value = measurementPoint
-
-    } catch (error) {
-      console.error('Error loading profile data and image:', error)
-      profileData.value = []
-      profileImageUrl.value = null
-    } finally {
-      isLoadingProfile.value = false
-      isLoadingProfileImage.value = false
-    }
-  }
-}
-
-// Handler for point data loaded event
-function handlePointDataLoaded(data) {
-  // Could be used to update UI state or trigger other actions
-}
-
 
 // Image handling functions
 function handleImageError(event) {
   console.warn('Profile image failed to load:', event)
-  profileImageUrl.value = null
 }
 
 function handleImageLoad(event) {
@@ -482,69 +267,6 @@ function goBack() {
   }
 }
 
-// Computed property for checking if we have any data
-const hasData = computed(() => {
-  return (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) ||
-    (summaryData.value && summaryData.value.length > 0) ||
-    (detailedData.value && detailedData.value.length > 0)
-})
-
-// Download functions
-function downloadMeasurementInfo() {
-  const data = formatMeasurementInfo(measurementInfo.value)
-  const filename = generateFilename('measurement_info', measurementInfo.value)
-  downloadCSV(data, filename)
-}
-
-function downloadSummaryStatistics() {
-  const data = formatSummaryStatistics(summaryData.value)
-  const filename = generateFilename('summary_statistics', measurementInfo.value)
-  downloadCSV(data, filename)
-}
-
-function downloadDetailedData() {
-  const filename = generateFilename('detailed_data', measurementInfo.value)
-  downloadCSV(detailedData.value, filename)
-}
-
-function downloadProfileData() {
-  const data = formatProfileData(profileData.value)
-  const filename = generateFilename(`profile_data_point_${selectedPoint.value || 'all'}`, measurementInfo.value)
-  downloadCSV(data, filename)
-}
-
-function downloadAllData() {
-  // Create a combined dataset
-  const timestamp = new Date().toISOString().split('T')[0].replace(/-/g, '')
-  const lotId = measurementInfo.value.lot_id || 'unknown'
-  const recipe = measurementInfo.value.recipe_name || 'data'
-
-  // Download each dataset separately with related names
-  const baseFilename = `AFM_${recipe}_${lotId}_${timestamp}`
-
-  // Download measurement info
-  if (measurementInfo.value && Object.keys(measurementInfo.value).length > 0) {
-    const infoData = formatMeasurementInfo(measurementInfo.value)
-    downloadCSV(infoData, `${baseFilename}_info`)
-  }
-
-  // Download summary statistics
-  if (summaryData.value && summaryData.value.length > 0) {
-    const summaryFormatted = formatSummaryStatistics(summaryData.value)
-    downloadCSV(summaryFormatted, `${baseFilename}_summary`)
-  }
-
-  // Download detailed data
-  if (detailedData.value && detailedData.value.length > 0) {
-    downloadCSV(detailedData.value, `${baseFilename}_detailed`)
-  }
-
-  // Download profile data if available
-  if (profileData.value && profileData.value.length > 0) {
-    const profileFormatted = formatProfileData(profileData.value)
-    downloadCSV(profileFormatted, `${baseFilename}_profile_point_${selectedPoint.value || 'last'}`)
-  }
-}
 
 // Lifecycle
 onMounted(() => {
@@ -552,9 +274,15 @@ onMounted(() => {
   if (route.query.from) {
     referrer.value = route.query.from
   }
-
-  loadData()
 })
+
+// Auto-select first point when measurement points are loaded
+watch(measurementPoints, (newPoints) => {
+  if (newPoints && newPoints.length > 0 && !selectedPoint.value) {
+    console.log(`📍 Auto-selecting first point: ${newPoints[0].point}`)
+    selectPoint(newPoints[0].point)
+  }
+}, { immediate: true })
 </script>
 
 <style scoped>

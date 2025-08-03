@@ -14,12 +14,11 @@
           <span class="text-h6 font-weight-medium mr-4">Tool:</span>
           <v-tooltip v-for="tool in availableTools" :key="tool.id" :text="tool.description" location="bottom">
             <template v-slot:activator="{ props }">
-              <v-chip v-bind="props"
-                :color="selectedTool === tool.id ? 'primary' : 'default'"
+              <v-chip v-bind="props" :color="selectedTool === tool.id ? 'primary' : 'default'"
                 :variant="selectedTool === tool.id ? 'elevated' : 'outlined'" size="large" class="px-4 mx-2"
                 @click="selectTool(tool.id)">
                 <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
-                  {{ tool.icon }}
+                  mdi-microscope
                 </v-icon>
                 <span class="font-weight-medium">{{ tool.name }}</span>
               </v-chip>
@@ -41,7 +40,8 @@
         <div class="px-2">
           <!-- View History -->
           <ViewHistoryCard :view-history="dataStore.viewHistory" :history-count="dataStore.historyCount"
-            @view-details="viewDetails" @clear-history="dataStore.clearHistory" @remove-from-history="dataStore.removeFromHistory" />
+            @view-details="viewDetails" @clear-history="dataStore.clearHistory"
+            @remove-from-history="dataStore.removeFromHistory" />
 
           <!-- Data Grouping -->
           <DataGroupingCard :grouped-data="dataStore.groupedData" :grouped-count="dataStore.groupedCount"
@@ -120,6 +120,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDataStore } from '@/stores/dataStore.js'
+import { apiService } from '@/services/api'
 
 // Import components
 import SearchSection from '@/components/MainPage/SearchSection.vue'
@@ -138,14 +139,12 @@ const availableTools = ref([
   {
     id: 'MAP608',
     name: 'MAP608',
-    icon: 'mdi-microscope',
     description: 'PKG',
     status: 'active'
   },
   {
     id: 'MAPC01',
     name: 'MAPC01',
-    icon: 'mdi-microscope',
     description: 'R3',
     status: 'active'
   }
@@ -165,7 +164,7 @@ function viewDetails(measurement) {
     ...measurement,
     tool: measurement.tool || selectedTool.value
   }
-  
+
   // Add to history with tool information
   dataStore.addToHistory(measurementWithTool)
 
@@ -216,7 +215,6 @@ async function viewTrendAnalysis() {
         const toolName = measurement.tool || measurement.tool_name || selectedTool.value || 'MAP608'
 
         // Use the apiService to fetch detailed measurement data
-        const { apiService } = await import('@/services/index.js')
         const response = await apiService.getAfmFileDetail(measurement.filename, toolName)
 
         // Update progress
@@ -270,7 +268,6 @@ async function viewTrendAnalysis() {
     // Could show an error dialog here
   }
 }
-
 
 
 // Loading dialog state

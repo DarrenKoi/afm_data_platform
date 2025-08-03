@@ -151,30 +151,12 @@ const imageDialog = ref(false)
 const selectedImage = ref(null)
 const hoveredImage = ref({})
 
-// Images data structure with placeholder data
+// Images data structure - start with empty arrays to avoid network errors
 const imagesData = ref({
-  profile: [
-    { name: 'profile_scan_001.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+001' },
-    { name: 'profile_scan_002.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+002' },
-    { name: 'profile_scan_003.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+003' },
-    { name: 'profile_scan_004.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+004' },
-    { name: 'profile_scan_005.png', url: 'https://via.placeholder.com/400x300/4CAF50/FFFFFF?text=Profile+Scan+005' }
-  ],
-  tiff: [
-    { name: 'raw_image_001.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+001' },
-    { name: 'raw_image_002.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+002' },
-    { name: 'raw_image_003.tiff', url: 'https://via.placeholder.com/400x300/2196F3/FFFFFF?text=Raw+Image+003' }
-  ],
-  align: [
-    { name: 'alignment_ref_001.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+001' },
-    { name: 'alignment_ref_002.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+002' },
-    { name: 'alignment_ref_003.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+003' },
-    { name: 'alignment_ref_004.jpg', url: 'https://via.placeholder.com/400x300/FF9800/FFFFFF?text=Alignment+Ref+004' }
-  ],
-  tip: [
-    { name: 'tip_condition_before.png', url: 'https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Tip+Before' },
-    { name: 'tip_condition_after.png', url: 'https://via.placeholder.com/400x300/9C27B0/FFFFFF?text=Tip+After' }
-  ]
+  profile: [],
+  tiff: [],
+  align: [],
+  tip: []
 })
 
 // Tab configuration

@@ -125,7 +125,7 @@
         </v-card>
 
         <!-- Version Information -->
-        <v-card elevation="3">
+        <v-card elevation="3" class="mb-6">
           <v-card-title class="bg-info">
             <v-icon start>mdi-information</v-icon>
             버전 정보
@@ -135,10 +135,10 @@
               <v-col cols="12" md="6">
                 <v-list dense>
                   <v-list-item>
-                    <v-list-item-title><strong>현재 버전:</strong> 1.0.0</v-list-item-title>
+                    <v-list-item-title><strong>현재 버전:</strong> 1.1.0</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
-                    <v-list-item-title><strong>출시일:</strong> 2025년 7월</v-list-item-title>
+                    <v-list-item-title><strong>출시일:</strong> 2025년 8월</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-title><strong>개발 상태:</strong> 활발히 진행 중</v-list-item-title>
@@ -148,17 +148,87 @@
               <v-col cols="12" md="6">
                 <v-list dense>
                   <v-list-item>
-                    <v-list-item-title><strong>데이터셋 크기:</strong> 15,000+ 측정</v-list-item-title>
+                    <v-list-item-title><strong>데이터셋 크기:</strong> 20,000+ 측정</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
                     <v-list-item-title><strong>검색 성능:</strong> 300ms 미만 응답 시간</v-list-item-title>
                   </v-list-item>
                   <v-list-item>
-                    <v-list-item-title><strong>지원 형식:</strong> Pandas, Image, Excel</v-list-item-title>
+                    <v-list-item-title><strong>지원 형식:</strong> Charts, Image, Excel</v-list-item-title>
                   </v-list-item>
                 </v-list>
               </v-col>
             </v-row>
+          </v-card-text>
+        </v-card>
+
+        <!-- Update History -->
+        <v-card elevation="3">
+          <v-card-title class="bg-warning">
+            <v-icon start>mdi-update</v-icon>
+            업데이트 이력
+          </v-card-title>
+          <v-card-text class="pa-6">
+            <v-timeline align="start" density="compact">
+              <v-timeline-item dot-color="primary" size="small">
+                <div class="mb-4">
+                  <div class="font-weight-bold">버전 1.1.0 - 2025년 8월</div>
+                  <v-list dense class="mt-2">
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>MAPC01 툴 추가 (Fab R3 지원)</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>Vue Query 도입으로 캐싱 성능 개선</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>차트 테마 적용으로 시각화 품질 향상</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>데이터 트렌드 시계열 차트에 Lot ID 표시</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>검색어 자동 저장 및 복원 기능</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>컴포넌트 크기 최적화</v-list-item-title>
+                    </v-list-item>
+                    <v-list-item>
+                      <template v-slot:prepend>
+                        <v-icon size="small" color="success">mdi-check</v-icon>
+                      </template>
+                      <v-list-item-title>Profile, Align, Tip 이미지 정보 추가</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </div>
+              </v-timeline-item>
+
+              <v-timeline-item dot-color="grey" size="small">
+                <div>
+                  <div class="font-weight-bold">버전 1.0.0 - 2025년 7월</div>
+                  <div class="text-body-2 text-medium-emphasis mt-1">
+                    초기 출시 - MAP608 툴 지원, 기본 검색 및 시각화 기능
+                  </div>
+                </div>
+              </v-timeline-item>
+            </v-timeline>
           </v-card-text>
         </v-card>
       </v-col>

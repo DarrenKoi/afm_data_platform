@@ -38,13 +38,20 @@ let chartInstance = null
 const processedData = computed(() => {
   if (props.profileData.length === 0) return { data: [], xAxis: [], yAxis: [] }
 
+  // Handle both wafer data format {x, y, value} and profile data format {x, y, z}
+  const normalizedData = props.profileData.map(point => ({
+    x: point.x,
+    y: point.y,
+    z: point.z || point.value || 0  // Use z if available, otherwise value, otherwise 0
+  }))
+
   // Get unique x and y values
-  const xValues = [...new Set(props.profileData.map(p => p.x))].sort((a, b) => a - b)
-  const yValues = [...new Set(props.profileData.map(p => p.y))].sort((a, b) => a - b)
+  const xValues = [...new Set(normalizedData.map(p => p.x))].sort((a, b) => a - b)
+  const yValues = [...new Set(normalizedData.map(p => p.y))].sort((a, b) => a - b)
 
   // Create a map for fast lookup
   const dataMap = new Map()
-  props.profileData.forEach(point => {
+  normalizedData.forEach(point => {
     dataMap.set(`${point.x},${point.y}`, point.z)
   })
 
@@ -81,6 +88,18 @@ function initChart() {
 
   const { data, xAxis, yAxis } = processedData.value
 
+  // Safety check for valid data
+  const normalizedData = props.profileData.map(point => ({
+    x: point.x,
+    y: point.y,
+    z: point.z || point.value || 0
+  }))
+  
+  if (data.length === 0 || !normalizedData.every(p => typeof p.z === 'number' && typeof p.x === 'number' && typeof p.y === 'number')) {
+    console.warn('HeatmapChart: Invalid or empty profile data', props.profileData)
+    return
+  }
+
   // Use responsive margins that adapt to container size
   const containerWidth = chartContainer.value.offsetWidth
   const containerHeight = chartContainer.value.offsetHeight
@@ -90,6 +109,16 @@ function initChart() {
   const rightMargin = '15%'  // Space for visual map
   const topMargin = '10%'
   const bottomMargin = '15%'
+
+  // Calculate min/max values safely using normalized data
+  const zValues = normalizedData.map(p => p.z).filter(z => typeof z === 'number' && !isNaN(z))
+  const minZ = Math.min(...zValues)
+  const maxZ = Math.max(...zValues)
+
+  if (!isFinite(minZ) || !isFinite(maxZ)) {
+    console.warn('HeatmapChart: Invalid min/max values for color scale')
+    return
+  }
 
   const option = {
     tooltip: {
@@ -134,8 +163,8 @@ function initChart() {
       }
     },
     visualMap: {
-      min: Math.min(...props.profileData.map(p => p.z)),
-      max: Math.max(...props.profileData.map(p => p.z)),
+      min: minZ,
+      max: maxZ,
       calculable: true,
       orient: 'vertical',
       right: '5%',

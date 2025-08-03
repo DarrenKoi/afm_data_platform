@@ -92,7 +92,7 @@ watch(() => props.summaryData, (newData) => {
   console.log(`🏁 [StatisticalInfoByPoints] Length:`, newData?.length || 0)
   console.log(`🏁 [StatisticalInfoByPoints] Full data:`, newData)
 
-  if (newData && newData.length > 0) {
+  if (newData && Array.isArray(newData) && newData.length > 0) {
     console.log(`🏁 [StatisticalInfoByPoints] First record:`, newData[0])
     console.log(`🏁 [StatisticalInfoByPoints] First record keys:`, Object.keys(newData[0]))
     console.log(`🏁 [StatisticalInfoByPoints] Has ITEM field:`, 'ITEM' in newData[0])
@@ -100,7 +100,7 @@ watch(() => props.summaryData, (newData) => {
 
     // Check for data quality issues
     const hasValidStructure = newData.every(record =>
-      record && typeof record === 'object' && 'ITEM' in record
+      record && typeof record === 'object' && Object.keys(record).length > 0
     )
     console.log(`🏁 [StatisticalInfoByPoints] All records have valid structure:`, hasValidStructure)
 
@@ -108,7 +108,7 @@ watch(() => props.summaryData, (newData) => {
       console.error(`❌ [StatisticalInfoByPoints] Invalid data structure detected`)
     }
   } else {
-    console.warn(`⚠️ [StatisticalInfoByPoints] No valid summary data received`)
+    console.warn(`⚠️ [StatisticalInfoByPoints] No valid summary data received. Data:`, newData)
   }
 }, { immediate: true })
 

@@ -118,9 +118,9 @@
 
               <!-- Middle Column: Data Availability and File Info -->
               <v-col cols="2" class="text-center">
-                <div class="d-flex flex-column align-center justify-start gap-1 h-100">
-                  <!-- Data availability icons at the top -->
-                  <div class="d-flex flex-column align-center gap-1 mb-2">
+                <div class="d-flex flex-column align-center justify-between h-100">
+                  <!-- Data availability icons horizontally arranged -->
+                  <div class="d-flex flex-row align-center justify-center gap-2 flex-wrap">
                     <v-tooltip text="Profile Data Available" location="bottom" v-if="result.has_profile">
                       <template v-slot:activator="{ props }">
                         <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
@@ -159,7 +159,7 @@
                   </div>
 
                   <!-- File info at the bottom -->
-                  <div class="text-caption text-grey mt-auto">
+                  <div class="text-caption text-grey">
                     📁 {{ result.filename }}
                   </div>
                 </div>

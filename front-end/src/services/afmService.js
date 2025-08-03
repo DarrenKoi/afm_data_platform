@@ -83,14 +83,17 @@ export const afmService = {
           
           // Generate wafer coordinates based on point position
           let x, y
-          switch(position) {
+          
+          // Handle standard wafer position codes (case-insensitive)
+          const normalizedPosition = position ? position.toUpperCase() : ''
+          switch(normalizedPosition) {
             case 'UL': x = -3; y = 3; break  // Upper Left
             case 'UR': x = 3; y = 3; break   // Upper Right
             case 'LL': x = -3; y = -3; break // Lower Left
             case 'LR': x = 3; y = -3; break  // Lower Right
             case 'C': x = 0; y = 0; break    // Center
             default: 
-              // For numbered points, arrange in a grid
+              // For all other cases (numbered points, custom naming), arrange in a grid
               const gridSize = Math.ceil(Math.sqrt(points.length))
               x = (index % gridSize) * 2 - gridSize
               y = Math.floor(index / gridSize) * 2 - gridSize
