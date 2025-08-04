@@ -74,9 +74,8 @@ class LoggerManager:
         self.enable_exception_logging = enable_exception_logging
         self.custom_format = custom_format
 
-        # Simplified: Always use colors for console output
-        # ANSI codes are ignored by non-supporting terminals
-        self.colorize = colorize if colorize is not None else True
+        # Console output is plain text, no colors
+        self.colorize = colorize if colorize is not None else False
 
         # Dev mode defaults for debugging features
         self.backtrace = backtrace if backtrace is not None else self.is_dev
@@ -100,19 +99,14 @@ class LoggerManager:
         # Remove default handlers
         logger.remove()
 
-        # Console output - always enabled with colors
-        console_format = self.custom_format or (
-            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-            "<level>{level:<5}</level> | "
-            "<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-            "<level>{message}</level>"
-        )
+        # Console output - plain format for both dev and prod (no colors)
+        console_format = "{time:YYYY-MM-DD HH:mm:ss} | {level:<5} | {message}"
 
         handler_id = logger.add(
             sys.stdout,
             level=self.console_level,
             format=console_format,
-            colorize=True,  # Always true now
+            colorize=False,  # No colors for console output
             backtrace=self.backtrace,
             diagnose=self.diagnose,
             filter=self.filter_func
@@ -122,13 +116,19 @@ class LoggerManager:
         # Create log directory if it doesn't exist
         self.log_file_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # File logging format
+        # File logging format - simplified
         if self.json_format:
             # Use serialize=True instead of custom formatter for JSON
             log_format = "{message}"
             file_serialize = True
         else:
-            log_format = self.custom_format or "{time:YYYY-MM-DD HH:mm:ss} | {level:<5} | {function}:{line} - {message}"
+            # Simplified format for file output
+            log_format = self.custom_format or (
+                "{time:YYYY-MM-DD HH:mm:ss} | "
+                "{level:<5} | "
+                "{function}:{line} | "
+                "{message}"
+            )
             file_serialize = False
 
         # Add file handler

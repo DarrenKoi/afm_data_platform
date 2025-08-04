@@ -91,9 +91,9 @@
       <v-col cols="12" lg="6">
         <div style="max-height: 1200px; overflow-y: auto;">
           <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
-            :measurement-points="measurementPoints" :selected-point="String(selectedPoint?.value || selectedPoint || '')"
-            @point-selected="handlePointSelected" @point-data-loaded="handlePointDataLoaded"
-            @simple-point-selected="selectPoint" />
+            :measurement-points="measurementPoints"
+            :selected-point="String(selectedPoint?.value || selectedPoint || '')" @point-selected="handlePointSelected"
+            @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
         </div>
       </v-col>
 
@@ -112,7 +112,8 @@
                 </v-card-title>
                 <v-card-text class="pa-3">
                   <HeatmapChart :profile-data="waferData" :chart-height="420" :clickable="true"
-                    :selected-point="selectedPoint?.value || selectedPoint" @point-selected="handleWaferPointSelected" />
+                    :selected-point="selectedPoint?.value || selectedPoint"
+                    @point-selected="handleWaferPointSelected" />
                 </v-card-text>
               </v-card>
             </v-col>
@@ -124,7 +125,8 @@
                   <v-icon start size="small">mdi-image</v-icon>
                   <span class="text-subtitle-1">Profile Image</span>
                   <v-spacer />
-                  <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="primary" variant="outlined">
+                  <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="primary"
+                    variant="outlined">
                     Point {{ selectedPoint?.value || selectedPoint }}
                   </v-chip>
                 </v-card-title>
@@ -165,7 +167,7 @@
                   </div>
                   <HistogramChart v-else :profile-data="profileData" :chart-height="430" :compact="false" />
                 </v-card-text>
-                </v-card>
+              </v-card>
             </v-col>
           </v-row>
         </div>

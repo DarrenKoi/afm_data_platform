@@ -116,51 +116,101 @@
                 </v-list-item-subtitle>
               </v-col>
 
-              <!-- Middle Column: Data Availability and File Info -->
+              <!-- Middle Column: Data Availability -->
               <v-col cols="2" class="text-center">
-                <div class="d-flex flex-column align-center justify-between h-100">
-                  <!-- Data availability icons horizontally arranged -->
-                  <div class="d-flex flex-row align-center justify-center gap-2 flex-wrap">
-                    <v-tooltip text="Profile Data Available" location="bottom" v-if="result.has_profile">
+                <div class="d-flex flex-column align-center justify-center">
+                  <!-- Available data row -->
+                  <div class="d-flex flex-row align-center justify-center gap-1 mb-1">
+                    <v-icon size="x-small" color="success" class="mr-1">mdi-check-circle</v-icon>
+                    
+                    <v-tooltip text="Profile Data" location="top" 
+                      v-if="result.profile_dir_list && result.profile_dir_list[0] !== 'no files'">
                       <template v-slot:activator="{ props }">
                         <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
                       </template>
                     </v-tooltip>
 
-                    <v-tooltip text="Measurement Data Available" location="bottom" v-if="result.has_data">
+                    <v-tooltip text="Measurement Data" location="top" 
+                      v-if="result.data_dir_list && result.data_dir_list[0] !== 'no files'">
                       <template v-slot:activator="{ props }">
-                        <v-icon v-bind="props" size="small" color="info">mdi-database</v-icon>
+                        <v-icon v-bind="props" size="small" color="success">mdi-database</v-icon>
                       </template>
                     </v-tooltip>
 
-                    <v-tooltip text="Image Available" location="bottom" v-if="result.has_image">
+                    <v-tooltip text="Profile Images" location="top" 
+                      v-if="result.tiff_dir_list && result.tiff_dir_list[0] !== 'no files'">
                       <template v-slot:activator="{ props }">
-                        <v-icon v-bind="props" size="small" color="primary">mdi-image</v-icon>
+                        <v-icon v-bind="props" size="small" color="success">mdi-image</v-icon>
                       </template>
                     </v-tooltip>
 
-                    <v-tooltip text="Alignment Data Available" location="bottom" v-if="result.has_align">
+                    <v-tooltip text="Alignment Images" location="top" 
+                      v-if="result.align_dir_list && result.align_dir_list[0] !== 'no files'">
                       <template v-slot:activator="{ props }">
-                        <v-icon v-bind="props" size="small" color="warning">mdi-align-vertical-center</v-icon>
+                        <v-icon v-bind="props" size="small" color="success">mdi-axis-arrow</v-icon>
                       </template>
                     </v-tooltip>
 
-                    <v-tooltip text="Tip Data Available" location="bottom" v-if="result.has_tip">
+                    <v-tooltip text="Tip Images" location="top" 
+                      v-if="result.tip_dir_list && result.tip_dir_list[0] !== 'no files'">
                       <template v-slot:activator="{ props }">
-                        <v-icon v-bind="props" size="small" color="deep-purple">mdi-pin</v-icon>
+                        <v-icon v-bind="props" size="small" color="success">mdi-needle</v-icon>
                       </template>
                     </v-tooltip>
 
-                    <span
-                      v-if="!result.has_profile && !result.has_data && !result.has_image && !result.has_align && !result.has_tip"
-                      class="text-caption text-medium-emphasis">
-                      No data
-                    </span>
+                    <v-tooltip text="Analysis Images" location="top" 
+                      v-if="result.capture_dir_list && result.capture_dir_list[0] !== 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="success">mdi-chart-box-outline</v-icon>
+                      </template>
+                    </v-tooltip>
                   </div>
 
-                  <!-- File info at the bottom -->
-                  <div class="text-caption text-grey">
-                    📁 {{ result.filename }}
+                  <!-- Unavailable data row -->
+                  <div class="d-flex flex-row align-center justify-center gap-1">
+                    <v-icon size="x-small" color="grey" class="mr-1">mdi-close-circle</v-icon>
+                    
+                    <v-tooltip text="Profile Data" location="bottom" 
+                      v-if="!result.profile_dir_list || result.profile_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-chart-line</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Measurement Data" location="bottom" 
+                      v-if="!result.data_dir_list || result.data_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-database</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Profile Images" location="bottom" 
+                      v-if="!result.tiff_dir_list || result.tiff_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-image</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Alignment Images" location="bottom" 
+                      v-if="!result.align_dir_list || result.align_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-axis-arrow</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Tip Images" location="bottom" 
+                      v-if="!result.tip_dir_list || result.tip_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-needle</v-icon>
+                      </template>
+                    </v-tooltip>
+
+                    <v-tooltip text="Analysis Images" location="bottom" 
+                      v-if="!result.capture_dir_list || result.capture_dir_list[0] === 'no files'">
+                      <template v-slot:activator="{ props }">
+                        <v-icon v-bind="props" size="small" color="grey">mdi-chart-box-outline</v-icon>
+                      </template>
+                    </v-tooltip>
                   </div>
                 </div>
               </v-col>

@@ -5,6 +5,87 @@ import re
 from pathlib import Path
 import pickle
 
+# Old version of parse_filename (commented out)
+# def parse_filename(filename):
+#     """
+#     Parse AFM filename into structured data
+#     Pattern: #date#recipe_name#lot_id_time#slot_measured_info#.extension
+#     """
+#     try:
+#         # Remove extension
+#         filename_no_ext = filename.replace('.csv', '').replace('.pkl', '')
+#         
+#         # Split by # and remove empty parts
+#         parts = [part for part in filename_no_ext.split('#') if part]
+#         
+#         if len(parts) < 4:
+#             print(f"  -> Not enough parts: {parts}")
+#             return None
+#         
+#         # Extract components
+#         date = parts[0]  # e.g., "250609"
+#         recipe_name = parts[1]  # e.g., "FSOXCMP_DISHING_9PT"
+#         lot_time_part = parts[2]  # e.g., "T7HQR42TA_250709" or "T3HQR47TF[250814]"
+#         slot_info = parts[3]  # e.g., "21_1" or "07_repeat2"
+#         
+#         # Extract lot_id and time (remove time info for lot_id)
+#         time = None
+#         if '[' in lot_time_part:
+#             # Format: T3HQR47TF[250814]
+#             lot_id = lot_time_part.split('[')[0]
+#             time_part = lot_time_part.split('[')[1].rstrip(']')
+#             if len(time_part) >= 6:
+#                 time = time_part[-6:]  # Last 6 digits as time
+#         elif '_' in lot_time_part:
+#             # Format: T7HQR42TA_250709
+#             parts_split = lot_time_part.split('_')
+#             lot_id = parts_split[0]
+#             if len(parts_split) > 1 and len(parts_split[1]) >= 6:
+#                 time = parts_split[1][-6:]  # Last 6 digits as time
+#         else:
+#             lot_id = lot_time_part
+#         
+#         # Parse slot and measured info
+#         slot_parts = slot_info.split('_')
+#         slot_number = slot_parts[0]
+#         measured_info = '_'.join(slot_parts[1:]) if len(slot_parts) > 1 else "standard"
+#         
+#         # Format date to readable format
+#         try:
+#             year = "20" + date[:2]
+#             month = date[2:4]
+#             day = date[4:6]
+#             formatted_date = f"{year}-{month}-{day}"
+#         except:
+#             formatted_date = date
+#         
+#         # Create unique key
+#         unique_key = f"{date}_{recipe_name}_{lot_id}_{slot_number}"
+#         
+#         parsed_data = {
+#             'unique_key': unique_key,
+#             'filename': filename,
+#             'date': date,
+#             'formatted_date': formatted_date,
+#             'recipe_name': recipe_name,
+#             'lot_id': lot_id,
+#             'slot_number': slot_number,
+#             'time': time,
+#             'measured_info': measured_info,
+#             # Initialize dir lists as None - will be populated later
+#             'profile_dir_list': None,
+#             'data_dir_list': None,
+#             'tiff_dir_list': None,
+#             'align_dir_list': None,
+#             'tip_dir_list': None
+#         }
+#
+#         return parsed_data
+#         
+#     except Exception as e:
+#         print(f"  -> Error parsing {filename}: {e}")
+#         return None
+
 def parse_filename(filename):
     """
     Parse AFM filename into structured data
@@ -58,11 +139,16 @@ def parse_filename(filename):
         except:
             formatted_date = date
         
-        # Create unique key
-        unique_key = f"{date}_{recipe_name}_{lot_id}_{slot_number}"
+        # Create unique key with new format: date#time#recipe_name#slot_info#lot_id#measured_info
+        # Note: Using slot_info instead of just slot_number to preserve full slot information
+        if time:
+            uniquekey = f"{date}#{time}#{recipe_name}#{slot_info}#{lot_id}#{measured_info}"
+        else:
+            # If no time available, use a placeholder
+            uniquekey = f"{date}#000000#{recipe_name}#{slot_info}#{lot_id}#{measured_info}"
         
         parsed_data = {
-            'unique_key': unique_key,
+            'unique_key': uniquekey,
             'filename': filename,
             'date': date,
             'formatted_date': formatted_date,
@@ -71,12 +157,13 @@ def parse_filename(filename):
             'slot_number': slot_number,
             'time': time,
             'measured_info': measured_info,
-            # Initialize dir lists as None - will be populated later
-            'profile_dir_list': None,
-            'data_dir_list': None,
-            'tiff_dir_list': None,
-            'align_dir_list': None,
-            'tip_dir_list': None
+            # Initialize dir lists with ["no files"] as default - will be populated later
+            'profile_dir_list': ["no files"],
+            'data_dir_list': ["no files"],
+            'tiff_dir_list': ["no files"],
+            'align_dir_list': ["no files"],
+            'tip_dir_list': ["no files"],
+            'capture_dir_list': ["no files"]
         }
 
         return parsed_data
@@ -91,13 +178,14 @@ def check_available_files_for_measurement(parsed_file, tool_name='MAP608'):
     try:
         base_pattern = parsed_file['filename'].replace('.csv', '').replace('.pkl', '')
         
-        # Define directory mappings
+        # Define directory mappings - updated to include capture_dir_list
         dir_mappings = {
             'profile_dir_list': ('profile_dir', '*.pkl'),
             'data_dir_list': ('data_dir_pickle', '*.pkl'),
             'tiff_dir_list': ('tiff_dir', '*.webp'),
             'align_dir_list': ('align_dir', '*.png'),
-            'tip_dir_list': ('tip_dir', '*.tiff')
+            'tip_dir_list': ('tip_dir', '*.tiff'),
+            'capture_dir_list': ('capture_dir', '*.png')  # Added capture_dir_list
         }
         
         # Check each directory for matching files
@@ -111,16 +199,16 @@ def check_available_files_for_measurement(parsed_file, tool_name='MAP608'):
                     if base_pattern in file_path.stem:
                         matching_files.append(file_path.name)
                 
-                # Set the list or None if empty
-                parsed_file[list_key] = matching_files if matching_files else None
+                # Set the list or ["no files"] if empty
+                parsed_file[list_key] = matching_files if matching_files else ["no files"]
             else:
-                parsed_file[list_key] = None
+                parsed_file[list_key] = ["no files"]
     
     except Exception as e:
         print(f"Error checking available files: {e}")
-        # Set all to None on error
-        for list_key in ['profile_dir_list', 'data_dir_list', 'tiff_dir_list', 'align_dir_list', 'tip_dir_list']:
-            parsed_file[list_key] = None
+        # Set all to ["no files"] on error
+        for list_key in ['profile_dir_list', 'data_dir_list', 'tiff_dir_list', 'align_dir_list', 'tip_dir_list', 'capture_dir_list']:
+            parsed_file[list_key] = ["no files"]
 
 
 def check_pickle_file_exists(parsed_file, tool_name='MAP608'):

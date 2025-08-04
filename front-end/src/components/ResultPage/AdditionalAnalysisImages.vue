@@ -144,7 +144,7 @@ const props = defineProps({
 const dataStore = useDataStore()
 
 // State
-const selectedTab = ref('profile')
+const selectedTab = ref('align')
 const isLoading = ref(false)
 const loadError = ref('')
 const imageDialog = ref(false)
@@ -153,41 +153,33 @@ const hoveredImage = ref({})
 
 // Images data structure - start with empty arrays to avoid network errors
 const imagesData = ref({
-  profile: [],
-  tiff: [],
   align: [],
-  tip: []
+  tip: [],
+  capture: []
 })
 
 // Tab configuration
 const imageTabs = [
   {
-    value: 'profile',
-    title: 'Profile Analysis',
-    icon: 'mdi-chart-line-variant',
-    emptyIcon: 'mdi-chart-bell-curve-cumulative',
-    description: 'AFM profile measurement data visualization'
-  },
-  {
-    value: 'tiff',
-    title: 'TIFF Images',
-    icon: 'mdi-image',
-    emptyIcon: 'mdi-image-off',
-    description: 'Original TIFF format images from measurement'
-  },
-  {
     value: 'align',
-    title: 'Sample Alignment',
-    icon: 'mdi-align-horizontal-center',
-    emptyIcon: 'mdi-crosshairs-gps',
-    description: 'Sample alignment and positioning images'
+    title: 'Alignment Images',
+    icon: 'mdi-axis-arrow',
+    emptyIcon: 'mdi-axis-arrow',
+    description: 'Alignment images from the wafer'
   },
   {
     value: 'tip',
     title: 'Tip Condition',
     icon: 'mdi-needle',
-    emptyIcon: 'mdi-circle-slice-8',
-    description: 'AFM tip condition and quality images'
+    emptyIcon: 'mdi-needle',
+    description: 'AFM tip condition images'
+  },
+  {
+    value: 'capture',
+    title: 'Result Analysis',
+    icon: 'mdi-chart-box-outline',
+    emptyIcon: 'mdi-chart-box-outline',
+    description: 'Result analysis images'
   }
 ]
 
@@ -205,28 +197,34 @@ async function loadImages() {
     const tool = dataStore.selectedTool
     const pointId = props.selectedPoint || 'default'
     
-    // Fetch images for each directory type
-    const imageTypes = ['profile', 'tiff', 'align', 'tip']
-    const promises = imageTypes.map(async (type) => {
-      try {
-        const response = await imageService.getImagesByType(type, props.filename, pointId, tool)
-        
-        // Transform response data to include full URLs
-        if (response.success && response.data && response.data.images) {
-          imagesData.value[type] = response.data.images.map(img => ({
-            name: img.name || img,
-            url: imageService.getImageUrlByType(props.filename, pointId, type, img.name || img, tool)
-          }))
-        } else {
-          imagesData.value[type] = []
-        }
-      } catch (error) {
-        console.warn(`Failed to load ${type} images:`, error)
+    // Get the selected AFM file data to access directory lists
+    const selectedFile = dataStore.selectedAfmFile
+    
+    if (!selectedFile) {
+      console.warn('No selected AFM file found')
+      return
+    }
+    
+    // Map the directory lists to image types
+    const dirListMappings = {
+      'align': selectedFile.align_dir_list || ["no files"],
+      'tip': selectedFile.tip_dir_list || ["no files"],
+      'capture': selectedFile.capture_dir_list || ["no files"]
+    }
+    
+    // Process each image type
+    for (const [type, fileList] of Object.entries(dirListMappings)) {
+      if (fileList && fileList.length > 0 && fileList[0] !== "no files") {
+        // Files are available - transform to include full URLs
+        imagesData.value[type] = fileList.map(filename => ({
+          name: filename,
+          url: imageService.getImageUrlByType(props.filename, pointId, type, filename, tool)
+        }))
+      } else {
+        // No files available
         imagesData.value[type] = []
       }
-    })
-    
-    await Promise.all(promises)
+    }
     
   } catch (error) {
     console.error('Error loading images:', error)
@@ -242,23 +240,28 @@ function openImageDialog(image) {
 }
 
 // Watchers
-// Commented out to show placeholder images
-// watch(() => props.selectedPoint, (newPoint) => {
-//   if (newPoint !== undefined) {
-//     loadImages()
-//   }
-// })
+watch(() => props.selectedPoint, (newPoint) => {
+  if (newPoint !== undefined) {
+    loadImages()
+  }
+})
 
-// watch(() => props.filename, (newFilename) => {
-//   if (newFilename) {
-//     loadImages()
-//   }
-// })
+watch(() => props.filename, (newFilename) => {
+  if (newFilename) {
+    loadImages()
+  }
+})
+
+// Also watch for changes in selectedAfmFile from store
+watch(() => dataStore.selectedAfmFile, (newFile) => {
+  if (newFile) {
+    loadImages()
+  }
+})
 
 // Lifecycle
 onMounted(() => {
-  // Commented out to show placeholder images
-  // loadImages()
+  loadImages()
 })
 </script>
 
