@@ -81,7 +81,7 @@
     <!-- Additional Images Row: Measure Profile Analysis, Align, and Tip Images -->
     <v-row dense class="mb-3">
       <v-col cols="12">
-        <AdditionalAnalysisImages :selected-point="selectedPoint?.value || selectedPoint" :filename="filename" />
+        <AdditionalAnalysisImages :filename="filename" />
       </v-col>
     </v-row>
 
@@ -125,6 +125,17 @@
                   <v-icon start size="small">mdi-image</v-icon>
                   <span class="text-subtitle-1">Profile Image</span>
                   <v-spacer />
+                  <v-btn 
+                    v-if="profileImageUrl && (selectedPoint?.value || selectedPoint)"
+                    @click="downloadRawImage" 
+                    :loading="isDownloadingImage"
+                    size="x-small" 
+                    variant="text" 
+                    color="primary"
+                    class="mr-2">
+                    <v-icon start size="small">mdi-download</v-icon>
+                    Download Raw
+                  </v-btn>
                   <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="primary"
                     variant="outlined">
                     Point {{ selectedPoint?.value || selectedPoint }}
@@ -201,6 +212,7 @@ const referrer = ref('')
 const filename = ref(decodeURIComponent(route.params.filename || ''))
 const toolName = ref(route.query.tool || 'MAP608')
 const selectedStatistic = ref(null)
+const isDownloadingImage = ref(false)
 
 // Point selection logic
 const pointSelection = usePointSelection()
@@ -266,6 +278,59 @@ function goBack() {
   } else {
     // Default: go back to search page
     router.push('/')
+  }
+}
+
+// Download raw image function
+async function downloadRawImage() {
+  if (!filename.value || !(selectedPoint.value?.value || selectedPoint.value)) {
+    return
+  }
+  
+  isDownloadingImage.value = true
+  try {
+    const pointId = selectedPoint.value?.value || selectedPoint.value
+    const response = await fetch(
+      `/api/afm-files/download-raw-image/${encodeURIComponent(filename.value)}/${pointId}?tool=${toolName.value}`,
+      {
+        method: 'GET',
+        headers: {
+          'Accept': 'image/tiff, image/webp, */*'
+        }
+      }
+    )
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download image: ${response.statusText}`)
+    }
+    
+    // Get filename from Content-Disposition header or create one
+    const contentDisposition = response.headers.get('Content-Disposition')
+    let downloadFilename = `${filename.value}_point_${pointId}.tiff`
+    
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i)
+      if (filenameMatch) {
+        downloadFilename = filenameMatch[1]
+      }
+    }
+    
+    // Convert response to blob and download
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = downloadFilename
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+    
+  } catch (error) {
+    console.error('Error downloading raw image:', error)
+    alert('Failed to download raw image. Please try again.')
+  } finally {
+    isDownloadingImage.value = false
   }
 }
 

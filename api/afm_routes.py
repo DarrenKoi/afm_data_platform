@@ -6,6 +6,8 @@ import pickle
 from flask import Blueprint, jsonify, request
 from pathlib import Path
 from urllib.parse import unquote
+from datetime import datetime
+from .utils.app_logger import get_activity_logger
 from .utils.file_parser import (
     load_afm_file_list, 
     get_pickle_file_path_by_filename,
@@ -14,6 +16,25 @@ from .utils.file_parser import (
 
 # Create AFM data blueprint
 afm_bp = Blueprint('afm', __name__)
+
+# Get activity logger
+activity_logger = get_activity_logger()
+
+def log_afm_access(action, **kwargs):
+    """Log AFM data access activities"""
+    try:
+        # Get user from cookie
+        user_id = request.cookies.get('LAST_USER', 'anonymous')
+        
+        # Log with structured data
+        activity_logger.info(f"AFM {action}",
+                           user=user_id,
+                           action=action,
+                           timestamp=datetime.now().isoformat(),
+                           **kwargs)
+    except Exception:
+        # Don't let logging errors break the API
+        pass
 
 
 @afm_bp.route('/afm-files', methods=['GET'])
@@ -26,6 +47,13 @@ def get_afm_files():
         
         # Load and parse the file list for the specified tool
         parsed_data = load_afm_file_list(tool_name)
+        
+        # Log the access
+        log_afm_access(
+            action="list_files",
+            tool=tool_name,
+            files_count=len(parsed_data)
+        )
         
         print(f"Returning {len(parsed_data)} measurements to frontend")
         
@@ -159,6 +187,17 @@ def get_afm_file_detail(filename):
         if detail_records:
             print(f"  - Sample detail: {detail_records[0]}")
         print(f"  - Available points: {available_points}")
+        
+        # Log the detail access
+        log_afm_access(
+            action="get_detail",
+            tool=tool_name,
+            filename=decoded_filename,
+            pickle_file=pickle_path.name,
+            summary_count=len(summary_records),
+            detail_count=len(detail_records),
+            available_points=available_points
+        )
         
         return jsonify(response_data)
         

@@ -7,7 +7,7 @@ from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 import os
 from api.routes import register_blueprints
-from api.user_activity import log_user_activity
+# User activity logging removed - now handled in individual routes
 from api.utils.app_logger import get_system_logger, get_activity_logger, get_error_logger, cleanup_logger
 import atexit
 import time
@@ -74,8 +74,7 @@ def create_app():
                                  cookies=dict(request.cookies),
                                  method=request.method)
         
-        # Log user activity
-        log_user_activity()
+        # User activity logging now handled in individual routes
     
     # Add after_request middleware for response logging
     @app.after_request

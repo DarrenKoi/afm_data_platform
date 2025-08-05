@@ -43,50 +43,24 @@
             <div v-else class="image-gallery">
               <div class="image-container" v-for="(image, index) in getImagesForTab(tab.value)" :key="index">
                 <div class="image-wrapper">
-                  <v-card 
-                    class="image-card"
-                    @mouseenter="hoveredImage[index] = true"
-                    @mouseleave="hoveredImage[index] = false"
-                  >
-                    <v-img 
-                      :src="image.url" 
-                      :alt="image.name"
-                      height="220"
-                      width="320"
-                      cover
-                      class="image-hover"
-                    >
+                  <v-card class="image-card" @mouseenter="hoveredImage[index] = true"
+                    @mouseleave="hoveredImage[index] = false">
+                    <v-img :src="image.url" :alt="image.name" height="220" width="320" cover class="image-hover">
                       <template v-slot:placeholder>
                         <v-row class="fill-height ma-0" align="center" justify="center">
                           <v-progress-circular indeterminate color="grey-lighten-5" />
                         </v-row>
                       </template>
                     </v-img>
-                    <v-overlay 
-                      v-model="hoveredImage[index]"
-                      :scrim="false"
-                      contained
-                      class="align-center justify-center"
-                      @click="openImageDialog(image)"
-                    >
-                      <v-btn 
-                        icon="mdi-magnify-plus-outline" 
-                        color="white"
-                        size="large"
-                        variant="flat"
-                        class="expand-button"
-                      />
+                    <v-overlay v-model="hoveredImage[index]" :scrim="false" contained
+                      class="align-center justify-center" @click="openImageDialog(image)">
+                      <v-btn icon="mdi-magnify-plus-outline" color="white" size="large" variant="flat"
+                        class="expand-button" />
                     </v-overlay>
                   </v-card>
                   <div class="image-info">
                     <p class="text-caption text-truncate mb-0">{{ image.name }}</p>
-                    <v-btn 
-                      size="x-small" 
-                      variant="text" 
-                      color="primary"
-                      @click="openImageDialog(image)"
-                      class="mt-1"
-                    >
+                    <v-btn size="x-small" variant="text" color="primary" @click="openImageDialog(image)" class="mt-1">
                       <v-icon start size="x-small">mdi-arrow-expand</v-icon>
                       View Original
                     </v-btn>
@@ -110,13 +84,7 @@
           </v-btn>
         </v-card-title>
         <v-card-text class="pa-0">
-          <v-img 
-            v-if="selectedImage" 
-            :src="selectedImage.url" 
-            :alt="selectedImage.name"
-            max-height="80vh"
-            contain
-          />
+          <v-img v-if="selectedImage" :src="selectedImage.url" :alt="selectedImage.name" max-height="80vh" contain />
         </v-card-text>
       </v-card>
     </v-dialog>
@@ -130,10 +98,6 @@ import { imageService } from '@/services/imageService'
 
 // Props
 const props = defineProps({
-  selectedPoint: {
-    type: [String, Number],
-    default: null
-  },
   filename: {
     type: String,
     required: true
@@ -155,7 +119,7 @@ const hoveredImage = ref({})
 const imagesData = ref({
   align: [],
   tip: [],
-  capture: []
+  capture: [],
 })
 
 // Tab configuration
@@ -192,40 +156,39 @@ const getImagesForTab = computed(() => {
 async function loadImages() {
   isLoading.value = true
   loadError.value = ''
-  
+
   try {
     const tool = dataStore.selectedTool
-    const pointId = props.selectedPoint || 'default'
     
     // Get the selected AFM file data to access directory lists
     const selectedFile = dataStore.selectedAfmFile
-    
+
     if (!selectedFile) {
       console.warn('No selected AFM file found')
       return
     }
-    
+
     // Map the directory lists to image types
     const dirListMappings = {
       'align': selectedFile.align_dir_list || ["no files"],
       'tip': selectedFile.tip_dir_list || ["no files"],
       'capture': selectedFile.capture_dir_list || ["no files"]
     }
-    
+
     // Process each image type
     for (const [type, fileList] of Object.entries(dirListMappings)) {
       if (fileList && fileList.length > 0 && fileList[0] !== "no files") {
         // Files are available - transform to include full URLs
-        imagesData.value[type] = fileList.map(filename => ({
-          name: filename,
-          url: imageService.getImageUrlByType(props.filename, pointId, type, filename, tool)
+        imagesData.value[type] = fileList.map(imageName => ({
+          name: imageName,
+          url: imageService.getImageUrlByType(props.filename, 'default', type, imageName, tool)
         }))
       } else {
         // No files available
         imagesData.value[type] = []
       }
     }
-    
+
   } catch (error) {
     console.error('Error loading images:', error)
     loadError.value = error.message || 'Failed to load images'
@@ -240,12 +203,6 @@ function openImageDialog(image) {
 }
 
 // Watchers
-watch(() => props.selectedPoint, (newPoint) => {
-  if (newPoint !== undefined) {
-    loadImages()
-  }
-})
-
 watch(() => props.filename, (newFilename) => {
   if (newFilename) {
     loadImages()
