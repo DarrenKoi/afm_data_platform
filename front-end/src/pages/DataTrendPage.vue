@@ -370,13 +370,24 @@ const timeSeriesData = computed(() => {
 
       // Find the corresponding original measurement from dataStore to get the correct timestamp
       const originalMeasurement = dataStore.groupedData.find(m => m.filename === filename)
-      const timestamp = originalMeasurement?.event_time ||
+      
+      // Priority: Use Start Time from info first, then fall back to other timestamps
+      const startTime = info?.['Start Time']
+      const timestamp = startTime ||
+        originalMeasurement?.event_time ||
         originalMeasurement?.formatted_date ||
         originalMeasurement?.measurement_date ||
         info?.event_time ||
         info?.formatted_date ||
         info?.measurement_date ||
         new Date().toISOString()
+      
+      // Debug log to verify Start Time usage
+      if (startTime) {
+        console.log(`📅 Using Start Time for ${filename}: ${startTime}`)
+      } else {
+        console.log(`⚠️ No Start Time found for ${filename}, using fallback: ${timestamp}`)
+      }
 
       // Find record for the current site
       const record = summary.find(r => {
@@ -528,6 +539,8 @@ function processLoadedGroupData(loadedResults) {
     console.log('📊 [DataTrendPage] Sample data structure from first file:')
     console.log('   File:', firstFile)
     console.log('   Info:', sampleData.info)
+    console.log('   Info keys:', Object.keys(sampleData.info || {}))
+    console.log('   Start Time:', sampleData.info?.['Start Time'])
     if (sampleData.summary && sampleData.summary.length > 0) {
       console.log('   First summary record:', sampleData.summary[0])
       console.log('   Available columns:', Object.keys(sampleData.summary[0]))
@@ -616,6 +629,17 @@ async function loadGroupDataFromFlask() {
 
     console.log(`📊 Total detailed records loaded: ${allDetailedData.length}`)
     console.log(`📊 Unique sites found: ${uniqueSites.value.length}`)
+    
+    // Debug: Log sample data structure
+    if (Object.keys(summaryByFile).length > 0) {
+      const firstFile = Object.keys(summaryByFile)[0]
+      const sampleData = summaryByFile[firstFile]
+      console.log('📊 [DataTrendPage] Sample data structure from first file:')
+      console.log('   File:', firstFile)
+      console.log('   Info:', sampleData.info)
+      console.log('   Info keys:', Object.keys(sampleData.info || {}))
+      console.log('   Start Time:', sampleData.info?.['Start Time'])
+    }
 
     // Auto-switch to time series tab to show the data
     activeTab.value = 'time-series'

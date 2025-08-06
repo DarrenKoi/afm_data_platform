@@ -32,7 +32,6 @@ export { imageService } from './imageService'
 // Export data processing functions
 export {
   filterMeasurementsLocally,
-  searchMeasurementsAsync,
   fetchProfileData,
   fetchMeasurementData,
   fetchSummaryData,

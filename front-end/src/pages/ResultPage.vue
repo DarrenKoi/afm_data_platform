@@ -89,100 +89,100 @@
     <v-row dense>
       <!-- Column 1: Detailed Data (Half Width) -->
       <v-col cols="12" lg="6">
-        <div style="max-height: 1200px; overflow-y: auto;">
-          <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
-            :measurement-points="measurementPoints"
-            :selected-point="String(selectedPoint?.value || selectedPoint || '')" @point-selected="handlePointSelected"
-            @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
-        </div>
+        <MeasurementPoints :detailed-data="detailedData" :loading="isLoadingProfile" :filename="filename"
+          :measurement-points="measurementPoints"
+          :selected-point="String(selectedPoint?.value || selectedPoint || '')" @point-selected="handlePointSelected"
+          @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
       </v-col>
 
       <!-- Column 2: Heat Map and Charts -->
       <v-col cols="12" lg="6">
-        <div style="min-height: 1200px; max-height: 1200px; overflow-y: auto; overflow-x: hidden;">
-          <v-row dense>
-            <!-- Heat Map -->
-            <v-col cols="12">
-              <v-card class="heat-map-card mb-3" height="480">
-                <v-card-title class="py-2">
-                  <v-icon start size="small">mdi-grid</v-icon>
-                  <span class="text-subtitle-1">Wafer Heat Map</span>
-                  <v-spacer />
-                  <v-progress-circular v-if="isLoadingWafer" indeterminate size="16" width="2" />
-                </v-card-title>
-                <v-card-text class="pa-3">
-                  <HeatmapChart :profile-data="waferData" :chart-height="420" :clickable="true"
-                    :selected-point="selectedPoint?.value || selectedPoint"
-                    @point-selected="handleWaferPointSelected" />
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <!-- Profile Image Row -->
-            <v-col cols="12">
-              <v-card class="profile-card" height="500">
-                <v-card-title class="py-2">
-                  <v-icon start size="small">mdi-image</v-icon>
-                  <span class="text-subtitle-1">Profile Image</span>
-                  <v-spacer />
-                  <v-btn 
-                    v-if="profileImageUrl && (selectedPoint?.value || selectedPoint)"
-                    @click="downloadRawImage" 
-                    :loading="isDownloadingImage"
-                    size="x-small" 
-                    variant="text" 
-                    color="primary"
-                    class="mr-2">
-                    <v-icon start size="small">mdi-download</v-icon>
-                    Download Raw
-                  </v-btn>
-                  <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="primary"
-                    variant="outlined">
-                    Point {{ selectedPoint?.value || selectedPoint }}
-                  </v-chip>
-                </v-card-title>
-                <v-card-text class="pa-3">
-                  <div v-if="isLoadingProfileImage" class="text-center pa-4">
-                    <v-progress-circular indeterminate color="primary" size="small" />
-                    <p class="mt-2 text-caption">Loading profile image...</p>
-                  </div>
-                  <div v-else-if="profileImageUrl" class="profile-image-container"
-                    style="height: 430px; display: flex; align-items: center; justify-content: center;">
-                    <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
-                      style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
-                      @load="handleImageLoad" />
-                  </div>
-                  <div v-else class="text-center pa-4">
-                    <v-icon size="32" color="grey">mdi-image-off</v-icon>
-                    <p class="text-body-2 mt-2 text-medium-emphasis">No profile image available</p>
-                  </div>
-                </v-card-text>
-              </v-card>
-            </v-col>
-
-            <!-- Z-Value Distribution Row -->
-            <v-col cols="12">
-              <v-card class="distribution-card" height="500">
-                <v-card-title class="py-2">
-                  <v-icon start size="small">mdi-chart-bar</v-icon>
-                  <span class="text-subtitle-1">Z-Value Distribution</span>
-                  <v-spacer />
-                  <v-chip v-if="profileData.length > 0" size="x-small" color="success" variant="outlined">
-                    {{ profileData.length.toLocaleString() }} points
-                  </v-chip>
-                </v-card-title>
-                <v-card-text class="pa-3">
-                  <div v-if="isLoadingProfile" class="text-center pa-4">
-                    <v-progress-circular indeterminate color="primary" size="small" />
-                    <p class="mt-2 text-caption">Loading...</p>
-                  </div>
-                  <HistogramChart v-else :profile-data="profileData" :chart-height="430" :compact="false" />
-                </v-card-text>
-              </v-card>
-            </v-col>
-          </v-row>
-        </div>
+        <!-- Heat Map aligned with Details -->
+        <v-card class="heat-map-card mb-3" elevation="2" height="480">
+          <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
+            <v-icon start size="small">mdi-grid</v-icon>
+            Wafer Heat Map
+            <v-spacer />
+            <v-progress-circular v-if="isLoadingWafer" indeterminate size="16" width="2" color="white" />
+          </v-card-title>
+          <v-card-text class="pa-3">
+            <div v-if="!isLoadingWafer && (!waferData || waferData.length === 0)" class="text-center pa-6 text-medium-emphasis" style="height: 420px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-icon size="64" color="grey" class="mb-3">mdi-grid</v-icon>
+              <div class="text-h6 mb-2">No Wafer Data Available</div>
+              <div class="text-body-2">Heat map data will appear here when available</div>
+            </div>
+            <HeatmapChart v-else :profile-data="waferData" :chart-height="420" :clickable="true"
+              :selected-point="selectedPoint?.value || selectedPoint"
+              @point-selected="handleWaferPointSelected" />
+          </v-card-text>
+        </v-card>
+        
+        <!-- Profile Image below Heat Map -->
+        <v-card class="profile-card mb-3" elevation="2" height="500">
+          <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
+            <v-icon start size="small">mdi-image</v-icon>
+            Profile Image
+            <v-spacer />
+            <v-btn 
+              v-if="profileImageUrl && (selectedPoint?.value || selectedPoint)"
+              @click="downloadRawImage" 
+              :loading="isDownloadingImage"
+              size="x-small" 
+              variant="text" 
+              color="white"
+              class="mr-2">
+              <v-icon start size="small">mdi-download</v-icon>
+              Download Raw
+            </v-btn>
+            <v-chip v-if="selectedPoint?.value || selectedPoint" size="x-small" color="white"
+              variant="outlined">
+              Point {{ selectedPoint?.value || selectedPoint }}
+            </v-chip>
+          </v-card-title>
+          <v-card-text class="pa-3">
+            <div v-if="isLoadingProfileImage" class="text-center pa-4" style="height: 430px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-progress-circular indeterminate color="primary" size="small" />
+              <p class="mt-2 text-caption">Loading profile image...</p>
+            </div>
+            <div v-else-if="profileImageUrl" class="profile-image-container"
+              style="height: 430px; display: flex; align-items: center; justify-content: center;">
+              <img :src="profileImageUrl" alt="Profile Image" class="profile-image"
+                style="max-height: 100%; max-width: 100%; object-fit: contain;" @error="handleImageError"
+                @load="handleImageLoad" />
+            </div>
+            <div v-else class="text-center pa-6 text-medium-emphasis" style="height: 430px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-icon size="64" color="grey" class="mb-3">mdi-image-off</v-icon>
+              <div class="text-h6 mb-2">No Profile Image Available</div>
+              <div class="text-body-2">Profile image will appear here when available</div>
+            </div>
+          </v-card-text>
+        </v-card>
+        
+        <!-- Z-Value Distribution below Profile Image -->
+        <v-card class="distribution-card" elevation="2" height="500">
+          <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
+            <v-icon start size="small">mdi-chart-bar</v-icon>
+            Z-Value Distribution
+            <v-spacer />
+            <v-chip v-if="profileData.length > 0" size="x-small" color="white" variant="outlined">
+              {{ profileData.length.toLocaleString() }} points
+            </v-chip>
+          </v-card-title>
+          <v-card-text class="pa-3">
+            <div v-if="isLoadingProfile" class="text-center pa-4" style="height: 430px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-progress-circular indeterminate color="primary" size="small" />
+              <p class="mt-2 text-caption">Loading...</p>
+            </div>
+            <div v-else-if="!profileData || profileData.length === 0" class="text-center pa-6 text-medium-emphasis" style="height: 430px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-icon size="64" color="grey" class="mb-3">mdi-chart-bar</v-icon>
+              <div class="text-h6 mb-2">No Z-Value Data Available</div>
+              <div class="text-body-2">Distribution chart will appear here when data is available</div>
+            </div>
+            <HistogramChart v-else :profile-data="profileData" :chart-height="430" :compact="false" />
+          </v-card-text>
+        </v-card>
       </v-col>
+
     </v-row>
   </v-container>
 </template>
@@ -373,24 +373,20 @@ watch(measurementPoints, (newPoints) => {
 .heat-map-card,
 .profile-card,
 .distribution-card {
-  border: 1px solid rgba(var(--v-theme-outline), 0.12);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  /* Styles now handled by elevation="2" and bg-primary on title */
 }
 
 .heat-map-card .v-card-title,
 .profile-card .v-card-title,
 .distribution-card .v-card-title {
-  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 10px;
+  /* Title styles now handled by bg-primary text-white py-2 text-subtitle-1 classes */
 }
 
 .heat-map-card .v-card-text,
 .profile-card .v-card-text,
 .distribution-card .v-card-text {
-  padding: 6px;
-  height: calc(100% - 36px);
+  padding: 12px;
+  height: calc(100% - 48px);
   overflow: hidden;
 }
 

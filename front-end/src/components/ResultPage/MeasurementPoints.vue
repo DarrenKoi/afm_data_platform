@@ -230,8 +230,12 @@
     
     <!-- No data message -->
     <div v-else class="text-center pa-6 text-medium-emphasis">
-      <v-card elevation="2">
-        <v-card-text class="pa-6">
+      <v-card elevation="2" style="min-height: 600px;">
+        <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
+          <v-icon start size="small">mdi-dots-grid</v-icon>
+          Details
+        </v-card-title>
+        <v-card-text class="pa-6" style="min-height: 550px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
           <v-icon size="64" class="mb-3">mdi-dots-grid</v-icon>
           <div class="text-h6 mb-2">No Detailed Measurement Data Available</div>
           <div class="text-body-2">Load measurement data to view detailed point-by-point measurements</div>
