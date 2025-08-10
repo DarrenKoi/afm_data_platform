@@ -24,12 +24,32 @@ function loadFromStorage(key, defaultValue = []) {
   }
 }
 
-function saveToStorage(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-  } catch (error) {
-    console.error(`Error saving ${key} to localStorage:`, error)
+// Debounced save to storage
+let saveTimeouts = {}
+function saveToStorage(key, data, immediate = false) {
+  if (immediate) {
+    try {
+      localStorage.setItem(key, JSON.stringify(data))
+    } catch (error) {
+      console.error(`Error saving ${key} to localStorage:`, error)
+    }
+    return
   }
+  
+  // Cancel previous timeout for this key
+  if (saveTimeouts[key]) {
+    clearTimeout(saveTimeouts[key])
+  }
+  
+  // Set new timeout for debounced save
+  saveTimeouts[key] = setTimeout(() => {
+    try {
+      localStorage.setItem(key, JSON.stringify(data))
+      delete saveTimeouts[key]
+    } catch (error) {
+      console.error(`Error saving ${key} to localStorage:`, error)
+    }
+  }, 500) // 500ms debounce
 }
 
 export const useDataStore = defineStore('data', () => {
@@ -38,7 +58,9 @@ export const useDataStore = defineStore('data', () => {
   const viewHistory = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value)))
   const groupedData = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value)))
   const groupHistory = ref(loadFromStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value)))
-  const searchQuery = ref(loadFromStorage(STORAGE_KEYS.SEARCH_QUERY, ''))
+  // Ensure searchQuery is always a string
+  const loadedSearchQuery = loadFromStorage(STORAGE_KEYS.SEARCH_QUERY, '')
+  const searchQuery = ref(typeof loadedSearchQuery === 'string' ? loadedSearchQuery : '')
   const maxHistoryItems = ref(10)
 
   // Getters (computed properties)
@@ -185,14 +207,14 @@ export const useDataStore = defineStore('data', () => {
   function setSelectedTool(toolId) {
     // Save current tool's data before switching
     if (selectedTool.value !== toolId) {
-      // Save current tool data
-      saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value)
-      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value)
-      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value)
+      // Save current tool data immediately when switching tools
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, selectedTool.value), viewHistory.value, true)
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUPED_DATA, selectedTool.value), groupedData.value, true)
+      saveToStorage(getToolSpecificKey(STORAGE_KEYS.GROUP_HISTORY, selectedTool.value), groupHistory.value, true)
       
       // Update selected tool
       selectedTool.value = toolId
-      saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId)
+      saveToStorage(STORAGE_KEYS.SELECTED_TOOL, toolId, true)
       
       // Load new tool's data
       viewHistory.value = loadFromStorage(getToolSpecificKey(STORAGE_KEYS.VIEW_HISTORY, toolId))
@@ -204,8 +226,10 @@ export const useDataStore = defineStore('data', () => {
   }
 
   function setSearchQuery(query) {
-    searchQuery.value = query
-    saveToStorage(STORAGE_KEYS.SEARCH_QUERY, query)
+    // Ensure query is always a string
+    const stringQuery = typeof query === 'string' ? query : (query ? String(query) : '')
+    searchQuery.value = stringQuery
+    saveToStorage(STORAGE_KEYS.SEARCH_QUERY, stringQuery)
   }
 
   // Helper function to get date range from measurements

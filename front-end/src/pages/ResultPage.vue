@@ -1,5 +1,8 @@
 <template>
   <v-container fluid class="pa-6 px-md-8 px-lg-12">
+    <!-- Breadcrumb Navigation -->
+    <BreadcrumbNav :items="breadcrumbItems" />
+    
     <!-- Distinctive Back Button and Download Options -->
     <div class="mb-3 d-flex justify-space-between align-center flex-wrap ga-3">
       <v-btn color="primary" variant="elevated" size="large" @click="goBack" class="back-button">
@@ -21,39 +24,72 @@
             <v-list-item @click="downloadMeasurementInfo"
               :disabled="!measurementInfo || Object.keys(measurementInfo).length === 0">
               <template v-slot:prepend>
-                <v-icon>mdi-information</v-icon>
+                <v-icon :color="measurementInfo && Object.keys(measurementInfo).length > 0 ? 'success' : 'grey'">
+                  {{ measurementInfo && Object.keys(measurementInfo).length > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                </v-icon>
               </template>
-              <v-list-item-title>Measurement Info</v-list-item-title>
+              <v-list-item-title>
+                Measurement Info
+                <span v-if="measurementInfo && Object.keys(measurementInfo).length > 0" class="text-caption text-success ml-1">
+                  ({{ Object.keys(measurementInfo).length }} fields)
+                </span>
+              </v-list-item-title>
             </v-list-item>
 
             <v-list-item @click="downloadSummaryStatistics" :disabled="!summaryData || summaryData.length === 0">
               <template v-slot:prepend>
-                <v-icon>mdi-chart-line</v-icon>
+                <v-icon :color="summaryData && summaryData.length > 0 ? 'success' : 'grey'">
+                  {{ summaryData && summaryData.length > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                </v-icon>
               </template>
-              <v-list-item-title>Summary Statistics</v-list-item-title>
+              <v-list-item-title>
+                Summary Statistics
+                <span v-if="summaryData && summaryData.length > 0" class="text-caption text-success ml-1">
+                  ({{ summaryData.length }} points)
+                </span>
+              </v-list-item-title>
             </v-list-item>
 
             <v-list-item @click="downloadDetailedData" :disabled="!detailedData || detailedData.length === 0">
               <template v-slot:prepend>
-                <v-icon>mdi-table-large</v-icon>
+                <v-icon :color="detailedData && detailedData.length > 0 ? 'success' : 'grey'">
+                  {{ detailedData && detailedData.length > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                </v-icon>
               </template>
-              <v-list-item-title>Detailed Data</v-list-item-title>
+              <v-list-item-title>
+                Detailed Data
+                <span v-if="detailedData && detailedData.length > 0" class="text-caption text-success ml-1">
+                  ({{ detailedData.length }} rows)
+                </span>
+              </v-list-item-title>
             </v-list-item>
 
             <v-list-item @click="downloadProfileData" :disabled="!profileData || profileData.length === 0">
               <template v-slot:prepend>
-                <v-icon>mdi-axis</v-icon>
+                <v-icon :color="profileData && profileData.length > 0 ? 'success' : 'grey'">
+                  {{ profileData && profileData.length > 0 ? 'mdi-check-circle' : 'mdi-close-circle' }}
+                </v-icon>
               </template>
-              <v-list-item-title>Profile Data (X,Y,Z)</v-list-item-title>
+              <v-list-item-title>
+                Profile Data (X,Y,Z)
+                <span v-if="profileData && profileData.length > 0" class="text-caption text-success ml-1">
+                  ({{ profileData.length.toLocaleString() }} points)
+                </span>
+              </v-list-item-title>
             </v-list-item>
 
             <v-divider></v-divider>
 
             <v-list-item @click="downloadAllData" :disabled="!hasData">
               <template v-slot:prepend>
-                <v-icon>mdi-package-down</v-icon>
+                <v-icon :color="hasData ? 'primary' : 'grey'">mdi-package-down</v-icon>
               </template>
-              <v-list-item-title>Download All (CSV)</v-list-item-title>
+              <v-list-item-title class="font-weight-medium">
+                Download All (CSV)
+                <v-chip v-if="hasData" size="x-small" color="primary" variant="tonal" class="ml-2">
+                  Combined
+                </v-chip>
+              </v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -201,12 +237,34 @@ import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPo
 import MeasurementPoints from '@/components/ResultPage/MeasurementPoints.vue'
 import HeatmapChart from '@/components/ResultPage/charts/HeatmapChart.vue'
 import AdditionalAnalysisImages from '@/components/ResultPage/AdditionalAnalysisImages.vue'
+import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
 
 const route = useRoute()
 const router = useRouter()
 
 // Navigation tracking
 const referrer = ref('')
+
+// Computed breadcrumb items
+const breadcrumbItems = computed(() => {
+  const items = []
+  
+  if (referrer.value === 'data-trend') {
+    items.push({
+      title: 'Data Trend',
+      to: '/result/data_trend'
+    })
+  }
+  
+  items.push({
+    title: filename.value ? 
+      (filename.value.length > 30 ? filename.value.substring(0, 30) + '...' : filename.value) : 
+      'Result',
+    disabled: true
+  })
+  
+  return items
+})
 
 // Basic route data
 const filename = ref(decodeURIComponent(route.params.filename || ''))

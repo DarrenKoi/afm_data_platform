@@ -8,23 +8,73 @@
 
     <!-- Tool Selection Interface -->
     <div class="text-center mb-6">
-      <v-card class="pa-4 mx-auto" style="max-width: 500px;" elevation="2">
+      <v-card class="pa-4 mx-auto" style="max-width: 600px;" elevation="2">
         <div class="d-flex justify-center align-center gap-4">
           <v-icon color="primary">mdi-tools</v-icon>
           <span class="text-h6 font-weight-medium mr-4">Tool:</span>
           <v-tooltip v-for="tool in availableTools" :key="tool.id" :text="tool.description" location="bottom">
             <template v-slot:activator="{ props }">
-              <v-chip v-bind="props" :color="selectedTool === tool.id ? 'primary' : 'default'"
-                :variant="selectedTool === tool.id ? 'elevated' : 'outlined'" size="large" class="px-4 mx-2"
-                @click="selectTool(tool.id)">
-                <v-icon start :color="selectedTool === tool.id ? 'white' : 'primary'">
+              <v-chip 
+                v-bind="props" 
+                :color="selectedTool === tool.id ? 'primary' : 'default'"
+                :variant="selectedTool === tool.id ? 'elevated' : 'outlined'" 
+                size="large" 
+                class="px-4 mx-2 tool-chip"
+                :class="{ 'tool-selected': selectedTool === tool.id }"
+                @click="selectTool(tool.id)"
+                :disabled="isLoadingToolData">
+                <v-progress-circular 
+                  v-if="isLoadingToolData && pendingTool === tool.id" 
+                  indeterminate 
+                  size="18" 
+                  width="2"
+                  :color="selectedTool === tool.id ? 'white' : 'primary'"
+                  class="mr-2" />
+                <v-icon v-else start :color="selectedTool === tool.id ? 'white' : 'primary'">
                   mdi-microscope
                 </v-icon>
                 <span class="font-weight-medium">{{ tool.name }}</span>
+                <v-chip 
+                  v-if="toolDataCounts[tool.id] && selectedTool === tool.id" 
+                  size="x-small" 
+                  color="white" 
+                  class="ml-2">
+                  {{ toolDataCounts[tool.id].toLocaleString() }}
+                </v-chip>
               </v-chip>
             </template>
           </v-tooltip>
         </div>
+        
+        <!-- Loading indicator -->
+        <v-expand-transition>
+          <div v-if="isLoadingToolData" class="mt-3">
+            <v-progress-linear indeterminate color="primary" height="2" />
+            <p class="text-caption text-medium-emphasis mt-1">
+              Loading {{ pendingTool }} data...
+            </p>
+          </div>
+        </v-expand-transition>
+        
+        <!-- Tool data info -->
+        <v-expand-transition>
+          <v-alert 
+            v-if="!isLoadingToolData && toolDataCounts[selectedTool]" 
+            type="info" 
+            variant="tonal" 
+            density="compact"
+            class="mt-3">
+            <div class="d-flex align-center justify-space-between">
+              <span class="text-caption">
+                <v-icon size="small" class="mr-1">mdi-database</v-icon>
+                {{ toolDataCounts[selectedTool]?.toLocaleString() || 0 }} measurements available
+              </span>
+              <span class="text-caption text-medium-emphasis">
+                Last updated: {{ toolLastUpdated[selectedTool] || 'Just now' }}
+              </span>
+            </div>
+          </v-alert>
+        </v-expand-transition>
       </v-card>
     </div>
 
@@ -57,17 +107,19 @@
     </v-row>
 
     <!-- Loading Dialog for SEE TOGETHER -->
-    <v-dialog v-model="showLoadingDialog" max-width="400px" persistent>
-      <v-card>
-        <v-card-text class="text-center pa-6">
-          <v-progress-circular indeterminate color="primary" size="64" class="mb-4" />
-          <h3 class="text-h6 mb-2">Loading Measurement Data</h3>
-          <p class="text-body-2 text-medium-emphasis">
-            {{ loadingMessage }}
-          </p>
-        </v-card-text>
-      </v-card>
-    </v-dialog>
+    <LoadingDialog
+      v-model="showLoadingDialog"
+      title="Loading Measurement Data"
+      :progress="loadingProgress"
+      :current="loadedCount"
+      :total="totalCount"
+      :message="loadingMessage"
+      :detail="currentFileName"
+      :errors="loadingErrors"
+      :cancelling="isCancelling"
+      item-label="measurements"
+      error-label="file(s) failed to load"
+      @cancel="cancelLoading" />
 
     <!-- Save Group Dialog -->
     <v-dialog v-model="showSaveDialog" max-width="500px" persistent>
@@ -127,6 +179,7 @@ import SearchSection from '@/components/MainPage/SearchSection.vue'
 import ViewHistoryCard from '@/components/MainPage/ViewHistoryCard.vue'
 import DataGroupingCard from '@/components/MainPage/DataGroupingCard.vue'
 import SavedGroupsCard from '@/components/MainPage/SavedGroupsCard.vue'
+import LoadingDialog from '@/components/common/LoadingDialog.vue'
 
 const router = useRouter()
 const dataStore = useDataStore()
@@ -135,17 +188,21 @@ const isSearching = ref(false)
 
 // Tool selection state
 const selectedTool = ref('MAP608')
+const isLoadingToolData = ref(false)
+const pendingTool = ref('')
+const toolDataCounts = ref({})
+const toolLastUpdated = ref({})
 const availableTools = ref([
   {
     id: 'MAP608',
     name: 'MAP608',
-    description: 'PKG',
+    description: 'PKG - Wafer Level Packaging',
     status: 'active'
   },
   {
     id: 'MAPC01',
     name: 'MAPC01',
-    description: 'R3',
+    description: 'R3 - Research Fab',
     status: 'active'
   }
 ])
@@ -193,24 +250,42 @@ async function viewTrendAnalysis() {
     return
   }
 
+  // Reset loading state
+  loadingProgress.value = 0
+  loadedCount.value = 0
+  totalCount.value = dataStore.groupedData.length
+  loadingErrors.value = []
+  showErrorDetails.value = false
+  isCancelling.value = false
+  currentFileName.value = ''
+  
+  // Create abort controller for cancellation
+  loadingAbortController.value = new AbortController()
+
   // Show loading dialog
-  loadingMessage.value = `Loading data for ${dataStore.groupedCount} measurements...`
+  loadingMessage.value = 'Preparing to load measurements...'
   showLoadingDialog.value = true
 
   try {
-    // Track loading progress
-    let loadedCount = 0
-    const totalCount = dataStore.groupedData.length
-
     // Load detailed data for all measurements in the group
-    const loadPromises = dataStore.groupedData.map(async (measurement) => {
+    const loadPromises = dataStore.groupedData.map(async (measurement, index) => {
+      // Check for cancellation
+      if (loadingAbortController.value.signal.aborted) {
+        return null
+      }
+
       if (!measurement.filename) {
         console.warn(`⚠️ Skipping measurement without filename:`, measurement)
-        loadedCount++
+        loadedCount.value++
+        loadingProgress.value = (loadedCount.value / totalCount.value) * 100
         return null
       }
 
       try {
+        // Update current file being loaded
+        currentFileName.value = measurement.filename
+        loadingMessage.value = `Loading measurement ${loadedCount.value + 1} of ${totalCount.value}`
+        
         console.log(`📊 Loading data for: ${measurement.filename}`)
         const toolName = measurement.tool || measurement.tool_name || selectedTool.value || 'MAP608'
 
@@ -218,8 +293,8 @@ async function viewTrendAnalysis() {
         const response = await apiService.getAfmFileDetail(measurement.filename, toolName)
 
         // Update progress
-        loadedCount++
-        loadingMessage.value = `Loading measurement ${loadedCount} of ${totalCount}...`
+        loadedCount.value++
+        loadingProgress.value = (loadedCount.value / totalCount.value) * 100
 
         if (response.success && response.data) {
           return {
@@ -231,18 +306,34 @@ async function viewTrendAnalysis() {
             availablePoints: response.data.available_points || []
           }
         } else {
+          const errorMsg = `Failed: ${measurement.filename}`
+          loadingErrors.value.push(errorMsg)
           console.error(`❌ Failed to load data for ${measurement.filename}:`, response.error)
           return null
         }
       } catch (error) {
+        if (loadingAbortController.value.signal.aborted) {
+          return null
+        }
+        const errorMsg = `Error: ${measurement.filename}`
+        loadingErrors.value.push(errorMsg)
         console.error(`❌ Error loading ${measurement.filename}:`, error)
-        loadedCount++
+        loadedCount.value++
+        loadingProgress.value = (loadedCount.value / totalCount.value) * 100
         return null
       }
     })
 
     // Wait for all measurements to load
     const results = await Promise.all(loadPromises)
+    
+    // Check if cancelled
+    if (loadingAbortController.value.signal.aborted) {
+      console.log('⚠️ Loading cancelled by user')
+      showLoadingDialog.value = false
+      return
+    }
+    
     const validResults = results.filter(r => r !== null)
 
     console.log(`✅ Loaded ${validResults.length} out of ${dataStore.groupedData.length} measurements`)
@@ -258,21 +349,50 @@ async function viewTrendAnalysis() {
       router.push('/result/data_trend')
     } else {
       console.error('❌ No valid data loaded, cannot proceed to trend analysis')
-      showLoadingDialog.value = false
-      // Could show an error dialog here
+      loadingMessage.value = 'Failed to load measurements'
+      // Keep dialog open to show error state
+      setTimeout(() => {
+        showLoadingDialog.value = false
+      }, 3000)
     }
 
   } catch (error) {
-    console.error('❌ Error during trend analysis data loading:', error)
-    showLoadingDialog.value = false
-    // Could show an error dialog here
+    if (loadingAbortController.value.signal.aborted) {
+      console.log('⚠️ Loading cancelled')
+    } else {
+      console.error('❌ Error during trend analysis data loading:', error)
+      loadingMessage.value = 'An error occurred while loading'
+    }
+    setTimeout(() => {
+      showLoadingDialog.value = false
+    }, 3000)
   }
+}
+
+// Function to handle loading cancellation
+function cancelLoading() {
+  isCancelling.value = true
+  if (loadingAbortController.value) {
+    loadingAbortController.value.abort()
+  }
+  setTimeout(() => {
+    showLoadingDialog.value = false
+    isCancelling.value = false
+  }, 500)
 }
 
 
 // Loading dialog state
 const showLoadingDialog = ref(false)
 const loadingMessage = ref('')
+const loadingProgress = ref(0)
+const loadedCount = ref(0)
+const totalCount = ref(0)
+const currentFileName = ref('')
+const loadingErrors = ref([])
+// Removed showErrorDetails - now handled by LoadingDialog component
+const isCancelling = ref(false)
+const loadingAbortController = ref(null)
 
 // Save group dialog state
 const showSaveDialog = ref(false)
@@ -309,18 +429,33 @@ function loadSavedGroup(groupId) {
 }
 
 // Tool selection functions
-function selectTool(toolId) {
-  console.log(`🔧 Tool selected: ${toolId}`)
-  selectedTool.value = toolId
+async function selectTool(toolId) {
+  // Don't reload if already selected
+  if (selectedTool.value === toolId && toolDataCounts.value[toolId]) {
+    return
+  }
 
+  console.log(`🔧 Tool selected: ${toolId}`)
+  
+  // Set loading state
+  isLoadingToolData.value = true
+  pendingTool.value = toolId
+  
   // Clear current search results when switching tools
   searchResults.value = []
+  
+  // Update selected tool
+  selectedTool.value = toolId
 
   // Store selected tool in data store for use by other components
   dataStore.setSelectedTool(toolId)
 
   // Trigger initial data load for the selected tool
-  loadToolData(toolId)
+  await loadToolData(toolId)
+  
+  // Clear loading state
+  isLoadingToolData.value = false
+  pendingTool.value = ''
 }
 
 function getSelectedToolInfo() {
@@ -330,8 +465,33 @@ function getSelectedToolInfo() {
 
 async function loadToolData(toolId) {
   console.log(`📊 Loading data for tool: ${toolId}`)
-  // The search composable will automatically reload data when the tool changes
-  // via the watch on dataStore.selectedTool
+  
+  try {
+    // Simulate getting data count from the search composable or API
+    // The search composable will automatically reload data when the tool changes
+    // via the watch on dataStore.selectedTool
+    
+    // For now, we'll simulate with a timeout
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    // In reality, this would come from the API response
+    // You could get this from the search composable's loaded data
+    const mockCounts = {
+      'MAP608': 15234,
+      'MAPC01': 8756
+    }
+    
+    toolDataCounts.value[toolId] = mockCounts[toolId] || 0
+    toolLastUpdated.value[toolId] = new Date().toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })
+    
+    console.log(`✅ Loaded ${toolDataCounts.value[toolId]} measurements for ${toolId}`)
+  } catch (error) {
+    console.error(`❌ Error loading tool data for ${toolId}:`, error)
+    toolDataCounts.value[toolId] = 0
+  }
 }
 
 // Initialize component
@@ -350,3 +510,31 @@ onMounted(() => {
 })
 
 </script>
+
+<style scoped>
+/* Tool selection chips */
+.tool-chip {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.tool-chip:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.tool-chip.tool-selected {
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.3);
+}
+
+.tool-chip:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Smooth transitions for expand animations */
+.v-expand-transition-enter-active,
+.v-expand-transition-leave-active {
+  transition: all 0.3s ease;
+}
+</style>

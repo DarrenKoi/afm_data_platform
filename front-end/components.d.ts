@@ -9,6 +9,7 @@ export {}
 declare module 'vue' {
   export interface GlobalComponents {
     AdditionalAnalysisImages: typeof import('./src/components/ResultPage/AdditionalAnalysisImages.vue')['default']
+    BreadcrumbNav: typeof import('./src/components/common/BreadcrumbNav.vue')['default']
     ChartVisualization: typeof import('./src/components/ResultPage/ChartVisualization.vue')['default']
     DataGroupingCard: typeof import('./src/components/MainPage/DataGroupingCard.vue')['default']
     EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']
@@ -16,6 +17,7 @@ declare module 'vue' {
     HistogramChart: typeof import('./src/components/ResultPage/charts/HistogramChart.vue')['default']
     InformationDetails: typeof import('./src/components/ResultPage/InformationDetails.vue')['default']
     KeyOrderingSettings: typeof import('./src/components/Settings/KeyOrderingSettings.vue')['default']
+    LoadingDialog: typeof import('./src/components/common/LoadingDialog.vue')['default']
     MeasurementInfo: typeof import('./src/components/ResultPage/MeasurementInfo.vue')['default']
     MeasurementPoints: typeof import('./src/components/ResultPage/MeasurementPoints.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

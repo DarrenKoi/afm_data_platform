@@ -5,12 +5,15 @@
       <v-card-text>
         <v-text-field v-model="realtimeSearch.searchQuery.value" clearable label="Search AFM files..."
           placeholder="Search by Lot ID, Recipe, Date... (e.g., CMP, T7HQR42TA, ETCH, 250609)"
-          prepend-inner-icon="mdi-magnify" variant="outlined" @keyup.enter="triggerInstantSearch">
+          prepend-inner-icon="mdi-magnify" variant="outlined" 
+          aria-label="Search AFM files"
+          @keyup.enter="triggerInstantSearch">
           <!-- Recent search terms dropdown (instead of suggestions) -->
           <template v-if="recentSearchTerms.length > 0 && !realtimeSearch.searchQuery.value" #append>
             <v-menu v-model="showRecent" offset-y>
               <template #activator="{ props }">
                 <v-btn v-bind="props" icon="mdi-history" variant="text" size="small"
+                  aria-label="Show recent searches"
                   @click="showRecent = !showRecent" />
               </template>
               <v-list max-height="250">
@@ -83,7 +86,9 @@
 
         <!-- Inner filter input -->
         <v-text-field v-model="innerFilter" density="compact" variant="outlined" placeholder="Filter results..."
-          prepend-inner-icon="mdi-filter" clearable hide-details style="max-width: 300px;" class="ml-4" />
+          prepend-inner-icon="mdi-filter" clearable hide-details 
+          aria-label="Filter search results"
+          style="max-width: 300px;" class="ml-4" />
       </v-card-title>
       <v-divider />
 
@@ -126,45 +131,11 @@
                       <span class="text-caption text-success ml-1 font-weight-medium">Available</span>
                     </div>
                     <div class="d-flex flex-row align-center justify-center gap-1">
-                      <v-tooltip text="Profile Data" location="top" 
-                        v-if="result.profile_dir_list && result.profile_dir_list[0] !== 'no files'">
+                      <v-tooltip v-for="dataType in dataTypes" :key="dataType.key" 
+                        :text="dataType.tooltip" location="top"
+                        v-if="dataType && dataType.key && hasData(result[dataType.key])">
                         <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-chart-line</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Measurement Data" location="top" 
-                        v-if="result.data_dir_list && result.data_dir_list[0] !== 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-database</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Profile Images" location="top" 
-                        v-if="result.tiff_dir_list && result.tiff_dir_list[0] !== 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-image</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Alignment Images" location="top" 
-                        v-if="result.align_dir_list && result.align_dir_list[0] !== 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-axis-arrow</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Tip Images" location="top" 
-                        v-if="result.tip_dir_list && result.tip_dir_list[0] !== 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-needle</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Analysis Images" location="top" 
-                        v-if="result.capture_dir_list && result.capture_dir_list[0] !== 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">mdi-chart-box-outline</v-icon>
+                          <v-icon v-bind="props" size="small" color="success">{{ dataType.icon }}</v-icon>
                         </template>
                       </v-tooltip>
                     </div>
@@ -176,49 +147,16 @@
                   <!-- Unavailable data row -->
                   <div class="d-flex flex-column align-center mt-2">
                     <div class="d-flex align-center mb-1">
-                      <v-icon size="small" color="grey-darken-1" class="availability-indicator">mdi-close-circle</v-icon>
+                      <v-icon size="small" color="grey-darken-1"
+                        class="availability-indicator">mdi-close-circle</v-icon>
                       <span class="text-caption text-grey-darken-1 ml-1 font-weight-medium">Not Available</span>
                     </div>
                     <div class="d-flex flex-row align-center justify-center gap-1">
-                      <v-tooltip text="Profile Data" location="bottom" 
-                        v-if="!result.profile_dir_list || result.profile_dir_list[0] === 'no files'">
+                      <v-tooltip v-for="dataType in dataTypes" :key="dataType.key"
+                        :text="dataType.tooltip" location="bottom"
+                        v-if="dataType && dataType.key && !hasData(result[dataType.key])">
                         <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-chart-line</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Measurement Data" location="bottom" 
-                        v-if="!result.data_dir_list || result.data_dir_list[0] === 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-database</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Profile Images" location="bottom" 
-                        v-if="!result.tiff_dir_list || result.tiff_dir_list[0] === 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-image</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Alignment Images" location="bottom" 
-                        v-if="!result.align_dir_list || result.align_dir_list[0] === 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-axis-arrow</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Tip Images" location="bottom" 
-                        v-if="!result.tip_dir_list || result.tip_dir_list[0] === 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-needle</v-icon>
-                        </template>
-                      </v-tooltip>
-
-                      <v-tooltip text="Analysis Images" location="bottom" 
-                        v-if="!result.capture_dir_list || result.capture_dir_list[0] === 'no files'">
-                        <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">mdi-chart-box-outline</v-icon>
+                          <v-icon v-bind="props" size="small" color="grey">{{ dataType.icon }}</v-icon>
                         </template>
                       </v-tooltip>
                     </div>
@@ -230,11 +168,15 @@
               <v-col cols="5" class="text-right">
                 <div class="d-flex flex-column align-end gap-1">
                   <v-btn class='my-2' variant="outlined" size="small" color="success"
-                    :disabled="isInGroup(result.filename)" @click="addToGroup(result)" style="width: 140px;" dense>
+                    :disabled="isInGroup(result.filename)" 
+                    :aria-label="`Add ${result.filename} to group`"
+                    @click="addToGroup(result)" style="width: 140px;" dense>
                     <v-icon size="small">mdi-plus</v-icon>
                     <span class="ml-1">Add to Group</span>
                   </v-btn>
-                  <v-btn variant="outlined" size="small" @click="viewDetails(result)" style="width: 140px;" dense>
+                  <v-btn variant="outlined" size="small" 
+                    :aria-label="`View details for ${result.filename}`"
+                    @click="viewDetails(result)" style="width: 140px;" dense>
                     View Details
                   </v-btn>
                 </div>
@@ -255,7 +197,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, computed } from 'vue'
+import { ref, watch, onMounted, onUnmounted, computed } from 'vue'
 import { useRealtimeSearch } from '@/composables/useSearch.js'
 
 // Props
@@ -283,13 +225,16 @@ const showRecent = ref(false)
 
 // Recent search terms functionality
 const recentSearchTerms = ref([])
-const maxRecentTerms = 5
 
 // Inner filter functionality
 const innerFilter = ref('')
 
+// Configuration constants
+const MAX_VISIBLE_ITEMS = 10 // Show 10 items initially, then scroll for more
+const MAX_RECENT_TERMS = 5 // Maximum number of recent search terms to store
+
 // Results display configuration
-const maxVisibleItems = ref(10) // Show 10 items initially, then scroll for more
+const maxVisibleItems = ref(MAX_VISIBLE_ITEMS)
 
 // Computed property to filter search results
 const filteredResults = computed(() => {
@@ -323,7 +268,7 @@ const displayedResults = computed(() => {
 })
 
 // Watch for search results changes and emit to parent
-watch(realtimeSearch.searchResults, (newResults) => {
+const stopWatchResults = watch(realtimeSearch.searchResults, (newResults) => {
   // Clear inner filter when main search changes
   innerFilter.value = ''
 
@@ -333,7 +278,7 @@ watch(realtimeSearch.searchResults, (newResults) => {
 }, { deep: true })
 
 // Watch for filtered results changes and emit to parent
-watch(filteredResults, (newFilteredResults) => {
+const stopWatchFiltered = watch(filteredResults, (newFilteredResults) => {
   if (innerFilter.value) {
     console.log(`🔍 SearchSection: Filtered results changed, emitting ${newFilteredResults.length} results`)
     emit('search-performed', realtimeSearch.searchQuery.value, newFilteredResults)
@@ -341,7 +286,7 @@ watch(filteredResults, (newFilteredResults) => {
 }, { deep: true })
 
 // Watch for search query changes to add to recent terms
-watch(() => realtimeSearch.searchQuery.value, (newQuery, oldQuery) => {
+const stopWatchQuery = watch(() => realtimeSearch.searchQuery.value, (newQuery, oldQuery) => {
   // Only add to recent terms if user has performed a meaningful search (not just typing)
   if (oldQuery && oldQuery.trim().length >= 2 && newQuery !== oldQuery) {
     // This will capture when user clears search or significantly changes it
@@ -361,6 +306,28 @@ onMounted(() => {
     console.log(`🔄 SearchSection: Restored search query: "${realtimeSearch.searchQuery.value}"`)
   }
 })
+
+onUnmounted(() => {
+  // Clean up watchers to prevent memory leaks
+  stopWatchResults()
+  stopWatchFiltered()
+  stopWatchQuery()
+})
+
+// Helper function to check data availability
+function hasData(dirList) {
+  return dirList && dirList[0] !== 'no files'
+}
+
+// Data type configurations for availability display
+const dataTypes = [
+  { key: 'profile_dir_list', icon: 'mdi-chart-line', tooltip: 'Profile Data' },
+  { key: 'data_dir_list', icon: 'mdi-database', tooltip: 'Measurement Data' },
+  { key: 'tiff_dir_list', icon: 'mdi-image', tooltip: 'Profile Images' },
+  { key: 'align_dir_list', icon: 'mdi-axis-arrow', tooltip: 'Alignment Images' },
+  { key: 'tip_dir_list', icon: 'mdi-needle', tooltip: 'Tip Images' },
+  { key: 'capture_dir_list', icon: 'mdi-chart-box-outline', tooltip: 'Analysis Images' }
+]
 
 // Functions
 function triggerInstantSearch() {
@@ -395,8 +362,8 @@ function addToRecentTerms(term) {
   recentSearchTerms.value.unshift(trimmedTerm)
 
   // Keep only max recent terms
-  if (recentSearchTerms.value.length > maxRecentTerms) {
-    recentSearchTerms.value = recentSearchTerms.value.slice(0, maxRecentTerms)
+  if (recentSearchTerms.value.length > MAX_RECENT_TERMS) {
+    recentSearchTerms.value = recentSearchTerms.value.slice(0, MAX_RECENT_TERMS)
   }
 
   // Save to localStorage
@@ -444,10 +411,6 @@ function viewDetails(result) {
   emit('view-details', result)
 }
 
-function toggleShowAll() {
-  showAllResults.value = !showAllResults.value
-  console.log(`📋 SearchSection: Toggled show all results to ${showAllResults.value}`)
-}
 </script>
 
 <style scoped>

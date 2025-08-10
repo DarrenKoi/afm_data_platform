@@ -1,19 +1,33 @@
 <template>
   <v-container class="pa-6">
+    <!-- Breadcrumb Navigation -->
+    <BreadcrumbNav :items="breadcrumbItems" />
+    
     <v-row>
       <v-col cols="12">
         <!-- Header with back button -->
         <div class="d-flex align-center mb-4">
-          <v-btn variant="outlined" @click="goBack" class="mr-4">
-            <v-icon left>mdi-arrow-left</v-icon>
+          <v-btn 
+            variant="elevated" 
+            color="primary"
+            @click="goBack" 
+            class="mr-4 back-button">
+            <v-icon start>mdi-arrow-left</v-icon>
             Back to Search
           </v-btn>
 
           <div>
-            <h1 class="text-h4">AFM Data Trend Analysis</h1>
-            <p class="text-subtitle-1 text-medium-emphasis">
-              Comparing {{ dataStore.groupedCount }} measurements
-            </p>
+            <h1 class="text-h4 font-weight-bold">AFM Data Trend Analysis</h1>
+            <div class="d-flex align-center ga-3 mt-1">
+              <v-chip color="primary" variant="tonal" size="small">
+                <v-icon start size="small">mdi-file-document-multiple</v-icon>
+                {{ dataStore.groupedCount }} measurements
+              </v-chip>
+              <v-chip v-if="uniqueSites && uniqueSites.length > 0" color="secondary" variant="tonal" size="small">
+                <v-icon start size="small">mdi-target</v-icon>
+                {{ uniqueSites.length }} sites
+              </v-chip>
+            </div>
           </div>
         </div>
 
@@ -226,6 +240,7 @@ import { useDataStore } from '@/stores/dataStore.js'
 import { apiService } from '@/services/api'
 import SimplifiedMeasurementCard from '@/components/DataTrend/SimplifiedMeasurementCard.vue'
 import TimeSeriesChart from '@/components/DataTrend/charts/TimeSeriesChart.vue'
+import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
 
 const router = useRouter()
 const dataStore = useDataStore()
@@ -240,6 +255,15 @@ const selectedSites = ref([])  // Multiple site selection
 const selectedItem = ref('MEAN')
 const selectedColumn = ref('')
 const isProcessingTimeSeries = ref(false)
+
+// Breadcrumb items
+const breadcrumbItems = [
+  {
+    title: 'Data Trend Analysis',
+    icon: 'mdi-chart-timeline',
+    disabled: true
+  }
+]
 
 // Computed property to enrich measurement data with additional information
 const enrichedMeasurements = computed(() => {
@@ -652,3 +676,39 @@ async function loadGroupDataFromFlask() {
 }
 
 </script>
+
+<style scoped>
+/* Distinctive back button */
+.back-button {
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 12px rgba(var(--v-theme-primary), 0.3);
+  transition: all 0.3s ease;
+}
+
+.back-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(var(--v-theme-primary), 0.4);
+}
+
+/* Card hover effects */
+.v-card {
+  transition: all 0.3s ease;
+}
+
+.v-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* Breadcrumb styling */
+.v-breadcrumbs-item {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.v-breadcrumbs-item:not([disabled]):hover {
+  color: rgb(var(--v-theme-primary));
+}
+</style>

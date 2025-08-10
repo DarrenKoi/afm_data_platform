@@ -72,50 +72,46 @@ export const afmService = {
       
       if (response.success && response.data) {
         // Extract wafer data from the detailed response
-        // Generate wafer position data based on available measurement points
-        const waferData = []
         const points = response.data.available_points || []
         
+        // Pre-calculate grid size for non-standard positions
+        const gridSize = Math.ceil(Math.sqrt(points.length))
+        
+        // Position mapping for standard wafer positions
+        const positionMap = {
+          'UL': { x: -3, y: 3 },   // Upper Left
+          'UR': { x: 3, y: 3 },    // Upper Right
+          'LL': { x: -3, y: -3 },  // Lower Left
+          'LR': { x: 3, y: -3 },   // Lower Right
+          'C': { x: 0, y: 0 }      // Center
+        }
+        
+        // Get mean data once if available
+        const meanData = response.data.summary?.find?.(item => item.ITEM === 'MEAN')
+        
         // Create wafer data from measurement points
-        points.forEach((point, index) => {
+        const waferData = points.map((point, index) => {
           // Parse point name (e.g., "1_UL" -> point 1, position UL)
           const [pointNum, position] = point.split('_')
+          const normalizedPosition = position?.toUpperCase() || ''
           
-          // Generate wafer coordinates based on point position
-          let x, y
-          
-          // Handle standard wafer position codes (case-insensitive)
-          const normalizedPosition = position ? position.toUpperCase() : ''
-          switch(normalizedPosition) {
-            case 'UL': x = -3; y = 3; break  // Upper Left
-            case 'UR': x = 3; y = 3; break   // Upper Right
-            case 'LL': x = -3; y = -3; break // Lower Left
-            case 'LR': x = 3; y = -3; break  // Lower Right
-            case 'C': x = 0; y = 0; break    // Center
-            default: 
-              // For all other cases (numbered points, custom naming), arrange in a grid
-              const gridSize = Math.ceil(Math.sqrt(points.length))
-              x = (index % gridSize) * 2 - gridSize
-              y = Math.floor(index / gridSize) * 2 - gridSize
+          // Get coordinates from position map or calculate grid position
+          const coords = positionMap[normalizedPosition] || {
+            x: (index % gridSize) * 2 - gridSize,
+            y: Math.floor(index / gridSize) * 2 - gridSize
           }
           
           // Get measurement value from summary data if available
-          let value = 75 + Math.random() * 50 // Default random value
-          if (response.data.summary && Array.isArray(response.data.summary)) {
-            const meanData = response.data.summary.find(item => item.ITEM === 'MEAN')
-            if (meanData && meanData[point]) {
-              value = meanData[point]
-            }
-          }
+          const value = meanData?.[point] || (75 + Math.random() * 50)
           
-          waferData.push({
-            point: point,
-            x: x,
-            y: y,
-            value: value,
+          return {
+            point,
+            x: coords.x,
+            y: coords.y,
+            value,
             name: `Point ${pointNum}`,
-            position: position
-          })
+            position
+          }
         })
         
         console.log('📊 Generated wafer data:', waferData)
