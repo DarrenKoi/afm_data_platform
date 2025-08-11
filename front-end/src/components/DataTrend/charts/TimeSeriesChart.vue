@@ -29,6 +29,23 @@ const props = defineProps({
 const chartContainer = ref(null)
 let chartInstance = null
 
+// Helper function to combine date and time strings into a Date object
+const parseDateTime = (dateStr, timeStr) => {
+  if (!dateStr || !timeStr) return null
+
+  // Parse date string (YYMMDD format)
+  const year = 2000 + parseInt(dateStr.substring(0, 2), 10)
+  const month = parseInt(dateStr.substring(2, 4), 10) - 1 // Month is 0-indexed
+  const day = parseInt(dateStr.substring(4, 6), 10)
+
+  // Parse time string (HHMMSS format)
+  const hours = parseInt(timeStr.substring(0, 2), 10)
+  const minutes = parseInt(timeStr.substring(2, 4), 10)
+  const seconds = parseInt(timeStr.substring(4, 6), 10)
+
+  return new Date(year, month, day, hours, minutes, seconds)
+}
+
 // Computed property to format the chart data
 const chartData = computed(() => {
   if (!props.timeSeriesData || props.timeSeriesData.length === 0) {
@@ -40,16 +57,17 @@ const chartData = computed(() => {
   props.timeSeriesData.forEach(series => {
     if (series && series.data && Array.isArray(series.data)) {
       series.data.forEach(item => {
-        if (item && item.timestamp) {
-          allTimestampsSet.add(item.timestamp)
+        if (item && item.date && item.time) {
+          const combinedDateTime = parseDateTime(item.date, item.time)
+          if (combinedDateTime) {
+            allTimestampsSet.add(combinedDateTime.getTime())
+          }
         }
       })
     }
   })
 
-  const allTimestamps = Array.from(allTimestampsSet).sort((a, b) => {
-    return new Date(a) - new Date(b)
-  })
+  const allTimestamps = Array.from(allTimestampsSet).sort((a, b) => a - b)
 
   // Format timestamps for display (Korean-friendly format: yy/mm/dd hh:mm:ss)
   const formattedTimestamps = allTimestamps.map(timestamp => {
@@ -70,20 +88,29 @@ const chartData = computed(() => {
       return { name: series?.name || `Series ${seriesIndex}`, data: [], rawData: [] }
     }
 
-    // Sort series data by timestamp
-    const sortedData = [...series.data].sort((a, b) => {
-      return new Date(a.timestamp) - new Date(b.timestamp)
-    })
+    // Sort series data by combined timestamp
+    const sortedData = [...series.data]
+      .map(item => {
+        const combinedDateTime = parseDateTime(item.date, item.time)
+        return {
+          ...item,
+          combinedTimestamp: combinedDateTime
+        }
+      })
+      .filter(item => item.combinedTimestamp !== null)
+      .sort((a, b) => a.combinedTimestamp - b.combinedTimestamp)
 
     // Convert to scatter plot format
     const scatterData = sortedData.map(item => {
-      const timestampIndex = allTimestamps.indexOf(item.timestamp)
+      const timestampIndex = allTimestamps.indexOf(item.combinedTimestamp.getTime())
       return {
         value: [timestampIndex, item.value],
-        timestamp: item.timestamp,
+        timestamp: item.combinedTimestamp,
         lotId: item.lotId,
         recipe: item.recipe,
-        site: item.site
+        site: item.site,
+        date: item.date,
+        time: item.time
       }
     })
 
@@ -121,7 +148,7 @@ function initChart() {
       formatter: function (params) {
         const dataItem = params.data
         // Format timestamp to Korean-friendly format
-        const date = new Date(dataItem.timestamp)
+        const date = dataItem.timestamp
         const year = String(date.getFullYear()).slice(-2)
         const month = String(date.getMonth() + 1).padStart(2, '0')
         const day = String(date.getDate()).padStart(2, '0')
@@ -136,6 +163,7 @@ function initChart() {
             <div>Time: ${formattedTime}</div>
             <div>Value: ${dataItem.value[1].toFixed(3)} nm</div>
             <div style="color: #666; font-size: 12px; margin-top: 4px;">
+              Date: ${dataItem.date || 'N/A'} | Time: ${dataItem.time || 'N/A'}<br/>
               Lot: ${dataItem.lotId || 'N/A'}<br/>
               Recipe: ${dataItem.recipe || 'N/A'}
             </div>

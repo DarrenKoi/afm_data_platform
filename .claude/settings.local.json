@@ -14,7 +14,10 @@
       "WebFetch(domain:github.com)",
       "Bash(rg:*)",
       "Bash(git checkout:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "mcp__sequential-thinking__sequentialthinking",
+      "Bash(npx vue-tsc:*)",
+      "Bash(node:*)"
     ],
     "deny": []
   }
