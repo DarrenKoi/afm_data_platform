@@ -7,7 +7,7 @@ from flask import Blueprint, jsonify, request
 from pathlib import Path
 from urllib.parse import unquote
 from datetime import datetime
-from .utils.app_logger import get_activity_logger
+from .utils.app_logger_standard import get_activity_logger
 from .utils.file_parser import (
     load_afm_file_list, 
     get_pickle_file_path_by_filename,
@@ -27,11 +27,11 @@ def log_afm_access(action, **kwargs):
         user_id = request.cookies.get('LAST_USER', 'anonymous')
         
         # Log with structured data
-        activity_logger.info(f"AFM {action}",
-                           user=user_id,
-                           action=action,
-                           timestamp=datetime.now().isoformat(),
-                           **kwargs)
+        activity_logger.info(f"AFM {action}", extra={
+                           'user': user_id,
+                           'action': action,
+                           'timestamp': datetime.now().isoformat(),
+                           **kwargs})
     except Exception:
         # Don't let logging errors break the API
         pass

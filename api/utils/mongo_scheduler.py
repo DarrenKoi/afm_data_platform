@@ -30,7 +30,7 @@ class MongoCleanupScheduler:
     def cleanup_job(self):
         """Job function for cleaning up old measurements"""
         try:
-            logger.info(f"Starting scheduled cleanup job at {datetime.utcnow()}")
+            logger.info(f"Starting scheduled cleanup job at {datetime.now()}")
             
             # Get MongoDB client
             self.mongo_client = get_mongo_client()

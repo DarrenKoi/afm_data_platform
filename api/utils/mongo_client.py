@@ -335,7 +335,7 @@ class AFMMongoClient:
                             prepared_doc = measurement
                         
                         # Add metadata
-                        prepared_doc['_updated_at'] = datetime.utcnow()
+                        prepared_doc['_updated_at'] = datetime.now()
                         prepared_doc['_version'] = '1.1.0'
                         
                         # Final size check
@@ -690,7 +690,7 @@ class AFMMongoClient:
             collection = self._get_collection(tool_name)
             
             # Calculate cutoff date (YYMMDD format)
-            cutoff_datetime = datetime.utcnow() - timedelta(days=days_to_keep)
+            cutoff_datetime = datetime.now() - timedelta(days=days_to_keep)
             cutoff_date = cutoff_datetime.strftime('%y%m%d')
             
             logger.info(f"Cleanup: Looking for measurements before {cutoff_date} "
@@ -780,7 +780,7 @@ class AFMMongoClient:
                 total_deleted += result['deleted']
         
         return {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now().isoformat(),
             'days_to_keep': days_to_keep,
             'dry_run': dry_run,
             'total_found': total_found,
@@ -825,7 +825,7 @@ class AFMMongoClient:
             date_distribution = list(collection.aggregate(pipeline))
             
             # Calculate age statistics
-            today = datetime.utcnow()
+            today = datetime.now()
             age_buckets = {
                 '0-30_days': 0,
                 '31-90_days': 0,

@@ -10,9 +10,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     AdditionalAnalysisImages: typeof import('./src/components/ResultPage/AdditionalAnalysisImages.vue')['default']
     BreadcrumbNav: typeof import('./src/components/common/BreadcrumbNav.vue')['default']
-    ChartVisualization: typeof import('./src/components/ResultPage/ChartVisualization.vue')['default']
     DataGroupingCard: typeof import('./src/components/MainPage/DataGroupingCard.vue')['default']
-    EnhancedChartVisualization: typeof import('./src/components/ResultPage/EnhancedChartVisualization.vue')['default']
     HeatmapChart: typeof import('./src/components/ResultPage/charts/HeatmapChart.vue')['default']
     HistogramChart: typeof import('./src/components/ResultPage/charts/HistogramChart.vue')['default']
     InformationDetails: typeof import('./src/components/ResultPage/InformationDetails.vue')['default']
@@ -23,7 +21,6 @@ declare module 'vue' {
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     SavedGroupsCard: typeof import('./src/components/MainPage/SavedGroupsCard.vue')['default']
-    ScatterChart: typeof import('./src/components/ResultPage/charts/ScatterChart.vue')['default']
     SearchSection: typeof import('./src/components/MainPage/SearchSection.vue')['default']
     SimplifiedMeasurementCard: typeof import('./src/components/DataTrend/SimplifiedMeasurementCard.vue')['default']
     StatisticalInfoByPoints: typeof import('./src/components/ResultPage/StatisticalInfoByPoints.vue')['default']

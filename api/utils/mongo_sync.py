@@ -58,7 +58,7 @@ def sync_tool_data_to_mongodb(tool_name='MAP608', connection_string=None):
         result = client.store_measurements(tool_name, measurements)
         
         # Add sync metadata
-        result['sync_timestamp'] = datetime.utcnow().isoformat()
+        result['sync_timestamp'] = datetime.now().isoformat()
         result['source'] = 'file_system'
         
         logger.info(f"Sync completed: {result}")
@@ -101,7 +101,7 @@ def sync_all_tools_to_mongodb(connection_string=None):
     total_measurements = sum(r.get('total_processed', 0) for r in results.values())
     
     summary = {
-        'timestamp': datetime.utcnow().isoformat(),
+        'timestamp': datetime.now().isoformat(),
         'tools_synced': total_success,
         'total_tools': len(tools),
         'total_measurements': total_measurements,

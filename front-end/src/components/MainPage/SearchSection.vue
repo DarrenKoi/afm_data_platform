@@ -131,11 +131,11 @@
                       <span class="text-caption text-success ml-1 font-weight-medium">Available</span>
                     </div>
                     <div class="d-flex flex-row align-center justify-center gap-1">
-                      <v-tooltip v-for="dataType in dataTypes" :key="dataType.key" 
-                        :text="dataType.tooltip" location="top"
-                        v-if="dataType && dataType.key && hasData(result[dataType.key])">
+                      <v-tooltip v-for="dt in dataTypes" :key="dt.key" 
+                        :text="dt.tooltip" location="top"
+                        v-if="dt && dt.key && hasData(result[dt.key])">
                         <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="success">{{ dataType.icon }}</v-icon>
+                          <v-icon v-bind="props" size="small" color="success">{{ dt.icon }}</v-icon>
                         </template>
                       </v-tooltip>
                     </div>
@@ -152,11 +152,11 @@
                       <span class="text-caption text-grey-darken-1 ml-1 font-weight-medium">Not Available</span>
                     </div>
                     <div class="d-flex flex-row align-center justify-center gap-1">
-                      <v-tooltip v-for="dataType in dataTypes" :key="dataType.key"
-                        :text="dataType.tooltip" location="bottom"
-                        v-if="dataType && dataType.key && !hasData(result[dataType.key])">
+                      <v-tooltip v-for="dt in dataTypes" :key="dt.key"
+                        :text="dt.tooltip" location="bottom"
+                        v-if="dt && dt.key && !hasData(result[dt.key])">
                         <template v-slot:activator="{ props }">
-                          <v-icon v-bind="props" size="small" color="grey">{{ dataType.icon }}</v-icon>
+                          <v-icon v-bind="props" size="small" color="grey">{{ dt.icon }}</v-icon>
                         </template>
                       </v-tooltip>
                     </div>

@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from "node:url";
 import Vue from "@vitejs/plugin-vue";
 // Plugins
 import AutoImport from "unplugin-auto-import/vite";
-import Fonts from "unplugin-fonts/vite";
 import Components from "unplugin-vue-components/vite";
 import { VueRouterAutoImports } from "unplugin-vue-router";
 import VueRouter from "unplugin-vue-router/vite";
@@ -30,23 +29,6 @@ export default defineConfig({
       },
     }),
     Components(),
-    Fonts({
-      google: {
-        families: [
-          {
-            name: "Roboto",
-            styles: "wght@100;300;400;500;700;900",
-          },
-          {
-            name: "Noto Sans KR",
-            styles: "wght@100;300;400;500;700;900",
-          },
-        ],
-        preconnect: true,
-        display: 'swap',
-        injectTo: 'head',
-      },
-    }),
     AutoImport({
       imports: [
         "vue",
@@ -89,6 +71,9 @@ export default defineConfig({
         api: "modern-compiler",
       },
     },
+    postcss: {
+      plugins: [],
+    },
   },
   build: {
     rollupOptions: {
@@ -101,7 +86,7 @@ export default defineConfig({
             if (id.includes("echarts")) {
               return "charts";
             }
-            if (id.includes("@fontsource") || id.includes("@mdi/font")) {
+            if (id.includes("@mdi/font")) {
               return "fonts";
             }
             if (id.includes("vue") || id.includes("pinia")) {
@@ -110,15 +95,28 @@ export default defineConfig({
           }
         },
         assetFileNames: (assetInfo) => {
-          // Don't preload font files
           const fileName = assetInfo.names?.[0] || assetInfo.fileName || "";
-          if (/\.(woff|woff2|ttf|eot)$/.test(fileName)) {
+          // Organize assets by type
+          if (fileName.endsWith('.woff') || fileName.endsWith('.woff2') || fileName.endsWith('.ttf') || fileName.endsWith('.eot')) {
             return "assets/fonts/[name]-[hash][extname]";
+          }
+          if (fileName.endsWith('.png') || fileName.endsWith('.jpg') || fileName.endsWith('.jpeg') || 
+              fileName.endsWith('.gif') || fileName.endsWith('.svg') || fileName.endsWith('.webp') || fileName.endsWith('.avif')) {
+            return "assets/images/[name]-[hash][extname]";
+          }
+          if (fileName.endsWith('.css')) {
+            return "assets/css/[name]-[hash][extname]";
           }
           return "assets/[name]-[hash][extname]";
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600,
+    target: 'es2015',
+    sourcemap: false,
+    minify: 'esbuild',
+    esbuildOptions: {
+      drop: ['console', 'debugger'],
+    },
   },
 });

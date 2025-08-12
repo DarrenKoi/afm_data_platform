@@ -255,7 +255,6 @@ async function viewTrendAnalysis() {
   loadedCount.value = 0
   totalCount.value = dataStore.groupedData.length
   loadingErrors.value = []
-  showErrorDetails.value = false
   isCancelling.value = false
   currentFileName.value = ''
   

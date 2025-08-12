@@ -5,7 +5,7 @@ Handles user activity tracking and retrieval
 from flask import Blueprint, jsonify, request
 from pathlib import Path
 import json
-from .utils.app_logger import get_error_logger
+from .utils.app_logger_standard import get_error_logger
 
 # Create activity blueprint
 activity_bp = Blueprint('activity', __name__)
@@ -91,16 +91,16 @@ def get_afm_activities(user_id=None, limit=100):
                         continue
                         
             except Exception as e:
-                error_logger.warning(f"Failed to read log file {log_file}",
-                                   error=str(e),
-                                   file=str(log_file))
+                error_logger.warning(f"Failed to read log file {log_file}", extra={
+                                   'error': str(e),
+                                   'file': str(log_file)})
                 continue
                 
     except Exception as e:
-        error_logger.error("Failed to read AFM activities",
-                         error=str(e),
-                         user_id=user_id,
-                         limit=limit)
+        error_logger.error("Failed to read AFM activities", extra={
+                         'error': str(e),
+                         'user_id': user_id,
+                         'limit': limit})
     
     return activities
 
