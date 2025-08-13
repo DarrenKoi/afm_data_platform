@@ -131,8 +131,44 @@
           @point-data-loaded="handlePointDataLoaded" @simple-point-selected="selectPoint" />
       </v-col>
 
-      <!-- Column 2: Heat Map and Charts -->
+      <!-- Column 2: Scatter Chart, Heat Map and Charts -->
       <v-col cols="12" lg="6">
+        <!-- Data Scatter Chart -->
+        <v-card class="scatter-chart-card mb-3" elevation="2" height="520">
+          <v-card-title class="bg-info text-white py-2 text-subtitle-1">
+            <v-icon start size="small">mdi-chart-scatter-plot</v-icon>
+            Data Scatter Chart
+            <v-spacer />
+            <v-chip v-if="detailedData && detailedData.length > 0" size="x-small" color="white" variant="outlined">
+              {{ detailedData.length.toLocaleString() }} points available
+            </v-chip>
+          </v-card-title>
+          <v-card-text class="pa-3">
+            <div v-if="!detailedData || detailedData.length === 0" class="text-center pa-6 text-medium-emphasis" style="height: 460px; display: flex; align-items: center; justify-content: center; flex-direction: column;">
+              <v-icon size="64" color="grey" class="mb-3">mdi-chart-scatter-plot</v-icon>
+              <div class="text-h6 mb-2">No Detailed Data Available</div>
+              <div class="text-body-2">Scatter chart will appear here when detailed data is loaded</div>
+            </div>
+            <div v-else style="height: 460px;">
+              <!-- Data Selector (compact) -->
+              <div class="mb-3">
+                <ScatterDataSelector 
+                  :detailed-data="detailedData" 
+                  @chart-config-changed="handleScatterChartConfigChanged"
+                />
+              </div>
+              
+              <!-- Scatter Chart -->
+              <div style="height: 300px;">
+                <DataScatterChart 
+                  :chart-config="scatterChartConfig"
+                  :chart-height="300"
+                />
+              </div>
+            </div>
+          </v-card-text>
+        </v-card>
+
         <!-- Heat Map aligned with Details -->
         <v-card class="heat-map-card mb-3" elevation="2" height="480">
           <v-card-title class="bg-primary text-white py-2 text-subtitle-1">
@@ -236,6 +272,8 @@ import HistogramChart from '@/components/ResultPage/charts/HistogramChart.vue'
 import StatisticalInfoByPoints from '@/components/ResultPage/StatisticalInfoByPoints.vue'
 import MeasurementPoints from '@/components/ResultPage/MeasurementPoints.vue'
 import HeatmapChart from '@/components/ResultPage/charts/HeatmapChart.vue'
+import ScatterDataSelector from '@/components/ResultPage/charts/ScatterDataSelector.vue'
+import DataScatterChart from '@/components/ResultPage/charts/DataScatterChart.vue'
 import AdditionalAnalysisImages from '@/components/ResultPage/AdditionalAnalysisImages.vue'
 import BreadcrumbNav from '@/components/common/BreadcrumbNav.vue'
 
@@ -271,6 +309,9 @@ const filename = ref(decodeURIComponent(route.params.filename || ''))
 const toolName = ref(route.query.tool || 'MAP608')
 const selectedStatistic = ref(null)
 const isDownloadingImage = ref(false)
+
+// Scatter chart data
+const scatterChartConfig = ref(null)
 
 // Point selection logic
 const pointSelection = usePointSelection()
@@ -317,6 +358,11 @@ function handleStatisticRowClick(rowItem) {
 // Handler for statistic selection
 function handleStatisticSelected(statisticName) {
   selectedStatistic.value = statisticName
+}
+
+// Handler for scatter chart configuration changes
+function handleScatterChartConfigChanged(config) {
+  scatterChartConfig.value = config
 }
 
 
@@ -427,19 +473,7 @@ watch(measurementPoints, (newPoints) => {
 }
 
 /* Professional layout */
-
-.heat-map-card,
-.profile-card,
-.distribution-card {
-  /* Styles now handled by elevation="2" and bg-primary on title */
-}
-
-.heat-map-card .v-card-title,
-.profile-card .v-card-title,
-.distribution-card .v-card-title {
-  /* Title styles now handled by bg-primary text-white py-2 text-subtitle-1 classes */
-}
-
+.scatter-chart-card .v-card-text,
 .heat-map-card .v-card-text,
 .profile-card .v-card-text,
 .distribution-card .v-card-text {
@@ -563,6 +597,7 @@ watch(measurementPoints, (newPoints) => {
 }
 
 /* Prevent horizontal overflow in Column 2 */
+.scatter-chart-card,
 .heat-map-card,
 .profile-card,
 .distribution-card {
@@ -571,6 +606,7 @@ watch(measurementPoints, (newPoints) => {
   box-sizing: border-box;
 }
 
+.scatter-chart-card .v-card-text,
 .heat-map-card .v-card-text,
 .profile-card .v-card-text,
 .distribution-card .v-card-text {
@@ -581,6 +617,7 @@ watch(measurementPoints, (newPoints) => {
 }
 
 /* Ensure charts don't exceed container width */
+.scatter-chart-card :deep(.echarts-container),
 .heat-map-card :deep(.echarts),
 .distribution-card :deep(.echarts) {
   max-width: 100% !important;
