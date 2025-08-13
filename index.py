@@ -3,7 +3,7 @@ AFM Data Platform Backend - Main Entry Point
 Run with: python index.py
 """
 
-from flask import Flask, send_from_directory, request, session, redirect
+from flask import Flask, send_from_directory, request
 from flask_cors import CORS
 import os
 from api.routes import register_blueprints
@@ -11,13 +11,6 @@ from api.routes import register_blueprints
 from api.utils.app_logger_standard import get_system_logger, get_activity_logger, get_error_logger, cleanup_loggers
 import atexit
 import time
-
-# SSO import for production mode
-try:
-    from hcputil.auth.sso import SSO
-    SSO_AVAILABLE = True
-except ImportError:
-    SSO_AVAILABLE = False
 
 def create_app():
     # Get logger instances
@@ -29,8 +22,6 @@ def create_app():
     static_folder = 'front-end' if os.path.exists('front-end') else None
     app = Flask(__name__, static_folder=static_folder, static_url_path='')
     
-    # Configure session secret key for SSO (use environment variable in production)
-    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
     
     # Log application initialization
     system_logger.info("AFM Data Platform Backend starting", extra={
@@ -49,9 +40,9 @@ def create_app():
         'http://127.0.0.1:5173',
         'http://127.0.0.1:8080',
         'http://127.0.0.1:5000',  # Flask default
-        # Add your production URL here
-        # 'https://your-production-domain.com',
-        # 'https://afm-platform.skhynix.com',  # Example
+        # Production URLs
+        'http://afm.skhynix.com',
+        'https://afm.skhynix.com',  # Include both HTTP and HTTPS
     ]
     
     # Configure CORS
@@ -74,39 +65,11 @@ def create_app():
         # Store request start time for response time logging
         request.start_time = time.time()
         
-        # SSO authentication check for API routes in production
-        if SSO_AVAILABLE and static_folder:
-            # Allow login route and static assets without authentication
-            if not (request.path.startswith('/login') or 
-                    request.path.startswith('/assets') or 
-                    request.path == '/favicon.ico'):
-                # Check if user is authenticated for all other routes (including API)
-                if session.get('logFlag') != True:
-                    # Check for LASTUSER cookie to auto-authenticate
-                    last_user = request.cookies.get('LASTUSER')
-                    if last_user is not None:
-                        # Auto-authenticate user based on LASTUSER cookie
-                        session['logFlag'] = True
-                        session['user_id'] = last_user
-                        
-                        activity_logger.info("User auto-authenticated via LASTUSER cookie", extra={
-                            'user_id': last_user,
-                            'path': request.path
-                        })
-                    else:
-                        # No authentication available
-                        # For API routes, return 401 Unauthorized
-                        if request.path.startswith('/api/'):
-                            return {'error': 'Unauthorized - Please login first'}, 401
-                        # For other routes, redirect to login
-                        else:
-                            return redirect('/login')
-        
         # Skip logging for static files and favicon
         if request.path.startswith('/assets') or request.path == '/favicon.ico':
             return
         
-        # Debug: Log all cookies
+        # Debug: Log all cookies (including LASTUSER for user activity tracking)
         if app.debug:
             activity_logger.debug("Request cookies", extra={
                                  'path': request.path,
@@ -147,114 +110,31 @@ def create_app():
     if static_folder and os.path.exists('front-end'):
         system_logger.info("Serving Vue app from static folder")
         
-        # Configure SSO if available in production mode
-        if SSO_AVAILABLE:
-            system_logger.info("SSO authentication enabled")
+        # Route to get current user info from LASTUSER cookie (for frontend)
+        @app.route('/api/current-user')
+        def get_current_user():
+            last_user = request.cookies.get('LASTUSER')
+            if last_user:
+                return {
+                    'authenticated': True,
+                    'user_id': last_user
+                }
+            else:
+                return {'authenticated': False, 'user_id': None}
+        
+        @app.route('/', defaults={'path': ''})
+        @app.route('/<path:path>')
+        def serve_vue_app(path):
+            # Check if path is an API route
+            if path.startswith('api/'):
+                return {'error': 'Not found'}, 404
+                
+            # Check if path is a static file
+            if path and os.path.exists(os.path.join('front-end', path)):
+                return send_from_directory('front-end', path)
             
-            # Route to get current user info (for frontend)
-            @app.route('/api/current-user')
-            def get_current_user():
-                if session.get('logFlag') == True:
-                    return {
-                        'authenticated': True,
-                        'user_id': session.get('user_id')
-                    }
-                else:
-                    return {'authenticated': False}, 401
-            
-            # Logout route
-            @app.route('/logout')
-            def logout():
-                user_id = session.get('user_id', 'Unknown')
-                session.clear()
-                
-                activity_logger.info("User logged out", extra={'user_id': user_id})
-                
-                # Redirect to SSO logout if available, otherwise to login
-                try:
-                    sso = SSO(request)
-                    if hasattr(sso, 'logout_url'):
-                        return redirect(sso.logout_url)
-                except:
-                    pass
-                
-                return redirect('/login')
-            
-            # SSO login route
-            @app.route('/login')
-            @app.route('/login/<path:sub_path>')
-            def login(sub_path=None):
-                sso = SSO(request)
-                # Redirect to the original path after login, or to root
-                if sub_path is not None:
-                    redirect_url = '/' + sub_path
-                else:
-                    redirect_url = '/'
-                    
-                # Check if user is already logged in
-                if session.get('logFlag') != True:
-                    cookie = request.headers.get('cookie')
-                    # Check for LASTUSER cookie which contains user membership number
-                    last_user = request.cookies.get('LASTUSER')
-                    
-                    if cookie is not None and last_user is not None:
-                        session['logFlag'] = True
-                        # Store user membership number from LASTUSER cookie
-                        session['user_id'] = last_user
-                        
-                        activity_logger.info("User logged in via SSO", extra={
-                            'user_id': last_user,
-                            'user_agent': request.headers.get('User-Agent', 'Unknown')
-                        })
-                        
-                        return redirect(redirect_url)
-                    else:
-                        # Redirect to SSO login page
-                        return redirect(sso.login_url)
-                else:
-                    # Already logged in, redirect to requested page
-                    return redirect(redirect_url)
-            
-            @app.route('/', defaults={'path': ''})
-            @app.route('/<path:path>')
-            def serve_vue_app(path):
-                # Check if path is an API route
-                if path.startswith('api/'):
-                    return {'error': 'Not found'}, 404
-                
-                # Check if user is authenticated (except for login route)
-                if not path.startswith('login') and session.get('logFlag') != True:
-                    # User not authenticated, redirect to login page
-                    if path:
-                        return redirect(f'/login/{path}')
-                    else:
-                        return redirect('/login')
-                
-                # User is authenticated or accessing login route
-                # Check if path is a static file
-                if path and os.path.exists(os.path.join('front-end', path)):
-                    return send_from_directory('front-end', path)
-                
-                # For all other routes, serve index.html (Vue Router will handle routing)
-                return send_from_directory('front-end', 'index.html')
-                
-        else:
-            # No SSO available (development mode or SSO package not installed)
-            system_logger.warning("SSO not available - running without authentication")
-            
-            @app.route('/', defaults={'path': ''})
-            @app.route('/<path:path>')
-            def serve_vue_app(path):
-                # Check if path is an API route
-                if path.startswith('api/'):
-                    return {'error': 'Not found'}, 404
-                    
-                # Check if path is a static file
-                if path and os.path.exists(os.path.join('front-end', path)):
-                    return send_from_directory('front-end', path)
-                
-                # For all other routes, serve index.html (Vue Router will handle routing)
-                return send_from_directory('front-end', 'index.html')
+            # For all other routes, serve index.html (Vue Router will handle routing)
+            return send_from_directory('front-end', 'index.html')
     else:
         # Development mode - just API health check
         @app.route('/')
@@ -265,7 +145,7 @@ def create_app():
     return app
 
 # Create the Flask application instance
-app = create_app()
+application = create_app()
 
 # Register cleanup function
 atexit.register(cleanup_loggers)
@@ -281,7 +161,7 @@ if __name__ == '__main__':
                           'port': 5000,
                           'debug': True})
         
-        app.run(debug=True)
+        application.run(debug=True)
         
     except OSError as e:
         error_logger.error("Failed to start server", extra={

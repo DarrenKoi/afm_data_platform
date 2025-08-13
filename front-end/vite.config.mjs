@@ -3,20 +3,15 @@ import Vue from "@vitejs/plugin-vue";
 // Plugins
 import AutoImport from "unplugin-auto-import/vite";
 import Components from "unplugin-vue-components/vite";
-import { VueRouterAutoImports } from "unplugin-vue-router";
-import VueRouter from "unplugin-vue-router/vite";
 // Utilities
 import { defineConfig } from "vite";
 import vueDevTools from "vite-plugin-vue-devtools";
-import Layouts from "vite-plugin-vue-layouts-next";
 import Vuetify, { transformAssetUrls } from "vite-plugin-vuetify";
 
 // https://vitejs.dev/config/
 export default defineConfig({
   base: process.env.VITE_BASE_URL || "/",
   plugins: [
-    VueRouter(),
-    Layouts(),
     vueDevTools(),
     Vue({
       template: { transformAssetUrls },
@@ -32,7 +27,7 @@ export default defineConfig({
     AutoImport({
       imports: [
         "vue",
-        VueRouterAutoImports,
+        "vue-router",
         {
           pinia: ["defineStore", "storeToRefs"],
         },
@@ -47,9 +42,6 @@ export default defineConfig({
     exclude: [
       "vuetify",
       "vue-router",
-      "unplugin-vue-router/runtime",
-      "unplugin-vue-router/data-loaders",
-      "unplugin-vue-router/data-loaders/basic",
     ],
   },
   define: { "process.env": {} },

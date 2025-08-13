@@ -12,6 +12,35 @@ from functools import wraps
 from typing import Optional, Callable, Dict, Any
 
 
+class ExtraFieldsFormatter(logging.Formatter):
+    """Custom formatter that includes extra fields in the log output."""
+    
+    def format(self, record: logging.LogRecord) -> str:
+        # Get the base formatted message
+        base_msg = super().format(record)
+        
+        # Collect extra fields
+        extra_fields = {}
+        standard_fields = {
+            'name', 'msg', 'args', 'created', 'filename', 'funcName',
+            'levelname', 'levelno', 'lineno', 'module', 'msecs',
+            'pathname', 'process', 'processName', 'relativeCreated',
+            'thread', 'threadName', 'exc_info', 'exc_text', 'stack_info',
+            'getMessage', 'message', 'asctime', 'start_time'
+        }
+        
+        for key, value in record.__dict__.items():
+            if key not in standard_fields:
+                extra_fields[key] = value
+        
+        # Append extra fields if any
+        if extra_fields:
+            extra_str = ' | ' + ' | '.join([f"{k}={v}" for k, v in extra_fields.items()])
+            return base_msg + extra_str
+        
+        return base_msg
+
+
 class StandardLoggerManager:
     """
     Production-ready logger using Python's standard logging module.
@@ -63,13 +92,13 @@ class StandardLoggerManager:
         
         if self.is_dev:
             # Detailed format for development
-            console_format = logging.Formatter(
+            console_format = ExtraFieldsFormatter(
                 '%(asctime)s | %(levelname)-5s | %(name)s | %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
             )
         else:
             # Simpler format for production console
-            console_format = logging.Formatter(
+            console_format = ExtraFieldsFormatter(
                 '%(asctime)s | %(levelname)-5s | %(message)s',
                 datefmt='%H:%M:%S'
             )
@@ -93,8 +122,8 @@ class StandardLoggerManager:
             # JSON formatter for structured logging
             file_handler.setFormatter(JsonFormatter())
         else:
-            # Standard text format
-            file_format = logging.Formatter(
+            # Standard text format with extra fields support
+            file_format = ExtraFieldsFormatter(
                 '%(asctime)s | %(levelname)-5s | %(name)s | '
                 '%(filename)s:%(lineno)d | %(funcName)s | %(message)s',
                 datefmt='%Y-%m-%d %H:%M:%S'
