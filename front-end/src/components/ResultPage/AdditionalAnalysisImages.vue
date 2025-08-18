@@ -14,6 +14,24 @@
             {{ getImagesForTab(tab.value).length }}
           </v-chip>
         </v-tab>
+        
+        <!-- Download All Button for Active Tab -->
+        <template v-slot:extension>
+          <div class="d-flex justify-end align-center pa-2">
+            <v-btn
+              v-if="getImagesForTab(selectedTab).length > 0"
+              @click="downloadAllImagesForTab(selectedTab)"
+              :loading="isDownloadingTab[selectedTab]"
+              size="small"
+              variant="outlined"
+              color="success"
+              class="download-tab-btn"
+            >
+              <v-icon start size="small">mdi-download</v-icon>
+              Download All ({{ getImagesForTab(selectedTab).length }})
+            </v-btn>
+          </div>
+        </template>
       </v-tabs>
 
       <v-tabs-window v-model="selectedTab">
@@ -95,6 +113,7 @@
 import { ref, watch, onMounted, computed } from 'vue'
 import { useDataStore } from '@/stores/dataStore'
 import { imageService } from '@/services/imageService'
+import { downloadSingleImage } from '@/utils/imageDownloadUtils'
 
 // Props
 const props = defineProps({
@@ -114,6 +133,11 @@ const loadError = ref('')
 const imageDialog = ref(false)
 const selectedImage = ref(null)
 const hoveredImage = ref({})
+const isDownloadingTab = ref({
+  align: false,
+  tip: false,
+  capture: false
+})
 
 // Images data structure - start with empty arrays to avoid network errors
 const imagesData = ref({
@@ -200,6 +224,61 @@ async function loadImages() {
 function openImageDialog(image) {
   selectedImage.value = image
   imageDialog.value = true
+}
+
+// Download all images for a specific tab individually
+async function downloadAllImagesForTab(tabValue) {
+  const images = getImagesForTab.value(tabValue)
+  
+  if (!images || images.length === 0) {
+    console.warn(`No images available for tab: ${tabValue}`)
+    return
+  }
+
+  // Set loading state for this tab
+  isDownloadingTab.value[tabValue] = true
+
+  try {
+    let successCount = 0
+    let failCount = 0
+    
+    // Download each image individually with a small delay to avoid overwhelming the browser
+    for (let i = 0; i < images.length; i++) {
+      const image = images[i]
+      
+      try {
+        // Create a prefixed filename to keep downloads organized
+        const prefixedFilename = `${props.filename.replace(/\.(pkl|pickle)$/i, '')}_${tabValue}_${image.name}`
+        
+        await downloadSingleImage(image.url, prefixedFilename)
+        successCount++
+        
+        // Add small delay between downloads to prevent browser issues
+        if (i < images.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 200))
+        }
+        
+      } catch (error) {
+        console.error(`Failed to download image ${image.name}:`, error)
+        failCount++
+      }
+    }
+    
+    // Log results
+    if (failCount > 0) {
+      console.warn(`Downloaded ${successCount}/${images.length} images. ${failCount} images failed.`)
+      alert(`Downloaded ${successCount} images successfully. ${failCount} images failed to download.`)
+    } else {
+      console.log(`Successfully downloaded all ${successCount} images from ${tabValue} tab`)
+    }
+    
+  } catch (error) {
+    console.error(`Error downloading images for ${tabValue} tab:`, error)
+    alert(`Failed to download images: ${error.message}`)
+  } finally {
+    // Clear loading state
+    isDownloadingTab.value[tabValue] = false
+  }
 }
 
 // Watchers
@@ -310,5 +389,14 @@ onMounted(() => {
 
 :deep(.v-tabs-window) {
   min-height: 380px;
+}
+
+.download-tab-btn {
+  margin-left: auto;
+}
+
+:deep(.v-tabs-extension) {
+  background-color: rgba(var(--v-theme-surface), 0.8);
+  border-bottom: 1px solid rgba(var(--v-theme-outline), 0.12);
 }
 </style>

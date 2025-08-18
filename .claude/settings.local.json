@@ -17,7 +17,9 @@
       "Bash(touch:*)",
       "mcp__sequential-thinking__sequentialthinking",
       "Bash(npx vue-tsc:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(npm install:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
