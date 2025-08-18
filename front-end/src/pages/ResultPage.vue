@@ -376,13 +376,8 @@ function handleImageLoad(event) {
 }
 
 function goBack() {
-  // Check if we came from DataTrendPage
-  if (referrer.value === 'data-trend') {
-    router.push('/result/data_trend')
-  } else {
-    // Default: go back to search page
-    router.push('/')
-  }
+  // Use browser's back navigation to respect history
+  router.back()
 }
 
 // Download raw image function

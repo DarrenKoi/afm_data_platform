@@ -23,7 +23,7 @@ docs/
 *.egg-info/
 .installed.cfg
 *.egg
-
+.claude/
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt

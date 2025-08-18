@@ -520,7 +520,8 @@ function validateMeasurementData(measurement) {
 }
 
 function goBack() {
-  router.push('/')
+  // Use browser's back navigation to respect history
+  router.back()
 }
 
 // Process pre-loaded group data
