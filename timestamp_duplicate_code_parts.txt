@@ -1,0 +1,59 @@
+Timestamp Duplicate-Risk / Time-Loss Code Parts
+==============================================
+
+Date: 2026-03-02
+Repository: afm_data_platform
+
+Must-Fix (duplicate-risk in backend)
+------------------------------------
+
+1) api/utils/file_parser.py
+   - check_pickle_file_exists() match fields:
+     - Lines around 227-239
+     - Current matching uses only:
+       lot_id + slot_number + measured_info + recipe_name
+     - Issue: date/time are not included, so different timestamp records can collide.
+
+2) api/utils/file_parser.py
+   - unique_key generation:
+     - Lines around 145-148
+     - Current fallback sets time to "000000" when missing.
+     - Issue: if multiple rows share same date/recipe/slot/lot/measured and no parsed time,
+       key collisions are possible.
+
+3) api/utils/file_parser.py
+   - load_afm_file_list_live() append flow:
+     - Lines around 320-337
+     - Current logic appends parsed records directly without dedup validation
+       against a timestamp-aware identifier.
+
+
+Time-loss points (frontend/trend behavior)
+-----------------------------------------
+
+4) front-end/src/pages/DataTrendPage.vue
+   - event_time fallback:
+     - Line around 287
+     - Current fallback uses formatted_date (date-only), which drops time precision.
+
+5) front-end/src/pages/DataTrendPage.vue
+   - time-series timestamp fallback chain:
+     - Lines around 400-406
+     - Current chain includes formatted_date fallback (date-only).
+
+6) front-end/src/services/dataService.js
+   - sorting logic:
+     - Lines around 16-18 and 42-44
+     - Current sort uses formatted_date only, which ignores time.
+
+7) front-end/src/stores/dataStore.js
+   - getDateRange() fallback:
+     - Line around 240
+     - Current date derivation falls back to formatted_date (date-only).
+
+8) front-end/src/components/DataTrend/charts/TimeSeriesChart.vue
+   + front-end/src/pages/DataTrendPage.vue
+   - data shape mismatch for time-series:
+     - Chart expects item.date + item.time (TimeSeriesChart.vue lines around 60-61).
+     - Page currently builds timestamp field only (DataTrendPage.vue lines around 427-433).
+     - Result: time handling can be inconsistent/lost depending on source path.
