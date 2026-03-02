@@ -49,6 +49,7 @@ coverage.xml
 
 # VS Code
 .vscode/
+.idea/
 
 # mypy
 .mypy_cache/
